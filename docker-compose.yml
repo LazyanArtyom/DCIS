@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+
+  server:
+    build:
+      context: "./server"
+      dockerfile: Dockerfile
+
+    ports:
+      - 8080:8080
+
+  client:
+    stdin_open: true
+
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+    build:
+      dockerfile: Dockerfile
+      context: "./dcsi"
+
+    ports:
+      - 4001:3000
+
+    depends_on:
+      - server
