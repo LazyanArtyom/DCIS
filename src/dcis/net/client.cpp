@@ -1,8 +1,10 @@
 #include <net/client.h>
 
-#include <utils/graphutils.h>
+// App includes
+#include <graph/graph.h>
 #include <utils/debugstream.h>
 
+// STL includes
 #include <QDebug>
 
 
@@ -13,7 +15,7 @@ Client::Client(QObject* parent)
 {
 
     ////////////////////////////
-    QJsonDocument doc = utils::graph::toJSON();
+    QJsonDocument doc = graph::Graph::toJSON(graph::Graph(true));
 
     resource::Body<QJsonDocument> body(doc);
     resource::Header hed{sizeof(body), resource::Command::Publish, resource::ResourceType::Text};
@@ -88,8 +90,8 @@ void Client::onReadyRead()
 
             resource::Body<QJsonDocument> body;
             input >> body;
-            QString str = utils::graph::fromJSON(body.data);
-            utils::log(utils::LogLevel::INFO, "Output: \n", str.toStdString());
+            graph::Graph gr = graph::Graph::fromJSON(body.data);
+            //utils::log(utils::LogLevel::INFO, "Output: \n", str.toStdString());
 
             nextBlockSize_ = 0;
             //resourceHandler_.handle(head, body);

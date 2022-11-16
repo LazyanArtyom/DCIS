@@ -1,6 +1,6 @@
 #ifndef DCIS_COMMON_UTILS_GRAPHUTILS_H_
 #define DCIS_COMMON_UTILS_GRAPHUTILS_H_
-
+/*
 // App includes
 #include <streambuf>
 
@@ -74,6 +74,5 @@ QJsonDocument toJSON()
 
     return jsonDoc;
 }
-
-} // end namespace dcis::common::utils::graph
+} // end namespace dcis::common::utils::graph */
 #endif // DCIS_COMMON_UTILS_GRAPHUTILS_H_

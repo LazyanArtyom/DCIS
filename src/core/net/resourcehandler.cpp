@@ -1,9 +1,8 @@
 #include <net/resourcehandler.h>
 
-#include <utils/graphutils.h>
-
 // App includes
 #include <net/server.h>
+#include <graph/graph.h>
 
 namespace dcis::server {
 
@@ -40,7 +39,7 @@ void ResourceHandler::handleString(const QString str)
 
 void ResourceHandler::handleJson(const QJsonDocument json)
 {
-    utils::log(utils::LogLevel::INFO, "Json passed: ", utils::graph::fromJSON(json).toStdString());
+//    utils::log(utils::LogLevel::INFO, "Json passed: ", graph::Graph::fromJSON(json).toStdString());
 
     switch (header_.command)
     {

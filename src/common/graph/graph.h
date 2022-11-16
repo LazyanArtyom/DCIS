@@ -5,6 +5,11 @@
 #include <graph/node.h>
 #include <graph/edge.h>
 
+// Qt includes
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
+
 // STL includes
 #include <memory>
 #include <string>
@@ -44,6 +49,9 @@ public:
     NodeListType getNodes() const;
     bool addNode(const Node& node);
     bool addNode(std::string nodeName);
+
+    static Graph fromJSON(QJsonDocument jsonDoc);
+    static QJsonDocument toJSON(const Graph& graph);
 
     void print() const;
 
