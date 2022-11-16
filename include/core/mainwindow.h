@@ -4,7 +4,7 @@
 #include <QMainWindow>
 
 // App includes
-#include <server.h>
+#include <net/server.h>
 #include <utils/debugstream.h>
 
 // STL includes

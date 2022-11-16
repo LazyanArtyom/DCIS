@@ -6,7 +6,8 @@ include_directories(${SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCES
     "${INCLUDE_DIR}/*.h"
-    "${INCLUDE_DIR}/net/*.h"
+#    "${INCLUDE_DIR}/net/*.h"
+#	"${INCLUDE_DIR}/graph/*.h"
     "${SOURCE_DIR}/*.cpp"
 )
 

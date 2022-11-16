@@ -1,9 +1,9 @@
-#include <resourcehandler.h>
+#include <net/resourcehandler.h>
 
 #include <utils/graphutils.h>
 
 // App includes
-#include <server.h>
+#include <net/server.h>
 
 namespace dcis::server {
 

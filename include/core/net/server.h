@@ -3,7 +3,7 @@
 
 // App includes
 #include <net/resource.h>
-#include <resourcehandler.h>
+#include <net/resourcehandler.h>
 #include <utils/debugstream.h>
 
 // QT includes

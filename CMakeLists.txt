@@ -10,5 +10,5 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 qt_standard_project_setup()
 
 add_subdirectory(src/dcis)
-add_subdirectory(src/server)
+add_subdirectory(src/core)
 add_subdirectory(src/common)
