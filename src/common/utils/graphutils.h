@@ -75,5 +75,5 @@ QJsonDocument toJSON()
     return jsonDoc;
 }
 
-} // end namespace dcis::common::utils
+} // end namespace dcis::common::utils::graph
 #endif // DCIS_COMMON_UTILS_GRAPHUTILS_H_

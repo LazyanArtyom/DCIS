@@ -1,4 +1,4 @@
-set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/common")
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/common")
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src/common")
 
 include_directories(${INCLUDE_DIR})
