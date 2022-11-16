@@ -17,7 +17,7 @@ This project depends on some packages, which need to be installed prior to build
 ``` bash
 > cd DCIS && mkdir build && cd build
 > cmake .. && cmake --build .
-> ./server
+> ./core
 > ./dcis
 ```
 

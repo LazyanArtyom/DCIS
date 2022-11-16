@@ -11,17 +11,17 @@ file(GLOB_RECURSE SOURCES
     "${SOURCE_DIR}/*.cpp"
 )
 
-add_executable(server
+add_executable(core
     ${SOURCES}
 )
 
-target_link_libraries(server PRIVATE
+target_link_libraries(core PRIVATE
     common
     Qt6::Widgets
     Qt6::Network
     )
 
-set_target_properties(server PROPERTIES
+set_target_properties(core PROPERTIES
     WIN32_EXECUTABLE ON
     MACOSX_BUNDLE ON
 )
