@@ -2,12 +2,10 @@
 
 #include <QApplication>
 
-#include <utils/test.h>
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+    dcis::ui::MainWindow w;
     w.show();
     return a.exec();
 }

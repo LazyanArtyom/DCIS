@@ -6,6 +6,7 @@ include_directories(${SOURCE_DIR})
 
 file(GLOB_RECURSE SOURCES
     "${INCLUDE_DIR}/*.h"
+    "${INCLUDE_DIR}/net/*.h"
     "${SOURCE_DIR}/*.cpp"
 )
 
@@ -15,7 +16,9 @@ add_executable(dcis
 
 target_link_libraries(dcis PRIVATE
     common
-    Qt6::Widgets)
+    Qt6::Widgets
+    Qt6::Network
+    )
 
 set_target_properties(dcis PROPERTIES
     WIN32_EXECUTABLE ON

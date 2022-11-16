@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+    dcis::server::MainWindow w;
     w.show();
     return a.exec();
 }
