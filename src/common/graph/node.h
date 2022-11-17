@@ -4,7 +4,7 @@
 // App includes
 
 //Qt includes
-// #include <QPointF>
+ #include <QPointF>
 
 // STL includes
 #include <list>
@@ -25,11 +25,12 @@ using EdgeSetType  = std::unordered_set<NodePairType>;
 class Node
 {
 public:
-    explicit Node(std::string name);
-    //explicit Node(std::string name, QPointF);
+    explicit Node(const std::string& name);
+    explicit Node(const std::string& name, QPointF euclidePos);
 
     std::string getName() const;
-
+    double getX() const;
+    double getY() const;
 
     bool operator==(const Node& other) const { return (name_ == other.name_); }
     bool operator<(const Node&  other) const { return (name_ < other.name_);  }
@@ -40,7 +41,7 @@ private:
     int degPos_ = 0;
     int degNeg_ = 0;
     std::string name_;
-    //QPointF euclidePos_;
+    QPointF euclidePos_;
 };
 
 } // end namespace dcis::common::graph

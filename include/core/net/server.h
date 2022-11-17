@@ -3,7 +3,6 @@
 
 // App includes
 #include <net/resource.h>
-#include <net/resourcehandler.h>
 #include <utils/debugstream.h>
 
 // QT includes
@@ -30,6 +29,12 @@ public:
 
     template<typename T>
     void publish(resource::Header header, resource::Body<T> body);
+    template<typename T>
+    void handle(resource::Header header, resource::Body<T> body);
+
+    void handleUnknown();
+    void handleString(const QString str);
+    void handleJson(const QJsonDocument json);
 
 public slots:
     void onReadyRead();
@@ -43,10 +48,10 @@ private:
 
 private:
     DataType       data_;
+    resource::Header header_;
     SocketListType sockets_;
     qintptr currentSocket_;
     quint16 nextBlockSize_;
-    ResourceHandler resourceHandler_;
 };
 
 template<typename T>
@@ -61,6 +66,23 @@ void Server::publish(resource::Header header, resource::Body<T> body)
     for (auto &socket : sockets_)
     {
         socket->write(data_);
+    }
+}
+
+template<typename T>
+void Server::handle(resource::Header header, resource::Body<T> body)
+{
+    header_ = header;
+    switch (header.resourceType)
+    {
+        case resource::ResourceType::Text:
+        {
+            handleJson(body.data);
+            break;
+        }
+
+        default:
+            handleUnknown();
     }
 }
 

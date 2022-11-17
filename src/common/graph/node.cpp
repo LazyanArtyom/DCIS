@@ -4,13 +4,28 @@
 namespace dcis::common::graph
 {
 
-Node::Node(std::string name) : name_(name) {}
+Node::Node(const std::string &name)
+    : name_(name)
+{
 
-//explicit Node(std::string name, QPointF);
+}
+
+Node::Node(const std::string& name, QPointF euclidePos)
+    : name_(name), euclidePos_(euclidePos) {}
 
 std::string Node::getName() const
 {
     return name_;
+}
+
+double Node::getX() const
+{
+    return euclidePos_.x();
+}
+
+double Node::getY() const
+{
+    return euclidePos_.y();
 }
 
 } // end namespace dcis::common::graph

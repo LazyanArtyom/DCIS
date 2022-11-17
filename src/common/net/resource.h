@@ -13,12 +13,13 @@ namespace dcis::common::resource {
 // Message
 enum class ResourceType : uint32_t
 {
-    Text = 5
+    Text = 0,
+    Json
 };
 
 enum class Command : uint32_t
 {
-    Publish = 7
+    Publish = 0
 };
 
 // Message Header is sent at start of all messages. The template allows us

@@ -53,6 +53,8 @@ public:
     static Graph fromJSON(QJsonDocument jsonDoc);
     static QJsonDocument toJSON(const Graph& graph);
 
+    bool isDirected() const;
+
     void print() const;
 
 private:

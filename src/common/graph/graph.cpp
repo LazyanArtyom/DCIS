@@ -1,11 +1,14 @@
 #include <graph/graph.h>
 
 // App includes
+#include <utils/debugstream.h>
 
 namespace dcis::common::graph
 {
 
-Graph::Graph(bool isDirected) : isDirected_(isDirected) {}
+Graph::Graph(bool isDirected) : isDirected_(isDirected)
+{
+}
 
 Graph::Graph(const Graph &other)
     : isDirected_(other.isDirected_)
@@ -105,67 +108,118 @@ Graph Graph::fromJSON(QJsonDocument jsonDoc)
 {
     QJsonObject json = jsonDoc.object();
 
-    bool idDirected = json.value("directed").toBool();
+    bool isDirected = json.value("directed").toBool();
+    Graph graph(isDirected);
 
-    for (const auto& node : json.value("nodes").toArray())
+    foreach (const QJsonValue& node, json.value("nodes").toArray())
     {
-        QString name = node.toObject().value("name").toString();
+        std::string name = node.toObject().value("name").toString().toStdString();
         double x = node.toObject().value("x").toDouble();
         double y = node.toObject().value("y").toDouble();
+
+        graph.addNode(Node(name, QPointF(x, y)));
     }
 
-    for (const auto& node : json.value("edges").toArray())
+    foreach (const QJsonValue& edge, json.value("edges").toArray())
     {
-        QString start = node.toObject().value("start").toString();
-        QString end = node.toObject().value("end").toString();
+        std::string start = edge.toObject().value("start").toString().toStdString();
+        std::string end = edge.toObject().value("end").toString().toStdString();
+
+        graph.setEdge(start, end);
     }
 
-    return Graph(true);
+    return graph;
 }
 
-QJsonDocument Graph::toJSON(const Graph& g)
+QJsonDocument Graph::toJSON(const Graph& graph)
 {
-    QJsonObject graph;
+    QJsonObject jsonObj;
 
     //insert single datas first
-    graph.insert("directed", true);
+    jsonObj.insert("directed", graph.isDirected());
 
     // fill nodes
     QJsonArray nodes;
-    for (int i = 0; i < 3; ++i)
+    for (const auto& node : graph.getNodes())
     {
-        QJsonObject node;
-        node.insert("name", "Node1");
-        node.insert("x", 5.5);
-        node.insert("y", 6.6);
+        QJsonObject jsonNode;
+        jsonNode.insert("name", node->getName().c_str());
+        jsonNode.insert("x", node->getX());
+        jsonNode.insert("y", node->getY());
 
-        nodes.push_back(node);
+        nodes.push_back(jsonNode);
+
     }
-    graph.insert("nodes", nodes);
+    jsonObj.insert("nodes", nodes);
 
     // fill edges
     QJsonArray edges;
-    for (int i = 0; i < 3; ++i)
+    for (const auto& edge : graph.getEdges())
     {
-        QJsonObject edge;
-        edge.insert("start", "Node1");
-        edge.insert("end", "Node6");
+        QJsonObject jsonEdge;
+        jsonEdge.insert("start", edge.first->getName().c_str());
+        jsonEdge.insert("end", edge.second->getName().c_str());
 
-        edges.push_back(edge);
+        edges.push_back(jsonEdge);
     }
 
-    graph.insert("edges", edges);
+    jsonObj.insert("edges", edges);
 
     QJsonDocument jsonDoc;
-    jsonDoc.setObject(graph);
+    jsonDoc.setObject(jsonObj);
 
     return jsonDoc;
+}
+
+bool Graph::isDirected() const
+{
+    return isDirected_;
 }
 
 
 void Graph::print() const
 {
     // debugstream
+    QJsonObject jsonObj;
+
+    //insert single datas first
+    jsonObj.insert("directed", true);
+
+    // fill nodes
+    QJsonArray nodes;
+    for (int i = 0; i < 4; ++i)
+    {
+        QJsonObject jsonNode;
+        jsonNode.insert("name", "myname");
+        jsonNode.insert("x", i + 5);
+        jsonNode.insert("y", i + 10);
+
+        nodes.push_back(jsonNode);
+
+    }
+    jsonObj.insert("nodes", nodes);
+
+    // fill edges
+    QJsonArray edges;
+    for (int i = 0; i < 4; ++i)
+    {
+        QJsonObject jsonEdge;
+        jsonEdge.insert("start", "startNode");
+        jsonEdge.insert("end", "endNode");
+
+        edges.push_back(jsonEdge);
+    }
+
+    jsonObj.insert("edges", edges);
+
+    QJsonDocument jsonDoc;
+    jsonDoc.setObject(jsonObj);
+
+    Graph graph = fromJSON(jsonDoc);
+
+    jsonDoc = toJSON(graph);
+
+    utils::log(utils::LogLevel::INFO, jsonDoc.toJson().toStdString());
 }
 
 } // end namespace dcis::common::graph

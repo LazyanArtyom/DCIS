@@ -1,15 +1,23 @@
 #include "mainwindow.h"
 
+// App includes
+#include <graph/graph.h>
+
+// Qt includes
 #include <QVBoxLayout>
 
-#include <iostream>
+// STL includes
 #include <string>
 #include <vector>
+#include <iostream>
+
 namespace dcis::server {
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    graph::Graph graph(true);
+    graph.print();
     setObjectName("SERVER");
     //setWindowIcon(QIcon(":/Resources/icons/histogram.png"));
     setWindowTitle(tr("DCIS Server"));

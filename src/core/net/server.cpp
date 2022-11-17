@@ -1,17 +1,21 @@
 #include <net/server.h>
 
+// App includes
+#include <graph/graph.h>
+#include <net/resource.h>
+
+// Qt includes
 #include <QJsonDocument>
 
+// STL includes
 #include <iostream>
-
-#include <net/resource.h>
 
 
 namespace dcis::server {
 
 // public
 Server::Server(QObject* parent)
-    : QTcpServer(parent), resourceHandler_(this)
+    : QTcpServer(parent)
 {
     nextBlockSize_ = 0;
     run();
@@ -73,7 +77,7 @@ void Server::onReadyRead()
             input >> body;
 
             nextBlockSize_ = 0;
-            resourceHandler_.handle(head, body);
+            handle(head, body);
             break;
         }
 
@@ -106,6 +110,48 @@ void Server::incomingConnection(qintptr socketDescriptor)
     sockets_[socketDescriptor] = socket;
 
     emit sigPrintMsg("New Socket connected \n");
+}
+
+void Server::handleUnknown()
+{
+    utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+}
+
+void Server::handleString(const QString str)
+{
+    utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
+
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
+            utils::log(utils::LogLevel::INFO, "Publishing string to others.");
+            publish(header_, resource::Body<QString>(str));
+            break;
+        }
+
+        default:
+            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    }
+
+}
+
+void Server::handleJson(const QJsonDocument json)
+{
+    utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
+
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
+            utils::log(utils::LogLevel::INFO, "Publishing JSON to others.");
+            publish(header_, resource::Body<QJsonDocument>(json));
+            break;
+        }
+
+        default:
+            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    }
 }
 
 } // end namespace dcis::server
