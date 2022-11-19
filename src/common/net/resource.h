@@ -5,6 +5,7 @@
 #include <iostream>
 
 // Qt includes
+#include <QVariant>
 #include <QDataStream>
 
 
@@ -53,26 +54,24 @@ struct Header
     ResourceType resourceType;
 };
 
-template <typename T>
 struct Body
 {
     Body() {}
-    Body(T d) : data{d} {}
+    Body(QVariant d) : data{d} {}
 
-
-    friend QDataStream& operator << (QDataStream& stream, const Body<T> &body)
+    friend QDataStream& operator << (QDataStream& stream, const Body& body)
     {
         stream << body.data;
         return stream;
     }
 
-    friend QDataStream& operator >> (QDataStream& stream, Body<T>& body)
+    friend QDataStream& operator >> (QDataStream& stream, Body& body)
     {
         stream >> body.data;
         return stream;
     }
 
-    T data;
+    QVariant data;
 };
 
 } // end namespace dcis::common::resource

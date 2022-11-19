@@ -17,7 +17,7 @@ Client::Client(QObject* parent)
     ////////////////////////////
     QJsonDocument doc = graph::Graph::toJSON(graph::Graph(true));
 
-    resource::Body<QJsonDocument> body(doc);
+    resource::Body body(doc);
     resource::Header hed{sizeof(body), resource::Command::Publish, resource::ResourceType::Text};
 
 
@@ -88,9 +88,9 @@ void Client::onReadyRead()
                 break;
             }
 
-            resource::Body<QJsonDocument> body;
+            resource::Body body;
             input >> body;
-            graph::Graph gr = graph::Graph::fromJSON(body.data);
+            graph::Graph gr = graph::Graph::fromJSON(body.data.toJsonDocument());
             //utils::log(utils::LogLevel::INFO, "Output: \n", str.toStdString());
 
             nextBlockSize_ = 0;

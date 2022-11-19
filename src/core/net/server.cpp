@@ -5,7 +5,6 @@
 #include <net/resource.h>
 
 // Qt includes
-#include <QJsonDocument>
 
 // STL includes
 #include <iostream>
@@ -73,7 +72,7 @@ void Server::onReadyRead()
                 break;
             }
 
-            resource::Body<QJsonDocument> body;
+            resource::Body body;
             input >> body;
 
             nextBlockSize_ = 0;
@@ -112,6 +111,36 @@ void Server::incomingConnection(qintptr socketDescriptor)
     emit sigPrintMsg("New Socket connected \n");
 }
 
+void Server::publish(resource::Header header, resource::Body body)
+{
+    data_.clear();
+    QDataStream output(&data_, QIODevice::WriteOnly);
+    output.setVersion(QDataStream::Qt_6_4);
+
+    output << header << body;
+
+    for (auto &socket : sockets_)
+    {
+        socket->write(data_);
+    }
+}
+
+void Server::handle(resource::Header header, resource::Body body)
+{
+    header_ = header;
+    switch (header.resourceType)
+    {
+        case resource::ResourceType::Text:
+        {
+            handleJson(body.data.toJsonDocument());
+            break;
+        }
+
+        default:
+            handleUnknown();
+    }
+}
+
 void Server::handleUnknown()
 {
     utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
@@ -126,7 +155,7 @@ void Server::handleString(const QString str)
         case resource::Command::Publish:
         {
             utils::log(utils::LogLevel::INFO, "Publishing string to others.");
-            publish(header_, resource::Body<QString>(str));
+            publish(header_, resource::Body(str));
             break;
         }
 
@@ -145,7 +174,7 @@ void Server::handleJson(const QJsonDocument json)
         case resource::Command::Publish:
         {
             utils::log(utils::LogLevel::INFO, "Publishing JSON to others.");
-            publish(header_, resource::Body<QJsonDocument>(json));
+            publish(header_, resource::Body(json));
             break;
         }
 

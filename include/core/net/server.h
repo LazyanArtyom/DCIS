@@ -27,10 +27,8 @@ public:
     void run();
     void incomingConnection(qintptr socketDescriptor) override;
 
-    template<typename T>
-    void publish(resource::Header header, resource::Body<T> body);
-    template<typename T>
-    void handle(resource::Header header, resource::Body<T> body);
+    void publish(resource::Header header, resource::Body body);
+    void handle(resource::Header header, resource::Body body);
 
     void handleUnknown();
     void handleString(const QString str);
@@ -53,38 +51,6 @@ private:
     qintptr currentSocket_;
     quint16 nextBlockSize_;
 };
-
-template<typename T>
-void Server::publish(resource::Header header, resource::Body<T> body)
-{
-    data_.clear();
-    QDataStream output(&data_, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_4);
-
-    output << header << body;
-
-    for (auto &socket : sockets_)
-    {
-        socket->write(data_);
-    }
-}
-
-template<typename T>
-void Server::handle(resource::Header header, resource::Body<T> body)
-{
-    header_ = header;
-    switch (header.resourceType)
-    {
-        case resource::ResourceType::Text:
-        {
-            handleJson(body.data);
-            break;
-        }
-
-        default:
-            handleUnknown();
-    }
-}
 
 } // end namespace dcis::server
 #endif // DCIS_SERVER_SERVER_H_
