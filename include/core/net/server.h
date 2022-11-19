@@ -34,9 +34,11 @@ public:
     void handleString(const QString str);
     void handleJson(const QJsonDocument json);
 
+    void updateSockets();
+
 public slots:
     void onReadyRead();
-    void onDisconected(qintptr socketDescriptor);
+    void onDisconected();
 
 private:
     DataType       data_;

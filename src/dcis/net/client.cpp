@@ -13,45 +13,19 @@ namespace dcis::client {
 Client::Client(QObject* parent)
     : QObject(parent)
 {
-
-    ////////////////////////////
-    QJsonDocument doc = graph::Graph::toJSON(graph::Graph(true));
-
-    resource::Body body(doc);
-    resource::Header hed{sizeof(body), resource::Command::Publish, resource::ResourceType::Text};
-
-
-
-    QDataStream output(&data_, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_4);
-
-    output << hed << body;
-    /////////////////////////////
-
-    socket_ = new QTcpSocket(this);
-    connect(socket_, &QTcpSocket::readyRead, this, &Client::onReadyRead);
-    connect(socket_, &QTcpSocket::disconnected, this, &Client::onDisconected);
-
-    socket_->connectToHost("127.0.0.1", 2323);
-    utils::log(utils::LogLevel::INFO, "Client started.");
-
-    socket_->write(data_);
-    nextBlockSize_ = 0;
+     nextBlockSize_ = 0;
+     connectToServer();
 }
 
 Client::~Client()
 {
     socket_->close();
     socket_->deleteLater();
-    utils::log(utils::LogLevel::INFO, "Client ended.");
 }
 
 void Client::onDisconected()
 {
-    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
-
-    socket->close();
-    socket->deleteLater();
+    utils::log(utils::LogLevel::INFO, "Server is disocnnected.");
 }
 
 void Client::handle(resource::Header header, resource::Body body)
@@ -60,6 +34,12 @@ void Client::handle(resource::Header header, resource::Body body)
     switch (header.resourceType)
     {
         case resource::ResourceType::Text:
+        {
+            handleString(body.data.toString());
+            break;
+        }
+
+        case resource::ResourceType::Json:
         {
             handleJson(body.data.toJsonDocument());
             break;
@@ -106,6 +86,16 @@ void Client::handleJson(const QJsonDocument json)
         default:
             utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
     }
+}
+
+void Client::connectToServer()
+{
+    socket_ = new QTcpSocket(this);
+    connect(socket_, &QTcpSocket::readyRead, this, &Client::onReadyRead);
+    connect(socket_, &QTcpSocket::disconnected, this, &Client::onDisconected);
+
+    socket_->connectToHost("127.0.0.1", 2323);
+    utils::log(utils::LogLevel::INFO, "Client started.");
 }
 
 void Client::sendToServer(resource::Header header, resource::Body body)

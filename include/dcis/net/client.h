@@ -26,6 +26,7 @@ public:
     void handleString(const QString str);
     void handleJson(const QJsonDocument json);
 
+    void connectToServer();
     void sendToServer(resource::Header header, resource::Body body);
 
 public slots:

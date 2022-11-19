@@ -16,11 +16,9 @@ namespace dcis::server {
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    graph::Graph graph(true);
-    graph.print();
-    setObjectName("SERVER");
+    setObjectName("CoreUI");
     //setWindowIcon(QIcon(":/Resources/icons/histogram.png"));
-    setWindowTitle(tr("DCIS Server"));
+    setWindowTitle(tr("DCIS Core"));
     //connect(server_, &Server::sigPrintMsg, this, &MainWindow::onPrintMsg);
 
     QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);

@@ -23,20 +23,8 @@ public:
     explicit Graph(bool isDirected);
     Graph(const Graph &other);
 
-    /*
-    bool isDirected() const;
-
-    bool hasNode(const std::string& nodeName) const;
-
-    bool addNode(std::string nodeName = "");
-
-    Node* findNode(const std::string& name) const;
-    int getNodesCount() const;
-    Node* getNode(const std::string& nodeName) const;
-
-    */
-
     void clear();
+    bool isDirected() const;
 
     bool hasDirectedEdge(Node* u, Node* v) const;
     bool setEdge(Node* u, Node* v);
@@ -52,10 +40,6 @@ public:
 
     static Graph fromJSON(QJsonDocument jsonDoc);
     static QJsonDocument toJSON(const Graph& graph);
-
-    bool isDirected() const;
-
-    void print() const;
 
 private:
     EdgeSetType  edges_;

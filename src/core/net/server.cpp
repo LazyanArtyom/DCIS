@@ -23,13 +23,6 @@ Server::Server(QObject* parent)
 Server::~Server()
 {
     utils::log(utils::LogLevel::INFO, "End Server.");
-
-    QMapIterator<qintptr, QTcpSocket *> socket(sockets_);
-    while (socket.hasNext())
-    {
-        socket.value()->close();
-        socket.value()->deleteLater();
-    }
 }
 
 void Server::run()
@@ -87,12 +80,71 @@ void Server::onReadyRead()
     }
 }
 
-void Server::onDisconected(qintptr socketDescriptor)
+void Server::onDisconected()
 {
-    utils::log(utils::LogLevel::ERROR, "Client disonected.");
+    updateSockets();
+}
 
-    sockets_[socketDescriptor]->close();
-    sockets_[socketDescriptor]->deleteLater();
+void sendjson(Server* server)
+{
+// debugstream
+    QJsonObject jsonObj;
+
+    //insert single datas first
+    jsonObj.insert("directed", true);
+
+    // fill nodes
+    QJsonArray nodes;
+    QJsonObject jsonNode;
+    jsonNode.insert("name", "Node1");
+    jsonNode.insert("x", 1.1);
+    jsonNode.insert("y", 11.11);
+    nodes.push_back(jsonNode);
+
+    QJsonObject jsonNode2;
+    jsonNode2.insert("name", "Node2");
+    jsonNode2.insert("x", 2.2);
+    jsonNode2.insert("y", 22.22);
+    nodes.push_back(jsonNode2);
+
+    QJsonObject jsonNode3;
+    jsonNode3.insert("name", "Node3");
+    jsonNode3.insert("x", 3.3);
+    jsonNode3.insert("y", 33.33);
+    nodes.push_back(jsonNode3);
+
+    jsonObj.insert("nodes", nodes);
+
+    // fill edges
+    QJsonArray edges;
+
+    QJsonObject jsonEdge;
+    jsonEdge.insert("start", "Node1");
+    jsonEdge.insert("end", "Node2");
+    edges.push_back(jsonEdge);
+
+    QJsonObject jsonEdge2;
+    jsonEdge2.insert("start", "Node2");
+    jsonEdge2.insert("end", "Node3");
+    edges.push_back(jsonEdge2);
+
+    QJsonObject jsonEdge3;
+    jsonEdge3.insert("start", "Node3");
+    jsonEdge3.insert("end", "Node1");
+    edges.push_back(jsonEdge3);
+
+    jsonObj.insert("edges", edges);
+
+    QJsonDocument jsonDoc;
+    jsonDoc.setObject(jsonObj);
+
+    resource::Body body(jsonDoc);
+    resource::Header header(sizeof(body), resource::Command::Publish, resource::ResourceType::Json);
+
+    server->publish(header, body);
+
+    utils::log(utils::LogLevel::INFO, "sending json to client");
+    utils::log(utils::LogLevel::INFO, jsonDoc.toJson().toStdString());
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -101,11 +153,17 @@ void Server::incomingConnection(qintptr socketDescriptor)
 
     QTcpSocket* socket = new QTcpSocket();
     socket->setSocketDescriptor(socketDescriptor);
+    socket->setSocketOption(QAbstractSocket:: KeepAliveOption, 1);
 
     connect(socket, &QTcpSocket::readyRead, this, &Server::onReadyRead);
-    connect(socket, &QTcpSocket::disconnected, this, [this]{ onDisconected(currentSocket_); });
+    connect(socket, &QTcpSocket::disconnected, this, &Server::onDisconected);
 
     sockets_[socketDescriptor] = socket;
+
+    std::string msg = "Client:" + std::to_string(socketDescriptor) + " connected.";
+    utils::log(utils::LogLevel::ERROR, msg);
+
+    sendjson(this);
 }
 
 void Server::publish(resource::Header header, resource::Body body)
@@ -177,6 +235,26 @@ void Server::handleJson(const QJsonDocument json)
 
         default:
             utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    }
+}
+
+void Server::updateSockets()
+{
+    for (auto socket = sockets_.begin(); socket != sockets_.end();)
+    {
+        if (!(socket.value()->state() == QTcpSocket::ConnectedState))
+        {
+            std::string msg = "Client:" + std::to_string(socket.key()) + " disconnected.";
+            utils::log(utils::LogLevel::ERROR, msg);
+
+            socket.value()->close();
+            socket.value()->deleteLater();
+            sockets_.erase(socket++);
+        }
+        else
+        {
+            ++socket;
+        }
     }
 }
 
