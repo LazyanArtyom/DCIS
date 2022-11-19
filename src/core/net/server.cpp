@@ -103,12 +103,9 @@ void Server::incomingConnection(qintptr socketDescriptor)
     socket->setSocketDescriptor(socketDescriptor);
 
     connect(socket, &QTcpSocket::readyRead, this, &Server::onReadyRead);
-//    connect(socket_, &QTcpSocket::disconnected, this, &Server::onDisconected);
     connect(socket, &QTcpSocket::disconnected, this, [this]{ onDisconected(currentSocket_); });
 
     sockets_[socketDescriptor] = socket;
-
-    emit sigPrintMsg("New Socket connected \n");
 }
 
 void Server::publish(resource::Header header, resource::Body body)

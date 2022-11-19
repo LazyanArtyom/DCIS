@@ -38,12 +38,6 @@ public slots:
     void onReadyRead();
     void onDisconected(qintptr socketDescriptor);
 
-signals:
-    void sigPrintMsg(const QString msg);
-
-private:
-    void sendToClient(const QString str);
-
 private:
     DataType       data_;
     resource::Header header_;

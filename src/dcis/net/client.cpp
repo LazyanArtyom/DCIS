@@ -30,8 +30,7 @@ Client::Client(QObject* parent)
 
     socket_ = new QTcpSocket(this);
     connect(socket_, &QTcpSocket::readyRead, this, &Client::onReadyRead);
-//    connect(socket_, &QTcpSocket::disconnected, this, &Server::onDisconected);
-    connect(socket_, &QTcpSocket::disconnected, this, &QTcpSocket::deleteLater);
+    connect(socket_, &QTcpSocket::disconnected, this, &Client::onDisconected);
 
     socket_->connectToHost("127.0.0.1", 2323);
     utils::log(utils::LogLevel::INFO, "Client started.");
@@ -47,18 +46,76 @@ Client::~Client()
     utils::log(utils::LogLevel::INFO, "Client ended.");
 }
 
-void Client::sendToServer(const QString msg)
+void Client::onDisconected()
 {
-    /*
+    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+
+    socket->close();
+    socket->deleteLater();
+}
+
+void Client::handle(resource::Header header, resource::Body body)
+{
+    header_ = header;
+    switch (header.resourceType)
+    {
+        case resource::ResourceType::Text:
+        {
+            handleJson(body.data.toJsonDocument());
+            break;
+        }
+
+        default:
+            handleUnknown();
+    }
+}
+
+void Client::handleUnknown()
+{
+    utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+}
+
+void Client::handleString(const QString str)
+{
+    utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
+
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
+            utils::log(utils::LogLevel::INFO, "Publishing string to others.");
+            sendToServer(header_, resource::Body(str));
+            break;
+        }
+
+        default:
+            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    }
+}
+
+void Client::handleJson(const QJsonDocument json)
+{
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
+            utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
+            break;
+        }
+
+        default:
+            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    }
+}
+
+void Client::sendToServer(resource::Header header, resource::Body body)
+{
     data_.clear();
     QDataStream output(&data_, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_4); 
+    output.setVersion(QDataStream::Qt_6_4);
 
-    output << sizeof(res.header) << res.header << res.body;
-    output.device()->seek(0);
-    output << quint16(data_.size() - sizeof(quint16));
-
-    socket_->write(data_);*/
+    output << header << body;
+    socket_->write(data_);
 }
 
 void Client::onReadyRead()
@@ -68,9 +125,11 @@ void Client::onReadyRead()
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_4);
 
+    resource::Header header;
+    resource::Body body;
+
     if (input.status() == QDataStream::Ok)
     {
-        resource::Header head;
         while (true)
         {
             if (nextBlockSize_ == 0)
@@ -79,8 +138,8 @@ void Client::onReadyRead()
                 {
                     break;
                 }
-                input >> head;
-                nextBlockSize_ = head.bodySize;
+                input >> header;
+                nextBlockSize_ = header.bodySize;
             }
 
             if (socket->bytesAvailable() < nextBlockSize_)
@@ -88,13 +147,11 @@ void Client::onReadyRead()
                 break;
             }
 
-            resource::Body body;
             input >> body;
             graph::Graph gr = graph::Graph::fromJSON(body.data.toJsonDocument());
-            //utils::log(utils::LogLevel::INFO, "Output: \n", str.toStdString());
 
             nextBlockSize_ = 0;
-            //resourceHandler_.handle(head, body);
+            handle(header, body);
             break;
         }
 
@@ -103,7 +160,6 @@ void Client::onReadyRead()
     {
         utils::log(utils::LogLevel::ERROR, "Datastream error.");
     }
-
 }
 
 } // end namespace dcis::client

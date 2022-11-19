@@ -152,7 +152,6 @@ void MainWindow::onBtnSendMsgClicked()
 {
     // send
     txtConsole_->insertPlainText(QString("\nSending message: ") + txtMessage_->text());
-    client_->sendToServer(txtMessage_->text());
 }
 
 void MainWindow::onMsgReieved(const QString msg)

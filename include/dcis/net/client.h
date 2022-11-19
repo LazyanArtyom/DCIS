@@ -20,15 +20,23 @@ public:
     Client(QObject* parent = nullptr);
     ~Client();
 
-    void sendToServer(const QString msg);
+    void handle(resource::Header header, resource::Body body);
+
+    void handleUnknown();
+    void handleString(const QString str);
+    void handleJson(const QJsonDocument json);
+
+    void sendToServer(resource::Header header, resource::Body body);
 
 public slots:
     void onReadyRead();
+    void onDisconected();
 
 private:
-    quint16 nextBlockSize_;
     QByteArray data_;
     QTcpSocket* socket_;
+    quint16 nextBlockSize_;
+    resource::Header header_;
 };
 
 } // end namespace dcis::client
