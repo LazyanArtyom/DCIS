@@ -1,5 +1,8 @@
 #include "mainwindow.h"
 
+// Qt includes
+#include <QDockWidget>
+
 namespace dcis::ui {
 
 // public
@@ -66,16 +69,15 @@ void MainWindow::setupUi()
     actAddNode_ = new QAction(this);
 
     // Central Widget
-    centralTabWidget_ = new QTabWidget(this);
-    setCentralWidget(centralTabWidget_);
-    centralTabWidget_->setObjectName("centralTabWidget");
-    centralTabWidget_->setCurrentIndex(1);
+    centralWidget_ = new QStackedWidget(this);
+    setCentralWidget(centralWidget_);
+    centralWidget_->setObjectName("centralTabWidget");
     /////////////////////////////////////////////////////////////////////
 
     // Entry widget
-    entryWidget_ = new QWidget(centralTabWidget_);
+    entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
-    centralTabWidget_->addTab(entryWidget_, tr("entryWidget"));
+    centralWidget_->addWidget(entryWidget_);
 
     QHBoxLayout *horizontalLayoutEntry_ = new QHBoxLayout(entryWidget_);
     entryWidget_->setLayout(horizontalLayoutEntry_);
@@ -105,19 +107,41 @@ void MainWindow::setupUi()
     btnConnect_ = new QPushButton(tr("Connect"), entryWidget_);
     horizontalLayoutConnect->addWidget(btnConnect_);
     btnConnect_->setObjectName("btnConnect");
+    connect(btnConnect_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
     /////////////////////////////////////////////////////////////////////
 
     // Working widget
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
-    centralTabWidget_->addTab(workingWidget_, tr("workingWidget"));
-
+    centralWidget_->addWidget(workingWidget_);
+    //////
+    centralWidget_->setCurrentWidget(workingWidget_);
+///////
     QHBoxLayout* hLayoutWorking = new QHBoxLayout(workingWidget_);
     workingWidget_->setLayout(hLayoutWorking);
+    hLayoutWorking->setSpacing(6);
+    hLayoutWorking->setContentsMargins(0, 11, 11, 11);
 
+    // tool pane widget
+    QDockWidget* dockWidget = new QDockWidget(this);
+    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+    dockWidget->setObjectName("dockWidget");
+    dockWidget->setMinimumWidth(100);
+    dockWidget->setFeatures(QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
+
+    QSplitter* vSplitter = new QSplitter(workingWidget_);
+    hLayoutWorking->addWidget(vSplitter);
+    vSplitter->setLineWidth(2);
+    vSplitter->setOrientation(Qt::Vertical);
+    vSplitter->setChildrenCollapsible(false);
+
+    // graph view widget
+    graphView_ = new gui::GraphView;
+    vSplitter->addWidget(graphView_);
+
+    // console widget
     txtConsole_ = new QTextEdit(workingWidget_);
-    hLayoutWorking->addWidget(txtConsole_);
-
+    vSplitter->addWidget(txtConsole_);
     txtConsole_->setObjectName("consoleText");
     QSizePolicy sizePolicyConsole(QSizePolicy::Expanding, QSizePolicy::Minimum);
     sizePolicyConsole.setHorizontalStretch(240);
@@ -127,15 +151,6 @@ void MainWindow::setupUi()
     txtConsole_->setMinimumSize(QSize(0, 240));
     txtConsole_->setMaximumSize(QSize(16777215, 720));
     txtConsole_->setReadOnly(true);
-
-    txtMessage_ = new QLineEdit(workingWidget_);
-    hLayoutWorking->addWidget(txtMessage_);
-
-    btnMsgSend_ = new QPushButton(tr("Send"), workingWidget_);
-    hLayoutWorking->addWidget(btnMsgSend_);
-
-    connect(btnMsgSend_, &QPushButton::clicked, this, &MainWindow::onBtnSendMsgClicked);
-
 
     /*
     menuFile_;
@@ -148,15 +163,21 @@ void MainWindow::setupUi()
     menuBar_;*/
 }
 
-void MainWindow::onBtnSendMsgClicked()
+void MainWindow::setWorkspaceEnabled(bool enable)
 {
-    // send
-    txtConsole_->insertPlainText(QString("\nSending message: ") + txtMessage_->text());
+    if (enable)
+    {
+        centralWidget_->setCurrentWidget(workingWidget_);
+    }
+    else
+    {
+        centralWidget_->setCurrentWidget(entryWidget_);
+    }
 }
 
-void MainWindow::onMsgReieved(const QString msg)
+void MainWindow::onConnectBtnClicked()
 {
-    txtConsole_->insertPlainText(msg);
+    setWorkspaceEnabled(true);
 }
 
 // private

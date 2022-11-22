@@ -3,6 +3,7 @@
 
 // App headers
 #include <net/client.h>
+#include <gui/graphview.h>
 #include <utils/debugstream.h>
 
 // QT headers
@@ -18,13 +19,13 @@
 #include <QSplitter>
 #include <QTextEdit>
 #include <QStatusBar>
-#include <QTabWidget>
 #include <QPushButton>
 #include <QSpacerItem>
 #include <QMainWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QApplication>
+#include <QStackedWidget>
 
 namespace dcis::ui {
 using namespace common;
@@ -39,14 +40,12 @@ public:
 
     void setupUi();
 
+    void setWorkspaceEnabled(bool enable);
+
 public slots:
-    void onBtnSendMsgClicked();
-    void onMsgReieved(const QString msg);
+    void onConnectBtnClicked();
 
 private:
-    client::Client* client_;
-    std::unique_ptr<common::utils::DebugStream> debugStream_;
-
     QAction *actSave_;
     QAction *actExit_;
     QAction *actSaveAs_;
@@ -71,59 +70,19 @@ private:
 
     QMenuBar *menuBar_;
 
-    QPushButton *BFSbtn_;
-    QPushButton *DFSbtn_;
+    QStackedWidget *centralWidget_;
 
-    QWidget *utilsWidget_;
-    QWidget *workingWidget_;
-
-    // central tab
-    QTabWidget *centralTabWidget_;
-
-    // Entry widget start
     QWidget *entryWidget_;
     QLineEdit   *ip_;
     QLineEdit   *port_;
     QPushButton *btnConnect_;
-    // Entry widget end
 
-    // Working widget start
+    QWidget *workingWidget_;
     QTextEdit *txtConsole_;
-    QLineEdit *txtMessage_;
-    QPushButton *btnMsgSend_;
-    // Working widget end
 
-    QWidget *tabAdjMat_;
-    QWidget *tabIncMat_;
-    QWidget *tabVisualization_;
-
-    QFrame *line_;
-    QFrame *line_4_;
-
-    QLabel *label_;
-    QLabel *algorithmsLabel_;
-
-    QStatusBar *statusBar_;
-    QTabWidget *tabWidget_;
-
-    QSlider *horizontalSlider_;
-    QSplitter  *verticalSplitter_;
-
-    QHBoxLayout *horizontalLayoutCentral_;
-    QHBoxLayout *horizontalLayout_3_;
-    QHBoxLayout *horizontalLayout_2_;
-    QVBoxLayout *visualLayout_;
-    QVBoxLayout *verticalLayout_3_;
-    QVBoxLayout *adjMatLayout_;
-    QVBoxLayout *verticalLayout_5_;
-    QVBoxLayout *incMatLayout_;
-    QVBoxLayout *verticalLayout_;
-    QVBoxLayout *propertiesLayout_;
-    QVBoxLayout *verticalLayout_4_;
-    QVBoxLayout *verticalLayout_6_;
-    QHBoxLayout *horizontalLayout_4_;
-    QHBoxLayout *horizontalLayout_5_;
-    QHBoxLayout *horizontalLayout_6_;
+    client::Client* client_;
+    gui::GraphView* graphView_;
+    std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 
 } // end namespace dcis::ui
