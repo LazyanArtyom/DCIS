@@ -13,6 +13,16 @@ Node::Node(const std::string &name)
 Node::Node(const std::string& name, QPointF euclidePos)
     : name_(name), euclidePos_(euclidePos) {}
 
+QPointF Node::getEuclidePos() const
+{
+    return euclidePos_;
+}
+
+void Node::setEuclidePos(QPointF euclidePos)
+{
+    euclidePos_ = euclidePos;
+}
+
 std::string Node::getName() const
 {
     return name_;

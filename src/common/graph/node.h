@@ -28,6 +28,9 @@ public:
     explicit Node(const std::string& name);
     explicit Node(const std::string& name, QPointF euclidePos);
 
+    QPointF getEuclidePos() const;
+    void setEuclidePos(QPointF euclidePos);
+
     std::string getName() const;
     double getX() const;
     double getY() const;

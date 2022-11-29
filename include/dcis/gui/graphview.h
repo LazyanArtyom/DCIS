@@ -17,5 +17,6 @@ class GraphView : public QGraphicsView {
 
 public:
 };
+
 } // end namespace dcis::gui
 #endif // DCIS_GUI_GRAPHVIEW_H_
