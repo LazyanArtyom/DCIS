@@ -31,9 +31,21 @@ public:
     QPointF getEuclidePos() const;
     void setEuclidePos(QPointF euclidePos);
 
-    std::string getName() const;
+    void incPosDegree();
+    void incNegDegree();
+    void decPosDegree();
+    void decNegDegree();
+    void incUndirDegree();
+    void decUndirDegree();
+
+    int getNegDegree() const;
+    int getPosDegree() const;
+    int getDirDegree() const;
+    int getUndirDegree() const;
+
     double getX() const;
     double getY() const;
+    std::string getName() const;
 
     bool operator==(const Node& other) const { return (name_ == other.name_); }
     bool operator<(const Node&  other) const { return (name_ < other.name_);  }

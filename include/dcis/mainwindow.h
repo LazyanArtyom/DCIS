@@ -42,6 +42,9 @@ public:
 
     void setWorkspaceEnabled(bool enable);
 
+signals:
+    void sigGraphChanged();
+
 public slots:
     void onConnectBtnClicked();
 

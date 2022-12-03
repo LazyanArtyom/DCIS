@@ -104,12 +104,40 @@ bool Graph::hasEdge(const std::string& uname, const std::string& vname) const
 
 bool Graph::removeEdge(Node* u, Node* v)
 {
+    if (u == v || !hasNode(u) || !hasNode(v))
+    {
+        return false;
+    }
 
+    if (hasDirectedEdge(u, v))
+    {
+        edges_.erase({u, v});
+        if (isDirected_)
+        {
+            u->decNegDegree();
+            v->decPosDegree();
+        }
+        else
+        {
+            u->decUndirDegree();
+            v->decUndirDegree();
+        }
+
+        return true;
+    }
+    else if (!isDirected_ && hasDirectedEdge(v, u))
+    {
+        edges_.erase({v, u});
+        u->decUndirDegree();
+        v->decUndirDegree();
+    }
+
+    return false;
 }
 
 bool Graph::removeEdge(const std::string& uname, const std::string& vname)
 {
-
+    return removeEdge(getNode(uname), getNode(vname));
 }
 
 bool Graph::addNode(const Node& node)
@@ -229,7 +257,7 @@ bool Graph::isolateNode(Node* node)
 
 bool Graph::isolateNode(const std::string& name)
 {
-
+    return isolateNode(getNode(name));
 }
 
 void Graph::clear()

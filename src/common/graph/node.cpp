@@ -23,6 +23,65 @@ void Node::setEuclidePos(QPointF euclidePos)
     euclidePos_ = euclidePos;
 }
 
+void Node::incPosDegree()
+{
+    degPos_++;
+}
+
+void Node::incNegDegree()
+{
+    degNeg_++;
+}
+
+void Node::decPosDegree()
+{
+    if (degPos_ > 0)
+    {
+        degPos_--;
+    }
+}
+
+void Node::decNegDegree()
+{
+    if (degNeg_ > 0)
+    {
+        degNeg_--;
+    }
+}
+
+void Node::incUndirDegree()
+{
+    deg_++;
+}
+
+void Node::decUndirDegree()
+{
+    if (deg_ > 0)
+    {
+        deg_--;
+    }
+}
+
+int Node::getNegDegree() const
+{
+    return degNeg_;
+}
+
+int Node::getPosDegree() const
+{
+    return degPos_;
+}
+
+int Node::getDirDegree() const
+{
+    return degPos_ + degNeg_;
+}
+
+int Node::getUndirDegree() const
+{
+    return deg_;
+}
+
 std::string Node::getName() const
 {
     return name_;
