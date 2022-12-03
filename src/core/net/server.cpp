@@ -22,18 +22,18 @@ Server::Server(QObject* parent)
 
 Server::~Server()
 {
-    utils::log(utils::LogLevel::INFO, "End Server.");
+   // utils::log(utils::LogLevel::INFO, "End Server.");
 }
 
 void Server::run()
 {
     if (listen(QHostAddress::Any, 2323))
     {
-        utils::log(utils::LogLevel::INFO, "Start Server, listening port: ");
+       // utils::log(utils::LogLevel::INFO, "Start Server, listening port: ");
     }
     else
     {
-        utils::log(utils::LogLevel::ERROR, "Couldn't start server.");
+       // utils::log(utils::LogLevel::ERROR, "Couldn't start server.");
     }
 }
 
@@ -76,7 +76,7 @@ void Server::onReadyRead()
     }
     else
     {
-        utils::log(utils::LogLevel::ERROR, "Datastream error.");
+   //     utils::log(utils::LogLevel::ERROR, "Datastream error.");
     }
 }
 
@@ -143,8 +143,8 @@ void sendjson(Server* server)
 
     server->publish(header, body);
 
-    utils::log(utils::LogLevel::INFO, "sending json to client");
-    utils::log(utils::LogLevel::INFO, jsonDoc.toJson().toStdString());
+  //  utils::log(utils::LogLevel::INFO, "sending json to client");
+  //  utils::log(utils::LogLevel::INFO, jsonDoc.toJson().toStdString());
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -161,7 +161,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
     sockets_[socketDescriptor] = socket;
 
     std::string msg = "Client:" + std::to_string(socketDescriptor) + " connected.";
-    utils::log(utils::LogLevel::ERROR, msg);
+   // utils::log(utils::LogLevel::ERROR, msg);
 
     sendjson(this);
 }
@@ -198,43 +198,43 @@ void Server::handle(resource::Header header, resource::Body body)
 
 void Server::handleUnknown()
 {
-    utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+   // utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
 }
 
 void Server::handleString(const QString str)
 {
-    utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
+   // utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
 
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            utils::log(utils::LogLevel::INFO, "Publishing string to others.");
+           // utils::log(utils::LogLevel::INFO, "Publishing string to others.");
             publish(header_, resource::Body(str));
             break;
         }
 
-        default:
-            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+     //   default:
+       //    utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
     }
 
 }
 
 void Server::handleJson(const QJsonDocument json)
 {
-    utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
+    //utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
 
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            utils::log(utils::LogLevel::INFO, "Publishing JSON to others.");
+           // utils::log(utils::LogLevel::INFO, "Publishing JSON to others.");
             publish(header_, resource::Body(json));
             break;
         }
 
-        default:
-            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+    //    default:
+            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
     }
 }
 
@@ -245,7 +245,7 @@ void Server::updateSockets()
         if (!(socket.value()->state() == QTcpSocket::ConnectedState))
         {
             std::string msg = "Client:" + std::to_string(socket.key()) + " disconnected.";
-            utils::log(utils::LogLevel::ERROR, msg);
+            //utils::log(utils::LogLevel::ERROR, msg);
 
             socket.value()->close();
             socket.value()->deleteLater();

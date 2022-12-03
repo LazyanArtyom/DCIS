@@ -16,7 +16,7 @@
 
 
 namespace dcis::server {
-using namespace common::utils;
+using namespace common;
 
 class MainWindow : public QMainWindow
 {
@@ -33,7 +33,7 @@ private:
     QTextEdit  *txtConsole_;
     QTabWidget *centralTabWidget_;
 
-    std::unique_ptr<common::utils::DebugStream> debugStream_;
+    //std::unique_ptr<utils::DebugStream> debugStream_;
 };
 
 } // end namespace dcis::server

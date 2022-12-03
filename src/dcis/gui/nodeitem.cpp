@@ -18,7 +18,7 @@ NodeItem::NodeItem(graph::Node* node, QColor color)
     setAcceptHoverEvents(true);
     setNode(node);
     isMoving_ = false;
-    selectedColor_ = getDefaultOnSelectedColor();
+    selectedColor_ = getDefaultSelectedColor();
 }
 
 void NodeItem::setNode(graph::Node* node)
@@ -79,7 +79,7 @@ QColor NodeItem::getDefaultColor()
     return getColorTable()[0];
 }
 
-QColor NodeItem::getDefaultOnSelectedColor()
+QColor NodeItem::getDefaultSelectedColor()
 {
     return getColorTable()[1];
 }
@@ -166,7 +166,7 @@ void NodeItem::setColor(const QColor& newColor)
     color_ = newColor;
 }
 
-void NodeItem::setOnSelectedColor(const QColor& newColor)
+void NodeItem::setSelectedColor(const QColor& newColor)
 {
     selectedColor_ = newColor;
 }

@@ -23,12 +23,12 @@ public:
     };
 
     static QColor getDefaultColor();
-    static QColor getDefaultOnSelectedColor();
+    static QColor getDefaultSelectedColor();
     static const QList<QColor>& getColorTable();
 
     int type() const override;
     QRectF boundingRect() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
     graph::Node* getNode() const;
     void setNode(graph::Node* node);
@@ -39,7 +39,7 @@ public:
     QColor getColor() const;
     void setColor(const QColor& newColor);
 
-    void setOnSelectedColor(const QColor& newColor);
+    void setSelectedColor(const QColor& newColor);
 
 protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;

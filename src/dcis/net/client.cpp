@@ -25,7 +25,7 @@ Client::~Client()
 
 void Client::onDisconected()
 {
-    utils::log(utils::LogLevel::INFO, "Server is disocnnected.");
+    //utils::log(utils::LogLevel::INFO, "Server is disocnnected.");
 }
 
 void Client::handle(resource::Header header, resource::Body body)
@@ -52,24 +52,24 @@ void Client::handle(resource::Header header, resource::Body body)
 
 void Client::handleUnknown()
 {
-    utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+    //utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
 }
 
 void Client::handleString(const QString str)
 {
-    utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
+    //utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
 
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            utils::log(utils::LogLevel::INFO, "Publishing string to others.");
+            //utils::log(utils::LogLevel::INFO, "Publishing string to others.");
             sendToServer(header_, resource::Body(str));
             break;
         }
 
-        default:
-            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+       // default:
+            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
     }
 }
 
@@ -79,12 +79,12 @@ void Client::handleJson(const QJsonDocument json)
     {
         case resource::Command::Publish:
         {
-            utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
+            //utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
             break;
         }
 
-        default:
-            utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+      //  default:
+            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
     }
 }
 
@@ -95,7 +95,7 @@ void Client::connectToServer()
     connect(socket_, &QTcpSocket::disconnected, this, &Client::onDisconected);
 
     socket_->connectToHost("127.0.0.1", 2323);
-    utils::log(utils::LogLevel::INFO, "Client started.");
+    //utils::log(utils::LogLevel::INFO, "Client started.");
 }
 
 void Client::sendToServer(resource::Header header, resource::Body body)
@@ -148,7 +148,7 @@ void Client::onReadyRead()
     }
     else
     {
-        utils::log(utils::LogLevel::ERROR, "Datastream error.");
+        //utils::log(utils::LogLevel::ERROR, "Datastream error.");
     }
 }
 

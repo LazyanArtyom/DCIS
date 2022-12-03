@@ -29,6 +29,13 @@ public:
     bool hasDirectedEdge(Node* u, Node* v) const;
     bool setEdge(Node* u, Node* v);
     bool setEdge(const std::string& uName, const std::string& vName);
+    Edge getEdge(Node* u, Node* v) const;
+    Edge getEdge(const std::string& uname, const std::string& vname) const;
+    bool hasEdge(Node* u, Node* v) const;
+    bool hasEdge(const std::string& uname, const std::string& vname) const;
+    bool removeEdge(Node* u, Node* v);
+    bool removeEdge(const std::string& uname, const std::string& vname);
+
     const EdgeSetType& getEdges() const;
 
     bool hasNode(Node* node) const;
@@ -37,6 +44,14 @@ public:
     NodeListType getNodes() const;
     bool addNode(const Node& node);
     bool addNode(std::string nodeName);
+    std::string getNextNodeName() const;
+    bool setNodeName(Node* node, const std::string& newName);
+    bool setNodeName(const std::string& oldName, const std::string& newName);
+    bool removeNode(Node* node);
+    bool removeNode(const std::string& name);
+    bool isolateNode(Node* node);
+    bool isolateNode(const std::string& name);
+
 
     static Graph fromJSON(QJsonDocument jsonDoc);
     static QJsonDocument toJSON(const Graph& graph);

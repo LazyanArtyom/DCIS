@@ -70,6 +70,48 @@ bool Graph::setEdge(const std::string &uName, const std::string &vName)
     return setEdge(getNode(uName), getNode(vName));
 }
 
+Edge Graph::getEdge(Node* u, Node* v) const
+{
+    auto it = edges_.find({u, v});
+    if (isDirected_)
+    {
+        return Edge(it);
+    }
+
+    it = (it != edges_.end()) ? it : edges_.find({v, u});
+    if (it == edges_.end())
+    {
+        throw "Edge not found";
+    }
+
+    return Edge(it);
+}
+
+Edge Graph::getEdge(const std::string& uname, const std::string& vname) const
+{
+    return getEdge(getNode(uname), getNode(vname));
+}
+
+bool Graph::hasEdge(Node* u, Node* v) const
+{
+    return isDirected_ ? hasDirectedEdge(u, v) : (hasDirectedEdge(u, v) || hasDirectedEdge(v, u));
+}
+
+bool Graph::hasEdge(const std::string& uname, const std::string& vname) const
+{
+    return hasEdge(getNode(uname), getNode(vname));
+}
+
+bool Graph::removeEdge(Node* u, Node* v)
+{
+
+}
+
+bool Graph::removeEdge(const std::string& uname, const std::string& vname)
+{
+
+}
+
 bool Graph::addNode(const Node& node)
 {
     if (hasNode(node.getName()))
@@ -85,6 +127,109 @@ bool Graph::addNode(const Node& node)
 bool Graph::addNode(std::string nodeName)
 {
     return addNode(Node(nodeName));
+}
+
+std::string Graph::getNextNodeName() const
+{
+    for (size_t i = 0; i < nodes_.size(); ++i)
+    {
+        auto name = std::string(1, 'a' + (i % 26)) + std::to_string(int(i / 26));
+        if (!hasNode(name))
+        {
+            return name;
+        }
+    }
+
+    return std::string(1, 'a' + (nodes_.size() % 26)) + std::to_string(int(nodes_.size() / 26));
+}
+
+bool Graph::setNodeName(Node* node, const std::string& newName)
+{
+    if (!hasNode(node) || hasNode(newName) || node->getName() == newName)
+    {
+        return false;
+    }
+
+    std::list<Edge> cachedEdges;
+    for (auto it = edges_.begin(); it != edges_.end(); ++it)
+    {
+        auto edge = Edge(it);
+        if (edge.u() == node || edge.v() == node)
+        {
+            cachedEdges.emplace_back(edge);
+        }
+    }
+
+    addNode(Node(newName, node->getEuclidePos()));
+
+    for (auto it = edges_.begin(); it != edges_.end(); ++it)
+    {
+        auto edge = Edge(it);
+        if (edge.u()->getName() == node->getName())
+        {
+            setEdge(newName, edge.v()->getName());
+        }
+        else if (edge.v()->getName() == node->getName())
+        {
+            setEdge(edge.u()->getName(), newName);
+        }
+    }
+
+    removeNode(node);
+    return true;
+}
+
+bool Graph::setNodeName(const std::string& oldName, const std::string& newName)
+{
+    return setNodeName(getNode(oldName), newName);
+}
+
+bool Graph::removeNode(Node* node)
+{
+    if (!hasNode(node))
+    {
+        return false;
+    }
+
+    isolateNode(node);
+    nodes_.erase(*node);
+    cachedNodes_.remove(node);
+
+    return true;
+}
+
+bool Graph::removeNode(const std::string& name)
+{
+    return removeNode(getNode(name));
+}
+
+bool Graph::isolateNode(Node* node)
+{
+    if (!hasNode(node))
+    {
+        return false;
+    }
+
+    std::list<Edge> cachedEdges;
+    for (auto it = edges_.begin(); it != edges_.end(); ++it)
+    {
+        if (Edge(it).u() == node || Edge(it).v() == node)
+        {
+            cachedEdges.emplace_back(Edge(it));
+        }
+    }
+
+    for (auto& edge: cachedEdges)
+    {
+        removeEdge(edge.u(), edge.v());
+    }
+
+    return true;
+}
+
+bool Graph::isolateNode(const std::string& name)
+{
+
 }
 
 void Graph::clear()

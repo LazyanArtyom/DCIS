@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
     txtConsole_->setMaximumSize(QSize(16777215, 720));
     txtConsole_->setReadOnly(true);
 
-    debugStream_ = std::make_unique<utils::DebugStream>(std::cout, txtConsole_);
+   // debugStream_ = std::make_unique<utils::DebugStream>(std::cout, txtConsole_);
     server_ = new Server(this);
 }
 

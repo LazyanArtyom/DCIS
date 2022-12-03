@@ -2,6 +2,7 @@
 
 // Qt includes
 #include <QDockWidget>
+#include <QRegularExpression>
 
 namespace dcis::ui {
 
@@ -11,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUi();
 
-    debugStream_ = std::make_unique<utils::DebugStream>(std::cout, txtConsole_);
+  //  debugStream_ = std::make_unique<utils::DebugStream>(std::cout, txtConsole_);
     client_ = new client::Client(this);
 }
 
@@ -138,6 +139,31 @@ void MainWindow::setupUi()
     // graph view widget
     graphView_ = new gui::GraphView;
     vSplitter->addWidget(graphView_);
+
+    connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
+        bool ok;
+        QRegExp re("[a-zA-Z0-9]{1,30}");
+        auto newName = QInputDialog::getText(this, "Rename node", "Name: ", QLineEdit::Normal,
+                                              QString::fromStdString(graph_->getNextNodeName()), &ok);
+        if (ok)
+        {
+            if (!re.exactMatch(newName)) {
+                QMessageBox::critical(this, "Error",
+                                      tr("Node's name contains only alphabetical or numeric characters\n")
+                                      + tr("Length of the name mustn't be greater than 30 or smaller than 1"));
+                return;
+            }
+            if (graph_->hasNode(newName.toStdString()))
+                QMessageBox::critical(this, "Error", "This name has been used by another node");
+            else {
+                graph_->setNodeName(nodeName, newName.toStdString());
+                emit sigGraphChanged();
+            }
+        }
+    });
+
+    //graphView_->setScene();
+    graphView_->show();
 
     // console widget
     txtConsole_ = new QTextEdit(workingWidget_);

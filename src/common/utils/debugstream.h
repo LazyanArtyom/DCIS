@@ -10,10 +10,9 @@
 // Qt includes
 #include <QTextEdit>
 
-
+/*
 namespace dcis::common::utils {
 
-/******** LOGGER *******/
 namespace {
 
 enum class LogLevel {
@@ -32,7 +31,6 @@ void log(LogLevel level, Ts&&... args)
         std::cout << std::endl;
     }
 }
-/**************************/
 
 class DebugStream : public std::basic_streambuf<char>
 {
@@ -91,11 +89,12 @@ protected:
 
 private:
     std::string    string_;
-    std::ostream   &stream_;
-    std::streambuf *oldBuf_;
+    std::ostream&  stream_;
+    std::streambuf* oldBuf_;
 
-    QTextEdit *logWindowWidget_;
+    QTextEdit* logWindowWidget_;
 };
-
 } // end namespace dcis::common::utils
+
+*/
 #endif // DCIS_COMMON_UTILS_DEBUGSTREAM_H_

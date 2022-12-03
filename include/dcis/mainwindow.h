@@ -80,9 +80,11 @@ private:
     QWidget *workingWidget_;
     QTextEdit *txtConsole_;
 
+    graph::Graph* graph_;
     client::Client* client_;
     gui::GraphView* graphView_;
-    std::unique_ptr<common::utils::DebugStream> debugStream_;
+    gui::GraphScene* graphScene_;
+   // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 
 } // end namespace dcis::ui
