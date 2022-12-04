@@ -6,6 +6,10 @@ namespace dcis::gui {
 GraphView::GraphView()
 {
     setDragMode(ScrollHandDrag);
+    setRenderHint(QPainter::Antialiasing);
+    setCacheMode(CacheBackground);
+    setViewportUpdateMode(BoundingRectViewportUpdate);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 void GraphView::setScene(GraphScene* scene)

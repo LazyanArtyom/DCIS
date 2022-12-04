@@ -6,16 +6,17 @@
 
 // Qt includes
 #include <QGraphicsItem>
+#include <QPainterPath>
 
 
 namespace dcis::gui {
 using namespace common;
-class GraphGraphicsScene;
+class GraphScene;
 
 class NodeItem : public QObject, public QGraphicsItem {
     Q_OBJECT
 public:
-    NodeItem(graph::Node* node, QColor color = getColorTable()[0]);
+    NodeItem(gui::GraphScene* gscene, graph::Node* node, QColor color = getColorTable()[0]);
 
     enum
     {
@@ -57,6 +58,7 @@ private:
     QColor selectedColor_;
 
     graph::Node* node_;
+    gui::GraphScene* gscene_;
 
     const int fontSize_ = 10;
     const QString font_ = "Source Code Pro";

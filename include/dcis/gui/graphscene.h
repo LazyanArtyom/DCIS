@@ -40,6 +40,7 @@ private:
     using QGraphicsScene::clear;
 
     graph::Graph* graph_;
+    std::unique_ptr<QTimer> uniqueTimer_;
     std::unordered_map<std::string, NodeItem*> nodeItems_;
     std::unordered_map<std::pair<std::string, std::string>, EdgeItem*> edgeItems_;
 };

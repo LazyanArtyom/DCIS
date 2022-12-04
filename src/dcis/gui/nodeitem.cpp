@@ -1,17 +1,18 @@
 #include <gui/nodeitem.h>
 
-// App includes
-//#include "graphics/headers/GraphGraphicsScene.h"
+// APP includes
+#include <gui/graphscene.h>
 
-// Qt includes
+// QT includes
 #include <QDebug>
 #include <utility>
 #include <QtWidgets>
 
 namespace dcis::gui {
 
-NodeItem::NodeItem(graph::Node* node, QColor color)
+NodeItem::NodeItem(gui::GraphScene* gscene, graph::Node* node, QColor color)
 {
+    gscene_ = gscene;
     color_ = std::move(color);
     radius_ = 80;
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -127,17 +128,17 @@ void NodeItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
     setPos(event->scenePos());
     getNode()->setEuclidePos(pos());
 
-    /**********************/
-    //emit gscene_->needRedraw();
-    emit sigNeedRedraw();
+    emit gscene_->sigNeedRedraw();
     emit sigPositionChanged();
+
     QGraphicsItem::mouseMoveEvent(event);
 }
 
 void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
     QGraphicsItem::mouseReleaseEvent(event);
-    if (isMoving_) {
+    if (isMoving_)
+    {
         setSelected(false);
         isMoving_ = false;
     }

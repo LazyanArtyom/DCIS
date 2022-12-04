@@ -60,7 +60,7 @@ void GraphScene::onReload()
     clearAll();
     for (const auto& node : getGraph()->getNodes())
     {
-        nodeItems_[node->getName()] = new NodeItem(node);
+        nodeItems_[node->getName()] = new NodeItem(this, node);
     }
 
     for (auto it = getGraph()->getEdges().begin(); it != getGraph()->getEdges().end(); ++it)
