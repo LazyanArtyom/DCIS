@@ -125,7 +125,7 @@ void MainWindow::setupUi()
 
     // tool pane widget
     QDockWidget* dockWidget = new QDockWidget(this);
-    addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
     dockWidget->setObjectName("dockWidget");
     dockWidget->setMinimumWidth(100);
     dockWidget->setFeatures(QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
@@ -139,10 +139,53 @@ void MainWindow::setupUi()
     // graph view widget
     graph_ = new graph::Graph(false);
     graphScene_ = new gui::GraphScene(graph_);
+    connect(this, &MainWindow::sigGraphChanged, graphScene_, &gui::GraphScene::onReload);
+    connect(graphScene_, &gui::GraphScene::sigGraphChanged, this, &MainWindow::onGraphChanged);
+
     graphView_ = new gui::GraphView;
     vSplitter->addWidget(graphView_);
     graphView_->setScene(graphScene_);
 
+    elementPropertiesTable_ = new gui::ElementPropertiesTable(graph_);
+    connect(graphScene_, &gui::GraphScene::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
+    connect(graphView_, &gui::GraphView::sigUnSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onUnSelected);
+    connect(this, &MainWindow::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
+    connect(graphView_, &gui::GraphView::sigNodeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onNodeSelected);
+    connect(graphView_, &gui::GraphView::sigEdgeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onEdgeSelected);
+    connect(graphView_, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
+        if (!autoNaming)
+        {
+            showNewNodeDialog(pos);
+            return;
+        }
+
+        graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
+        emit sigGraphChanged();
+    });
+    connect(graphView_, &gui::GraphView::sigNodeRemoved, this, [this](const std::string& nodeName) {
+        if (graph_->removeNode(nodeName))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(graphView_, &gui::GraphView::sigNodeIsolated, this, [this](const std::string& nodeName) {
+        if (graph_->isolateNode(nodeName))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(graphView_, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string& uname, const std::string& vname) {
+        if (graph_->removeEdge(uname, vname))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(graphView_, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
+        if (graph_->setEdge(uname, vname))
+        {
+            emit sigGraphChanged();
+        }
+    });
     connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
@@ -177,6 +220,7 @@ void MainWindow::setupUi()
     // console widget
     txtConsole_ = new QTextEdit(workingWidget_);
     vSplitter->addWidget(txtConsole_);
+    vSplitter->setSizes(QList<int>() << 700 << 200);
     txtConsole_->setObjectName("consoleText");
     QSizePolicy sizePolicyConsole(QSizePolicy::Expanding, QSizePolicy::Minimum);
     sizePolicyConsole.setHorizontalStretch(240);
@@ -210,9 +254,47 @@ void MainWindow::setWorkspaceEnabled(bool enable)
     }
 }
 
+void MainWindow::onGraphChanged()
+{
+    //this->_dataNeedSaving = true;
+    //_ui->statusBar->clearMessage();
+    //_ui->consoleText->clear();
+}
+
 void MainWindow::onConnectBtnClicked()
 {
     setWorkspaceEnabled(true);
+}
+
+void MainWindow::showNewNodeDialog(QPointF pos)
+{
+    bool ok;
+    QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,3}")));
+
+    QString newNodeName = QInputDialog::getText(this, "Add new node", "Name: ", QLineEdit::Normal,
+                                                QString::fromStdString(graph_->getNextNodeName()), &ok);
+    if (ok)
+    {
+        static QRegularExpressionMatch match = re.match(newNodeName);
+        if (!match.hasMatch())
+        {
+            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
+                                                 +
+                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
+            return;
+        }
+
+        graph::Node newNode(newNodeName.toStdString(), pos);
+        bool succeeded = graph_->addNode(newNode);
+        if (!succeeded)
+        {
+            QMessageBox::critical(this, "Error", "This name has been used by another node");
+        }
+        else
+        {
+            emit sigGraphChanged();
+        }
+    }
 }
 
 // private

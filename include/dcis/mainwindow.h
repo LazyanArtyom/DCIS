@@ -5,6 +5,7 @@
 #include <net/client.h>
 #include <gui/graphview.h>
 #include <utils/debugstream.h>
+#include <gui/elementpropertiestable.h>
 
 // QT headers
 #include <QMenu>
@@ -46,7 +47,11 @@ signals:
     void sigGraphChanged();
 
 public slots:
+    void onGraphChanged();
     void onConnectBtnClicked();
+
+private:
+    void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
 private:
     QAction *actSave_;
@@ -87,6 +92,7 @@ private:
     client::Client* client_;
     gui::GraphView* graphView_;
     gui::GraphScene* graphScene_;
+    gui::ElementPropertiesTable* elementPropertiesTable_;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 
