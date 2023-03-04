@@ -15,6 +15,18 @@ add_executable(dcis
     ${SOURCES}
 )
 
+# Resources:
+set(dcis_icons
+    "resources/upload.svg"
+)
+
+qt_add_resources(dcis "dcis"
+    PREFIX
+        "/"
+    FILES
+        ${dcis_icons}
+)
+
 target_link_libraries(dcis PRIVATE
     common
     Qt6::Widgets

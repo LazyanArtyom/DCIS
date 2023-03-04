@@ -14,7 +14,7 @@ NodeItem::NodeItem(gui::GraphScene* gscene, graph::Node* node, QColor color)
 {
     gscene_ = gscene;
     color_ = std::move(color);
-    radius_ = 80;
+    radius_ = 50;
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setAcceptHoverEvents(true);
     setNode(node);

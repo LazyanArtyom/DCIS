@@ -55,12 +55,12 @@ protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
 private:
+    QColor color_;
+    QPainterPath path_;
+    NodeItem* endItem_;
     GraphScene* gscene_;
     NodeItem* startItem_;
-    NodeItem* endItem_;
-    QColor color_;
     QColor selectedColor_;
-    QPainterPath path_;
 };
 
 } // end namespace dcis::gui

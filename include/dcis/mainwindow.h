@@ -3,7 +3,9 @@
 
 // App headers
 #include <net/client.h>
+#include <gui/graphinfo.h>
 #include <gui/graphview.h>
+#include <gui/imageeditor.h>
 #include <utils/debugstream.h>
 #include <gui/elementpropertiestable.h>
 
@@ -36,11 +38,10 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
     void setupUi();
-
     void setWorkspaceEnabled(bool enable);
 
 signals:
@@ -51,6 +52,11 @@ public slots:
     void onConnectBtnClicked();
 
 private:
+    void createMenu();
+    void createToolBar();
+    void createEntryWidget();
+    void createWorkingWiget();
+    void createGraphInfoWidget();
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
 private:
@@ -91,7 +97,10 @@ private:
     graph::Graph* graph_;
     client::Client* client_;
     gui::GraphView* graphView_;
+    gui::GraphInfo* graphInfo_;
     gui::GraphScene* graphScene_;
+    gui::ImageEditor* imageEditor_;
+
     gui::ElementPropertiesTable* elementPropertiesTable_;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };

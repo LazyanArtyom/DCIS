@@ -3,13 +3,19 @@
 
 namespace dcis::gui {
 
-GraphView::GraphView()
+GraphView::GraphView(QWidget* parent)
+    : QGraphicsView(parent)
 {
     setDragMode(ScrollHandDrag);
-    setRenderHint(QPainter::Antialiasing);
     setCacheMode(CacheBackground);
-    setViewportUpdateMode(BoundingRectViewportUpdate);
+    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform | QPainter::TextAntialiasing);
+    //setViewportUpdateMode(BoundingRectViewportUpdate);
+    setViewportUpdateMode(FullViewportUpdate);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // When zooming, the view stay centered over the mouse
+    setTransformationAnchor(AnchorUnderMouse);
+    setResizeAnchor(AnchorViewCenter);
 }
 
 void GraphView::setScene(GraphScene* scene)
@@ -22,24 +28,6 @@ void GraphView::setScene(GraphScene* scene)
 void GraphView::onRedraw()
 {
     viewport()->update();
-}
-
-void GraphView::wheelEvent(QWheelEvent* event)
-{
-    QGraphicsView::wheelEvent(event);
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-
-    double scaleFactor = 1.05;
-    if (event->angleDelta().y() > 0 && currentScale_ <= scaleMax_)
-    {
-        scale(scaleFactor, scaleFactor);
-        currentScale_ *= scaleFactor;
-    }
-    else
-    {
-        scale(1 / scaleFactor, 1 / scaleFactor);
-        currentScale_ /= scaleFactor;
-    }
 }
 
 void GraphView::mousePressEvent(QMouseEvent* event)
@@ -61,11 +49,12 @@ void GraphView::mousePressEvent(QMouseEvent* event)
         }
     }
 
-    if (!isSelectTargetNode)
+    if (!isSelectTargetNode_)
     {
         QGraphicsView::mousePressEvent(event);
     }
-    if (isSelectTargetNode)
+
+    if (isSelectTargetNode_)
     {
         QList<QGraphicsItem*> itemsTo = items(event->pos());
         if (!itemsTo.empty())
@@ -78,7 +67,8 @@ void GraphView::mousePressEvent(QMouseEvent* event)
             }
         }
     }
-    isSelectTargetNode = false;
+
+    isSelectTargetNode_ = false;
     startItem_ = nullptr;
 
     scene()->update();
@@ -98,7 +88,8 @@ void GraphView::mouseReleaseEvent(QMouseEvent* event)
         }
         else if (nodeItem)
         {
-            emit sigNodeSelected(nodeItem->getNode()->getName());
+            QPointF pos = scene()->selectedItems()[0]->pos();
+            emit sigNodeSelected(nodeItem->getNode()->getName(), pos);
         }
     }
 
@@ -118,6 +109,33 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
     }
 
     QList<QGraphicsItem*> clickedItems = items(event->pos());
+
+    if (clickedItems.empty() || (!clickedItems.empty() && dynamic_cast<QGraphicsPixmapItem*>(clickedItems[0])))
+    {
+        if (!scene()->selectedItems().empty())
+        {
+            scene()->selectedItems()[0]->setSelected(false);
+        }
+
+        QMenu menu;
+        menu.addAction("Create node now");
+        menu.addAction("Create node...");
+        QAction *act = menu.exec(event->globalPos());
+        if (act)
+        {
+            if (act->text() == "Create node...")
+            {
+               emit sigNodeAdded(mapToScene(event->pos()), false);
+            }
+            else if (act->text() == "Create node now")
+            {
+               emit sigNodeAdded(mapToScene(event->pos()), true);
+            }
+        }
+
+        return;
+    }
+
     if (!clickedItems.empty())
     {
         auto item = clickedItems[0];
@@ -125,10 +143,11 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
 
         auto* edgeItem = dynamic_cast<EdgeItem*>(item);
         auto* nodeItem = dynamic_cast<NodeItem*>(item);
+
         if (nodeItem)
         {
             auto nodeName = nodeItem->getNode()->getName();
-            emit sigNodeSelected(nodeName);
+            emit sigNodeSelected(nodeName, item->pos());
 
             QMenu menu;
             menu.addAction("&Set edge to (Select other node by mouse)");
@@ -154,7 +173,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 }
                 if (act->text().contains("&Set edge to"))
                 {
-                    isSelectTargetNode = true;
+                    isSelectTargetNode_ = true;
                     startItem_ = nodeItem;
                 }
             }
@@ -178,29 +197,6 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 {
                    emit sigEdgeRemoved(edgeItem->getEdge().u()->getName(), edgeItem->getEdge().v()->getName());
                 }
-            }
-        }
-    }
-    else
-    {
-        if (!scene()->selectedItems().empty())
-        {
-            scene()->selectedItems()[0]->setSelected(false);
-        }
-
-        QMenu menu;
-        menu.addAction("Create node now");
-        menu.addAction("Create node...");
-        QAction *act = menu.exec(event->globalPos());
-        if (act)
-        {
-            if (act->text() == "Create node...")
-            {
-               emit sigNodeAdded(mapToScene(event->pos()), false);
-            }
-            else if (act->text() == "Create node now")
-            {
-               emit sigNodeAdded(mapToScene(event->pos()), true);
             }
         }
     }

@@ -50,9 +50,16 @@ EdgeItem* GraphScene::getEdgeItem(const std::string& uname, const std::string& v
 
 void GraphScene::clearAll()
 {
+    return;
     clear();
-    nodeItems_.clear();
-    edgeItems_.clear();
+    if (!nodeItems_.empty())
+    {
+        nodeItems_.clear();
+    }
+    if (!edgeItems_.empty())
+    {
+        edgeItems_.clear();
+    }
 }
 
 void GraphScene::onReload()
