@@ -11,7 +11,7 @@ namespace dcis::gui {
 class GraphInfo : public QWidget
 {
 public:
-    GraphInfo(QWidget* parent);
+    GraphInfo(QWidget* parent = nullptr);
 
     void setNodeCount(int count);
     void setEdgeCount(int count);

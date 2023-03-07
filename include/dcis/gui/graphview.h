@@ -19,14 +19,17 @@ public:
     GraphView(QWidget* parent = nullptr);
 
     void setScene(GraphScene* scene);
+    void setSceneSize(int width, int height);
 
 public slots:
     void onRedraw();
 
 protected:
+    void resizeEvent(QResizeEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 signals:
     void sigNodeEdited(std::string name);

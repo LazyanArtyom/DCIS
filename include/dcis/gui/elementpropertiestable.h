@@ -24,7 +24,7 @@ public slots:
     void onGraphChanged();
     void onSetGraph(graph::Graph* graph);
     void onNodeSelected(const std::string& nodeName);
-    void onEdgeSelected(const std::string& uname, const std::string& vname);
+    void onEdgeSelected(const std::string& uName, const std::string& vName);
 
 private:
     void clearTable();

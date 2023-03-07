@@ -9,13 +9,15 @@ GraphView::GraphView(QWidget* parent)
     setDragMode(ScrollHandDrag);
     setCacheMode(CacheBackground);
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform | QPainter::TextAntialiasing);
-    //setViewportUpdateMode(BoundingRectViewportUpdate);
+    setViewportUpdateMode(BoundingRectViewportUpdate);
     setViewportUpdateMode(FullViewportUpdate);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // When zooming, the view stay centered over the mouse
-    setTransformationAnchor(AnchorUnderMouse);
-    setResizeAnchor(AnchorViewCenter);
+    //setTransformationAnchor(AnchorUnderMouse);
+    //setResizeAnchor(AnchorViewCenter);
+
+    setStyleSheet("background-color: rgba(0, 0, 0, 0);");
 }
 
 void GraphView::setScene(GraphScene* scene)
@@ -25,9 +27,24 @@ void GraphView::setScene(GraphScene* scene)
     QGraphicsView::setScene(scene);
 }
 
+void GraphView::setSceneSize(int width, int height)
+{
+    setSceneRect(0, 0, width, height);
+}
+
 void GraphView::onRedraw()
 {
     viewport()->update();
+}
+
+void GraphView::resizeEvent(QResizeEvent *event)
+{
+    setSceneRect(0, 0, event->size().width(), event->size().height());
+    QGraphicsView::resizeEvent(event);
+}
+
+void GraphView::drawBackground(QPainter*, const QRectF&)
+{
 }
 
 void GraphView::mousePressEvent(QMouseEvent* event)

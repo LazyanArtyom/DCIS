@@ -62,6 +62,8 @@ GraphInfo::GraphInfo(QWidget* parent)
     txtNodePos_ = new QLineEdit(this);
     txtNodePos_->setDisabled(true);
     layoutNodePos->addWidget(txtNodePos_);
+
+    vLayoutMain->setContentsMargins(0, 50, 0, 0);
 }
 
 void dcis::gui::GraphInfo::setNodeCount(int count)

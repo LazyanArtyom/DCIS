@@ -42,8 +42,8 @@ void MainWindow::setupUi()
     centralWidget_->setObjectName("centralTabWidget");
 
     createEntryWidget();
-    createGraphInfoWidget();
     createWorkingWiget();
+    createGraphInfoWidget();
     createMenu();
     createToolBar();
 
@@ -60,13 +60,6 @@ void MainWindow::setWorkspaceEnabled(bool enable)
     {
         centralWidget_->setCurrentWidget(entryWidget_);
     }
-}
-
-void MainWindow::onGraphChanged()
-{
-    //this->_dataNeedSaving = true;
-    //_ui->statusBar->clearMessage();
-    //_ui->consoleText->clear();
 }
 
 void MainWindow::onConnectBtnClicked()
@@ -129,7 +122,7 @@ void MainWindow::createToolBar()
     pToolBar->addAction(actUploadImg);
 
     // conections
-    connect(actUploadImg, &QAction::triggered, imageEditor_, &gui::ImageEditor::onUploadImage);
+    connect(actUploadImg, &QAction::triggered, graphEditingTool_, &gui::GraphEditingTool::onUploadImage);
 }
 
 void MainWindow::createEntryWidget()
@@ -180,19 +173,8 @@ void MainWindow::createWorkingWiget()
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
 
-    // image editor widget
-    imageEditor_ = new gui::ImageEditor();
-    imageEditor_->setStyleSheet("background-color: red;");
-
-    // graph view widget
-    graph_ = new graph::Graph(false);
-    graphScene_ = new gui::GraphScene(graph_);
-    graphScene_->setBackgroundBrush(QColor(Qt::gray));
-    connect(this, &MainWindow::sigGraphChanged, graphScene_, &gui::GraphScene::onReload);
-    connect(graphScene_, &gui::GraphScene::sigGraphChanged, this, &MainWindow::onGraphChanged);
-
-    graphView_ = new gui::GraphView;
-    graphView_->setScene(graphScene_);
+    // graph editing tool
+    graphEditingTool_ = new gui::GraphEditingTool();
 
     // console widget
     txtConsole_ = new QTextEdit(workingWidget_);
@@ -205,81 +187,6 @@ void MainWindow::createWorkingWiget()
     txtConsole_->setMinimumSize(QSize(0, 240));
     txtConsole_->setMaximumSize(QSize(16777215, 720));
     txtConsole_->setReadOnly(true);
-
-    // properties table
-    elementPropertiesTable_ = new gui::ElementPropertiesTable(graph_);
-
-    // connections
-    connect(graphScene_, &gui::GraphScene::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
-    connect(graphView_, &gui::GraphView::sigUnSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onUnSelected);
-    connect(this, &MainWindow::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
-    connect(graphView_, &gui::GraphView::sigNodeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onNodeSelected);
-    connect(graphView_, &gui::GraphView::sigEdgeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onEdgeSelected);
-    connect(graphView_, &gui::GraphView::sigNodeSelected, this , [this](const std::string& nodeName, QPointF pos) {
-
-        //txtConsole_->setText(txt);
-    });
-    connect(graphView_, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
-        if (!autoNaming)
-        {
-            showNewNodeDialog(pos);
-            return;
-        }
-
-        graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
-        emit sigGraphChanged();
-    });
-    connect(graphView_, &gui::GraphView::sigNodeRemoved, this, [this](const std::string& nodeName) {
-        if (graph_->removeNode(nodeName))
-        {
-            emit sigGraphChanged();
-        }
-    });
-    connect(graphView_, &gui::GraphView::sigNodeIsolated, this, [this](const std::string& nodeName) {
-        if (graph_->isolateNode(nodeName))
-        {
-            emit sigGraphChanged();
-        }
-    });
-    connect(graphView_, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string& uname, const std::string& vname) {
-        if (graph_->removeEdge(uname, vname))
-        {
-            emit sigGraphChanged();
-        }
-    });
-    connect(graphView_, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
-        if (graph_->setEdge(uname, vname))
-        {
-            emit sigGraphChanged();
-        }
-    });
-    connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
-        bool ok;
-        QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
-
-        auto newName = QInputDialog::getText(this, tr("Rename node"), "Name: ", QLineEdit::Normal,
-                                              QString::fromStdString(graph_->getNextNodeName()), &ok);
-        if (ok)
-        {
-            static QRegularExpressionMatch match = re.match(newName);
-            if (!match.hasMatch())
-            {
-                QMessageBox::critical(this, tr("Error"),
-                                      tr("Node's name contains only alphabetical or numeric characters\n")
-                                      + tr("Length of the name mustn't be greater than 30 or smaller than 1"));
-                return;
-            }
-            if (graph_->hasNode(newName.toStdString()))
-            {
-                QMessageBox::critical(this, tr("Error"), tr("This name has been used by another node"));
-            }
-            else
-            {
-                graph_->setNodeName(nodeName, newName.toStdString());
-                emit sigGraphChanged();
-            }
-        }
-    });
 
     // layouts
     centralWidget_->addWidget(workingWidget_);
@@ -295,63 +202,41 @@ void MainWindow::createWorkingWiget()
     vSplitter->setOrientation(Qt::Vertical);
     vSplitter->setChildrenCollapsible(false);
 
-    vSplitter->addWidget(imageEditor_);
-    //vSplitter->addWidget(graphView_);
+    vSplitter->addWidget(graphEditingTool_);
     vSplitter->addWidget(txtConsole_);
     vSplitter->setSizes(QList<int>() << 700 << 200);
 }
 
 void MainWindow::createGraphInfoWidget()
 {
-    // tool pane widget
     QDockWidget* dockWidget = new QDockWidget(this);
     addDockWidget(Qt::RightDockWidgetArea, dockWidget);
     dockWidget->setObjectName("dockWidget");
     dockWidget->setMinimumWidth(200);
-    dockWidget->setFeatures(QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
-    QVBoxLayout* vLayoutDock = new QVBoxLayout();
-    vLayoutDock->setContentsMargins(100, 11, 11, 11);;
-    dockWidget->setLayout(vLayoutDock);
+    dockWidget->setFeatures(QDockWidget::DockWidgetFloatable
+                            | QDockWidget::DockWidgetMovable
+                            | QDockWidget::DockWidgetClosable);
 
     // graph info widget
     graphInfo_ = new gui::GraphInfo(dockWidget);
+    graphInfo_->setMinimumSize(200, 200);
+
+    // properties table
+    //elementPropertiesTable_ = new gui::ElementPropertiesTable(graph_);
+
+    // connections
+    /*
+    connect(graphScene_, &gui::GraphScene::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
+    connect(graphView_, &gui::GraphView::sigUnSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onUnSelected);
+    connect(this, &MainWindow::sigGraphChanged, elementPropertiesTable_, &gui::ElementPropertiesTable::onGraphChanged);
+    connect(graphView_, &gui::GraphView::sigNodeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onNodeSelected);
+    connect(graphView_, &gui::GraphView::sigEdgeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onEdgeSelected);
+    */
+
+    // layouts
+    QVBoxLayout* vLayoutDock = new QVBoxLayout();
+    dockWidget->setLayout(vLayoutDock);
     vLayoutDock->addWidget(graphInfo_);
-    graphInfo_->resize(200, 100);
 }
-
-void MainWindow::showNewNodeDialog(QPointF pos)
-{
-    bool ok;
-    QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,3}")));
-
-    QString newNodeName = QInputDialog::getText(this, "Add new node", "Name: ", QLineEdit::Normal,
-                                                QString::fromStdString(graph_->getNextNodeName()), &ok);
-    if (ok)
-    {
-        static QRegularExpressionMatch match = re.match(newNodeName);
-        if (!match.hasMatch())
-        {
-            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
-                                                 +
-                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
-            return;
-        }
-
-        graph::Node newNode(newNodeName.toStdString(), pos);
-        bool succeeded = graph_->addNode(newNode);
-        if (!succeeded)
-        {
-            QMessageBox::critical(this, "Error", "This name has been used by another node");
-        }
-        else
-        {
-            emit sigGraphChanged();
-        }
-    }
-}
-
-// private
-
-// slots
 
 } // end namespace dcis::ui

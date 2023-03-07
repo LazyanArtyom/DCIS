@@ -74,7 +74,7 @@ void ElementPropertiesTable::onNodeSelected(const std::string& nodeName)
     }
 }
 
-void ElementPropertiesTable::onEdgeSelected(const std::string& uname, const std::string& vname)
+void ElementPropertiesTable::onEdgeSelected(const std::string& uName, const std::string& vName)
 {
     clearTable();
     QStringList tableHeader;
@@ -85,12 +85,12 @@ void ElementPropertiesTable::onEdgeSelected(const std::string& uname, const std:
 
     setItem(0, 0, new QTableWidgetItem());
     item(0, 0)->setTextAlignment(Qt::AlignCenter);
-    item(0, 0)->setText(QString::fromStdString(uname));
+    item(0, 0)->setText(QString::fromStdString(uName));
     item(0, 0)->setFlags(Qt::ItemIsEnabled);
 
     setItem(1, 0, new QTableWidgetItem());
     item(1, 0)->setTextAlignment(Qt::AlignCenter);
-    item(1, 0)->setText(QString::fromStdString(vname));
+    item(1, 0)->setText(QString::fromStdString(vName));
     item(1, 0)->setFlags(Qt::ItemIsEnabled);
 
     setItem(2, 0, new QTableWidgetItem());

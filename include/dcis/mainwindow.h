@@ -4,9 +4,8 @@
 // App headers
 #include <net/client.h>
 #include <gui/graphinfo.h>
-#include <gui/graphview.h>
-#include <gui/imageeditor.h>
 #include <utils/debugstream.h>
+#include <gui/grapheditingtool.h>
 #include <gui/elementpropertiestable.h>
 
 // QT headers
@@ -44,11 +43,7 @@ public:
     void setupUi();
     void setWorkspaceEnabled(bool enable);
 
-signals:
-    void sigGraphChanged();
-
 public slots:
-    void onGraphChanged();
     void onConnectBtnClicked();
 
 private:
@@ -57,7 +52,6 @@ private:
     void createEntryWidget();
     void createWorkingWiget();
     void createGraphInfoWidget();
-    void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
 private:
     QAction *actSave_;
@@ -94,12 +88,9 @@ private:
     QWidget *workingWidget_;
     QTextEdit *txtConsole_;
 
-    graph::Graph* graph_;
     client::Client* client_;
-    gui::GraphView* graphView_;
     gui::GraphInfo* graphInfo_;
-    gui::GraphScene* graphScene_;
-    gui::ImageEditor* imageEditor_;
+    gui::GraphEditingTool* graphEditingTool_;
 
     gui::ElementPropertiesTable* elementPropertiesTable_;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
