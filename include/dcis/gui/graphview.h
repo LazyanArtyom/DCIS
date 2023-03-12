@@ -25,6 +25,7 @@ public slots:
     void onRedraw();
 
 protected:
+    void wheelEvent(QWheelEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
@@ -54,6 +55,9 @@ private:
     QMenu* contextMenu_;
     GraphScene* gscene_;
     NodeItem* startItem_;
+
+    qreal currentScale_ = 1.;
+    const qreal scaleMax_ = 1.5;
 };
 
 } // end namespace dcis::gui

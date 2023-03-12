@@ -14,8 +14,8 @@ GraphView::GraphView(QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // When zooming, the view stay centered over the mouse
-    //setTransformationAnchor(AnchorUnderMouse);
-    //setResizeAnchor(AnchorViewCenter);
+    setTransformationAnchor(AnchorUnderMouse);
+    setResizeAnchor(AnchorViewCenter);
 
     setStyleSheet("background-color: rgba(0, 0, 0, 0);");
 }
@@ -37,6 +37,23 @@ void GraphView::onRedraw()
     viewport()->update();
 }
 
+void GraphView::wheelEvent(QWheelEvent* event)
+{
+    QGraphicsView::wheelEvent(event);
+
+    double scaleFactor = 1.05;
+    if (event->angleDelta().y() > 0 && currentScale_ <= scaleMax_)
+    {
+        scale(scaleFactor, scaleFactor);
+        currentScale_ *= scaleFactor;
+    }
+    else
+    {
+        scale(1 / scaleFactor, 1 / scaleFactor);
+        currentScale_ /= scaleFactor;
+    }
+}
+
 void GraphView::resizeEvent(QResizeEvent *event)
 {
     setSceneRect(0, 0, event->size().width(), event->size().height());
@@ -45,6 +62,7 @@ void GraphView::resizeEvent(QResizeEvent *event)
 
 void GraphView::drawBackground(QPainter*, const QRectF&)
 {
+    // transparent background
 }
 
 void GraphView::mousePressEvent(QMouseEvent* event)
