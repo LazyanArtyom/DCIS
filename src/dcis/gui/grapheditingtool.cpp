@@ -125,9 +125,9 @@ void GraphEditingTool::showNewNodeDialog(QPointF pos)
     }
 }
 
-void GraphEditingTool::onUploadImage()
+void GraphEditingTool::showImage(const QImage& img)
 {
-    imageEditor_->onUploadImage();
+    imageEditor_->setImage(img);
 }
 
 void GraphEditingTool::resizeEvent(QResizeEvent*)

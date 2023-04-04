@@ -7,6 +7,7 @@
 
 // QT includes
 #include <QMap>
+#include <QImage>
 #include <QTcpServer>
 #include <QTcpSocket>
 
@@ -24,15 +25,16 @@ public:
     Server(QObject* parent = nullptr);
     ~Server();
 
-    void run();
+    bool run(const int port);
     void incomingConnection(qintptr socketDescriptor) override;
 
     void publish(resource::Header header, resource::Body body);
     void handle(resource::Header header, resource::Body body);
 
     void handleUnknown();
-    void handleString(const QString str);
-    void handleJson(const QJsonDocument json);
+    void handleImage(const QImage& str);
+    void handleString(const QString& str);
+    void handleJson(const QJsonDocument& json);
 
     void updateSockets();
 
@@ -46,6 +48,9 @@ private:
     SocketListType sockets_;
     qintptr currentSocket_;
     quint16 nextBlockSize_;
+
+    const QString WORKING_DIRECTORY_PATH = "";
+    const QString UPLOADED_IMAGES_PATH = WORKING_DIRECTORY_PATH + "/uploadedImages";
 };
 
 } // end namespace dcis::server

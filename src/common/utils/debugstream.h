@@ -2,99 +2,51 @@
 #define DCIS_COMMON_UTILS_DEBUGSTREAM_H_
 
 // App includes
-#include <string>
-#include <vector>
-#include <iostream>
-#include <streambuf>
 
 // Qt includes
+#include <QString>
 #include <QTextEdit>
 
-/*
 namespace dcis::common::utils {
 
-namespace {
+enum class LogLevel : uint32_t { Error = 1, Warning, Info, Debug, Verbose };
 
-enum class LogLevel {
-    ERROR = 1, INFO, DEBUG, VERBOSE
-};
-
-} // end namespace
-
-template <typename... Ts>
-void log(LogLevel level, Ts&&... args)
-{
-    if (level <= LogLevel::VERBOSE)
-    {
-        std::cout << "=> ";
-        (std::cout << ... << args);
-        std::cout << std::endl;
-    }
-}
-
-class DebugStream : public std::basic_streambuf<char>
+class DebugStream
 {
 public:
+    DebugStream() = default;
+    ~DebugStream() = default;
+    DebugStream(const DebugStream&) = delete;
+    DebugStream& operator = (const DebugStream&) = delete;
 
-    DebugStream(std::ostream &stream, QTextEdit *textEdit) : stream_(stream)
+    void setEditor(QTextEdit* textEdit)
     {
         logWindowWidget_ = textEdit;
-        oldBuf_ = stream.rdbuf();
-        stream.rdbuf(this);
     }
 
-    ~DebugStream() override
+    void setLogLevel(LogLevel level)
     {
-        if (!string_.empty())
-        {
-            logWindowWidget_->append(string_.c_str());
-        }
-
-        stream_.rdbuf(oldBuf_);
+        logLevel_ = level;
     }
 
-protected:
-    int_type overflow(int_type type) override
+    void log(LogLevel level, const QString& text)
     {
-        if (type == '\n')
+        if (level >= logLevel_)
         {
-            logWindowWidget_->append(string_.c_str());
-            string_.erase(string_.begin(), string_.end());
+            logWindowWidget_->append("=> " + text);
         }
-        else
-        {
-            string_ += std::to_string(type);
-        }
-
-        return type;
     }
 
-    std::streamsize xsputn(const char *p, std::streamsize size) override
+    static DebugStream& getInstance()
     {
-        string_.append(p, p + size);
-        size_t pos = 0;
-        while (pos != (size_t) std::string::npos)
-        {
-            pos = string_.find('\n');
-            if (pos != (size_t) std::string::npos)
-            {
-                std::string tmp(string_.begin(), string_.begin() + pos);
-                logWindowWidget_->append(tmp.c_str());
-                string_.erase(string_.begin(), string_.begin() + pos + 1);
-            }
-        }
-
-        return size;
+      static DebugStream instance;
+      return instance;
     }
 
 private:
-    std::string    string_;
-    std::ostream&  stream_;
-    std::streambuf* oldBuf_;
-
     QTextEdit* logWindowWidget_;
+    LogLevel logLevel_ = LogLevel::Verbose;
 };
-} // end namespace dcis::common::utils
 
-*/
+} // end namespace dcis::common::utils
 #endif // DCIS_COMMON_UTILS_DEBUGSTREAM_H_

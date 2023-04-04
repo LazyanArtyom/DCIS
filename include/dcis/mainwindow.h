@@ -3,6 +3,7 @@
 
 // App headers
 #include <net/client.h>
+#include <gui/console.h>
 #include <gui/graphinfo.h>
 #include <utils/debugstream.h>
 #include <gui/grapheditingtool.h>
@@ -29,7 +30,7 @@
 #include <QApplication>
 #include <QStackedWidget>
 
-namespace dcis::ui {
+namespace dcis::gui {
 using namespace common;
 
 class MainWindow : public QMainWindow
@@ -43,7 +44,10 @@ public:
     void setupUi();
     void setWorkspaceEnabled(bool enable);
 
+    Console* getConsole() const;
+
 public slots:
+    void onUploadImage();
     void onConnectBtnClicked();
 
 private:
@@ -54,45 +58,47 @@ private:
     void createGraphInfoWidget();
 
 private:
-    QAction *actSave_;
-    QAction *actExit_;
-    QAction *actSaveAs_;
-    QAction *actCredits_;
-    QAction *actNewGraph_;
-    QAction *actOpenGraph_;
+    QAction* actSave_;
+    QAction* actExit_;
+    QAction* actSaveAs_;
+    QAction* actCredits_;
+    QAction* actNewGraph_;
+    QAction* actOpenGraph_;
 
-    QAction *actionBFS_;
-    QAction *actionDFS_;
-    QAction *actAddNode_;
-    QAction *actAddEdge_;
-    QAction *actDelNode_;
-    QAction *actDelEdge_;
-    QAction *actEditEdge_;
+    QAction* actionBFS_;
+    QAction* actionDFS_;
+    QAction* actAddNode_;
+    QAction* actAddEdge_;
+    QAction* actDelNode_;
+    QAction* actDelEdge_;
+    QAction* actEditEdge_;
 
-    QMenu *menuFile_;
-    QMenu *menuGraph_;
-    QMenu *menuAdd_;
-    QMenu *menuEdit_;
-    QMenu *menuDelete_;
-    QMenu *menuAlgorithms_;
+    QMenu* menuFile_;
+    QMenu* menuGraph_;
+    QMenu* menuAdd_;
+    QMenu* menuEdit_;
+    QMenu* menuDelete_;
+    QMenu* menuAlgorithms_;
 
-    QMenuBar *menuBar_;
+    QMenuBar* menuBar_;
+    QToolBar* toolBar_;
 
-    QStackedWidget *centralWidget_;
+    QDockWidget* dockWidget_;
+    QStackedWidget* centralWidget_;
 
-    QWidget *entryWidget_;
-    QLineEdit   *ip_;
-    QLineEdit   *port_;
-    QPushButton *btnConnect_;
+    QWidget*     entryWidget_;
+    QLineEdit*   ip_;
+    QLineEdit*   port_;
+    QPushButton* btnConnect_;
 
-    QWidget *workingWidget_;
-    QTextEdit *txtConsole_;
+    Console* console_;
+    QWidget* workingWidget_;
 
     client::Client* client_;
-    gui::GraphInfo* graphInfo_;
-    gui::GraphEditingTool* graphEditingTool_;
+    GraphInfo* graphInfo_;
+    GraphEditingTool* graphEditingTool_;
 
-    gui::ElementPropertiesTable* elementPropertiesTable_;
+    ElementPropertiesTable* elementPropertiesTable_;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 

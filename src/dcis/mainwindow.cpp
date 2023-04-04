@@ -1,19 +1,18 @@
 #include "mainwindow.h"
 
+// App include
+
 // Qt includes
 #include <QDockWidget>
 #include <QRegularExpression>
 
-namespace dcis::ui {
+namespace dcis::gui {
 
 // public
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUi();
-
-  //  debugStream_ = std::make_unique<utils::DebugStream>(std::cout, txtConsole_);
-    client_ = new client::Client(this);
 }
 
 MainWindow::~MainWindow()
@@ -47,24 +46,67 @@ void MainWindow::setupUi()
     createMenu();
     createToolBar();
 
-    centralWidget_->setCurrentWidget(workingWidget_);
+    //setWorkspaceEnabled(false);
+    setWorkspaceEnabled(true);
 }
 
 void MainWindow::setWorkspaceEnabled(bool enable)
 {
     if (enable)
     {
+        toolBar_->show();
+        dockWidget_->show();
         centralWidget_->setCurrentWidget(workingWidget_);
     }
     else
     {
+        toolBar_->hide();
+        dockWidget_->hide();
         centralWidget_->setCurrentWidget(entryWidget_);
     }
 }
 
+Console* MainWindow::getConsole() const
+{
+    return console_;
+}
+
+void MainWindow::onUploadImage()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open Image"),
+        QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
+        tr("Image Files (*.png *.jpg *.bmp)"));
+
+    if (filePath.isEmpty())
+        return;
+
+    QImageReader imgReader(filePath);
+    if (!imgReader.canRead())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Cannot read file");
+        msgBox.exec();
+        return;
+    }
+
+    QImage img = imgReader.read();
+    graphEditingTool_->showImage(img);
+
+    client_->sendToServer(resource::Header(img.sizeInBytes(), resource::Command::Publish, resource::ResourceType::Image),
+                          resource::Body(img));
+}
+
 void MainWindow::onConnectBtnClicked()
 {
-    setWorkspaceEnabled(true);
+    if (client_->connectToServer(ip_->text(), port_->text()))
+    {
+        setWorkspaceEnabled(true);
+    }
+    else
+    {
+        QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
+    }
+
 }
 
 void MainWindow::createMenu()
@@ -116,17 +158,20 @@ void MainWindow::createMenu()
 void MainWindow::createToolBar()
 {
     // tool bar
-    QToolBar* pToolBar = addToolBar("Main ToolBar");
+    toolBar_ = addToolBar("Main ToolBar");
 
     QAction* actUploadImg = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload Image"));
-    pToolBar->addAction(actUploadImg);
+    toolBar_->addAction(actUploadImg);
 
     // conections
-    connect(actUploadImg, &QAction::triggered, graphEditingTool_, &gui::GraphEditingTool::onUploadImage);
+    connect(actUploadImg, &QAction::triggered, this, &MainWindow::onUploadImage);
 }
 
 void MainWindow::createEntryWidget()
 {
+    // client
+    client_ = new client::Client(this);
+
     // Entry widget
     entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
@@ -173,22 +218,14 @@ void MainWindow::createWorkingWiget()
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
 
-    // graph editing tool
-    graphEditingTool_ = new gui::GraphEditingTool();
+    // Graph editing tool
+    graphEditingTool_ = new GraphEditingTool();
 
-    // console widget
-    txtConsole_ = new QTextEdit(workingWidget_);
-    txtConsole_->setObjectName("consoleText");
-    QSizePolicy sizePolicyConsole(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    sizePolicyConsole.setHorizontalStretch(240);
-    sizePolicyConsole.setVerticalStretch(0);
-    sizePolicyConsole.setHeightForWidth(txtConsole_->sizePolicy().hasHeightForWidth());
-    txtConsole_->setSizePolicy(sizePolicyConsole);
-    txtConsole_->setMinimumSize(QSize(0, 240));
-    txtConsole_->setMaximumSize(QSize(16777215, 720));
-    txtConsole_->setReadOnly(true);
+    // Console
+    console_ = new Console();
+    utils::DebugStream::getInstance().setEditor(console_);
 
-    // layouts
+    // Layouts
     centralWidget_->addWidget(workingWidget_);
 
     QHBoxLayout* hLayoutWorking = new QHBoxLayout(workingWidget_);
@@ -203,22 +240,22 @@ void MainWindow::createWorkingWiget()
     vSplitter->setChildrenCollapsible(false);
 
     vSplitter->addWidget(graphEditingTool_);
-    vSplitter->addWidget(txtConsole_);
+    vSplitter->addWidget(console_);
     vSplitter->setSizes(QList<int>() << 700 << 200);
 }
 
 void MainWindow::createGraphInfoWidget()
 {
-    QDockWidget* dockWidget = new QDockWidget(this);
-    addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-    dockWidget->setObjectName("dockWidget");
-    dockWidget->setMinimumWidth(200);
-    dockWidget->setFeatures(QDockWidget::DockWidgetFloatable
+    dockWidget_ = new QDockWidget(this);
+    addDockWidget(Qt::RightDockWidgetArea, dockWidget_);
+    dockWidget_->setObjectName("dockWidget");
+    dockWidget_->setMinimumWidth(200);
+    dockWidget_->setFeatures(QDockWidget::DockWidgetFloatable
                             | QDockWidget::DockWidgetMovable
                             | QDockWidget::DockWidgetClosable);
 
     // graph info widget
-    graphInfo_ = new gui::GraphInfo(dockWidget);
+    graphInfo_ = new GraphInfo(dockWidget_);
     graphInfo_->setMinimumSize(200, 200);
 
     // properties table
@@ -232,11 +269,6 @@ void MainWindow::createGraphInfoWidget()
     connect(graphView_, &gui::GraphView::sigNodeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onNodeSelected);
     connect(graphView_, &gui::GraphView::sigEdgeSelected, elementPropertiesTable_, &gui::ElementPropertiesTable::onEdgeSelected);
     */
-
-    // layouts
-    QVBoxLayout* vLayoutDock = new QVBoxLayout();
-    dockWidget->setLayout(vLayoutDock);
-    vLayoutDock->addWidget(graphInfo_);
 }
 
 } // end namespace dcis::ui

@@ -3,8 +3,10 @@
 // App includes
 #include <graph/graph.h>
 #include <net/resource.h>
+#include <utils/debugstream.h>
 
 // Qt includes
+#include <QDir>
 
 // STL includes
 #include <iostream>
@@ -17,7 +19,7 @@ Server::Server(QObject* parent)
     : QTcpServer(parent)
 {
     nextBlockSize_ = 0;
-    run();
+    run(2323);
 }
 
 Server::~Server()
@@ -25,15 +27,17 @@ Server::~Server()
    // utils::log(utils::LogLevel::INFO, "End Server.");
 }
 
-void Server::run()
+bool Server::run(const int port)
 {
     if (listen(QHostAddress::Any, 2323))
     {
-       // utils::log(utils::LogLevel::INFO, "Start Server, listening port: ");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Starting server, listening to " + QString::number(port) + " port");
+        return true;
     }
     else
     {
-       // utils::log(utils::LogLevel::ERROR, "Couldn't start server.");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Filed to start server at " + QString::number(port) + " port");
+        return false;
     }
 }
 
@@ -41,6 +45,8 @@ void Server::run()
 void Server::onReadyRead()
 {
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from client: " + QString::number(socket->socketDescriptor()));
 
     QDataStream input(socket);
     input.setVersion(QDataStream::Qt_6_4);
@@ -76,12 +82,13 @@ void Server::onReadyRead()
     }
     else
     {
-   //     utils::log(utils::LogLevel::ERROR, "Datastream error.");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to read, bad package");
     }
 }
 
 void Server::onDisconected()
 {
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Server disconected");
     updateSockets();
 }
 
@@ -142,9 +149,6 @@ void sendjson(Server* server)
     resource::Header header(sizeof(body), resource::Command::Publish, resource::ResourceType::Json);
 
     server->publish(header, body);
-
-  //  utils::log(utils::LogLevel::INFO, "sending json to client");
-  //  utils::log(utils::LogLevel::INFO, jsonDoc.toJson().toStdString());
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -160,10 +164,8 @@ void Server::incomingConnection(qintptr socketDescriptor)
 
     sockets_[socketDescriptor] = socket;
 
-    std::string msg = "Client:" + std::to_string(socketDescriptor) + " connected.";
-   // utils::log(utils::LogLevel::ERROR, msg);
-
-    sendjson(this);
+    QString msg = "Client:" + QString::number(socketDescriptor) + " connected";
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Server::publish(resource::Header header, resource::Body body)
@@ -182,59 +184,84 @@ void Server::publish(resource::Header header, resource::Body body)
 
 void Server::handle(resource::Header header, resource::Body body)
 {
+    QString msg = "Success: data size is " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
+
     header_ = header;
     switch (header.resourceType)
     {
         case resource::ResourceType::Text:
         {
+            msg += "STRING";
+            handleString(body.data.toString());
+            break;
+        }
+
+        case resource::ResourceType::Json:
+        {
+            msg += "JSON";
             handleJson(body.data.toJsonDocument());
             break;
         }
 
+        case resource::ResourceType::Image:
+        {
+            msg += "IMAGE";
+            handleImage(body.data.value<QImage>());
+            break;
+        }
+
         default:
+        {
+            msg += "UNKNOWN";
             handleUnknown();
+        }
     }
+
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Server::handleUnknown()
 {
-   // utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+    // utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
 }
 
-void Server::handleString(const QString str)
+void Server::handleImage(const QImage& img)
 {
-   // utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
+    QDir dir;
+    QString WORKING_DIR = dir.absolutePath() + UPLOADED_IMAGES_PATH;
+    dir.mkdir(WORKING_DIR);
+    img.save(WORKING_DIR + "/test.png");
 
+    QString msg = "Image saved at " + WORKING_DIR;
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+}
+
+void Server::handleString(const QString& str)
+{
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-           // utils::log(utils::LogLevel::INFO, "Publishing string to others.");
             publish(header_, resource::Body(str));
             break;
         }
-
-     //   default:
-       //    utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+        default:
+            return;
     }
 
 }
 
-void Server::handleJson(const QJsonDocument json)
+void Server::handleJson(const QJsonDocument& json)
 {
-    //utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
-
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-           // utils::log(utils::LogLevel::INFO, "Publishing JSON to others.");
             publish(header_, resource::Body(json));
             break;
         }
-
-    //    default:
-            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+        default:
+            return;
     }
 }
 
@@ -244,8 +271,8 @@ void Server::updateSockets()
     {
         if (!(socket.value()->state() == QTcpSocket::ConnectedState))
         {
-            std::string msg = "Client:" + std::to_string(socket.key()) + " disconnected.";
-            //utils::log(utils::LogLevel::ERROR, msg);
+            QString msg = "Client:" + QString::number(socket.key()) + " disconnected.";
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
             socket.value()->close();
             socket.value()->deleteLater();

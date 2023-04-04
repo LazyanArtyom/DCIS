@@ -61,32 +61,6 @@ void ImageEditor::setImage(const QImage& img)
     viewFit();
 }
 
-void ImageEditor::onUploadImage()
-{
-    QString filePath = QFileDialog::getOpenFileName(this,
-        tr("Open Image"),
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
-        tr("Image Files (*.png *.jpg *.bmp)"));
-
-    if (filePath.isEmpty())
-        return;
-
-    QImageReader imgReader(filePath);
-    if (!imgReader.canRead())
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Cannot read file");
-        msgBox.exec();
-        return;
-    }
-
-    if (!scene()->sceneRect().isEmpty())
-        scene()->clear();
-
-    QImage img = imgReader.read();
-    setImage(img);
-}
-
 void ImageEditor::wheelEvent(QWheelEvent* event)
 {
     if (event->modifiers() == Qt::ControlModifier)

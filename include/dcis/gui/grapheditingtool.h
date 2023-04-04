@@ -17,10 +17,8 @@ class GraphEditingTool : public QWidget
 public:
     GraphEditingTool(QWidget* parent = nullptr);
 
+    void showImage(const QImage& img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
-
-public slots:
-    void onUploadImage();
 
 signals:
     void sigGraphChanged();

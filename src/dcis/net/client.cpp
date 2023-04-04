@@ -14,7 +14,6 @@ Client::Client(QObject* parent)
     : QObject(parent)
 {
      nextBlockSize_ = 0;
-     connectToServer();
 }
 
 Client::~Client()
@@ -25,91 +24,173 @@ Client::~Client()
 
 void Client::onDisconected()
 {
-    //utils::log(utils::LogLevel::INFO, "Server is disocnnected.");
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Server disconected.");
 }
 
 void Client::handle(resource::Header header, resource::Body body)
 {
+    QString msg = "Success: data size is " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
+
     header_ = header;
     switch (header.resourceType)
     {
         case resource::ResourceType::Text:
         {
+            msg += "STRING";
             handleString(body.data.toString());
             break;
         }
 
         case resource::ResourceType::Json:
         {
+            msg += "JSON";
             handleJson(body.data.toJsonDocument());
             break;
         }
 
+        case resource::ResourceType::Image:
+        {
+            msg += "IMAGE";
+            handleImage(body.data.value<QImage>());
+            break;
+        }
+
         default:
+        {
+            msg += "UNKNOWN";
             handleUnknown();
+        }
     }
+
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Client::handleUnknown()
 {
-    //utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
 }
 
-void Client::handleString(const QString str)
+void Client::handleImage(const QImage& img)
 {
-    //utils::log(utils::LogLevel::INFO, "String passed: ", str.toStdString());
-
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            //utils::log(utils::LogLevel::INFO, "Publishing string to others.");
+            sendToServer(header_, resource::Body(img));
+            break;
+        }
+        case resource::Command::ShowText:
+        {
+            emit sigShowImage(img);
+            break;
+        }
+        default:
+            return;
+    }
+}
+
+void Client::handleString(const QString& str)
+{
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
             sendToServer(header_, resource::Body(str));
             break;
         }
-
-       // default:
-            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+        case resource::Command::ShowText:
+        {
+            emit sigShowText(str);
+            break;
+        }
+        default:
+            return;
     }
 }
 
-void Client::handleJson(const QJsonDocument json)
+void Client::handleJson(const QJsonDocument& json)
 {
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            //utils::log(utils::LogLevel::INFO, "Json passed: ", json.toJson().toStdString());
+            sendToServer(header_, resource::Body(json));
             break;
         }
-
-      //  default:
-            //utils::log(utils::LogLevel::INFO, "Unknown command, doing nothing.");
+        case resource::Command::UpdateGraph:
+        {
+            emit sigUpdateGraph(json);
+            break;
+        }
+        default:
+            return;
     }
 }
 
-void Client::connectToServer()
+bool Client::connectToServer(const QString& ip, const QString& port)
 {
     socket_ = new QTcpSocket(this);
     connect(socket_, &QTcpSocket::readyRead, this, &Client::onReadyRead);
     connect(socket_, &QTcpSocket::disconnected, this, &Client::onDisconected);
 
-    socket_->connectToHost("127.0.0.1", 2323);
-    //utils::log(utils::LogLevel::INFO, "Client started.");
+    socket_->connectToHost(ip, port.toInt());
+
+    QString msg;
+    if(socket_->waitForConnected())
+    {
+        msg = "Succsesfully connected to " + ip + ":" + port;
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+        return true;
+    }
+    else
+    {
+        msg = "Error to connected to " + ip + ":" + port;
+        utils::DebugStream::getInstance().log(utils::LogLevel::Error, msg);
+
+        socket_->close();
+        socket_->deleteLater();
+        return false;
+    }
 }
 
-void Client::sendToServer(resource::Header header, resource::Body body)
+bool Client::sendToServer(resource::Header header, resource::Body body)
 {
+    QString msg = "Trying to send to server " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
     data_.clear();
     QDataStream output(&data_, QIODevice::WriteOnly);
     output.setVersion(QDataStream::Qt_6_4);
 
     output << header << body;
     socket_->write(data_);
+
+    if(socket_->state() == QAbstractSocket::ConnectedState)
+    {
+        if (socket_->waitForBytesWritten())
+        {
+            msg = "Succsesfully sent to server";
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+            return true;
+        }
+        else
+        {
+            msg = "Error to send to server";
+            utils::DebugStream::getInstance().log(utils::LogLevel::Error, msg);
+            return false;
+        }
+    }
+    else
+    {
+        msg = "Error to send to server. Connection issue.";
+        utils::DebugStream::getInstance().log(utils::LogLevel::Error, msg);
+        return false;
+    }
 }
 
 void Client::onReadyRead()
 {
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from server ...");
+
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
 
     QDataStream input(socket);
@@ -144,11 +225,10 @@ void Client::onReadyRead()
             handle(header, body);
             break;
         }
-
     }
     else
     {
-        //utils::log(utils::LogLevel::ERROR, "Datastream error.");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to read, bad package.");
     }
 }
 

@@ -15,12 +15,19 @@ namespace dcis::common::resource {
 enum class ResourceType : uint32_t
 {
     Text = 0,
+    Image,
     Json
 };
 
 enum class Command : uint32_t
 {
-    Publish = 0
+    // Server commands
+    Publish = 0,
+
+    // Client commands
+    ShowText,
+    ShowImage,
+    UpdateGraph,
 };
 
 // Message Header is sent at start of all messages. The template allows us
@@ -47,6 +54,17 @@ struct Header
         stream >> header.resourceType;
 
         return stream;
+    }
+
+    QString commandToString()
+    {
+        switch(command) {
+            case Command::Publish:
+                return "Publish";
+
+            default:
+                return "Unknown command";
+        }
     }
 
     int bodySize;

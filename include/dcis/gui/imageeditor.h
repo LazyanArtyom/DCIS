@@ -23,7 +23,6 @@ public:
     void setImage(const QImage& img);
 
 public slots:
-    void onUploadImage();
 
 protected:
     void wheelEvent(QWheelEvent* event) override;

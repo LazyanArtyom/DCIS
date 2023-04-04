@@ -23,15 +23,21 @@ public:
     void handle(resource::Header header, resource::Body body);
 
     void handleUnknown();
-    void handleString(const QString str);
-    void handleJson(const QJsonDocument json);
+    void handleImage(const QImage& imag);
+    void handleString(const QString& str);
+    void handleJson(const QJsonDocument& json);
 
-    void connectToServer();
-    void sendToServer(resource::Header header, resource::Body body);
+    bool connectToServer(const QString& ip, const QString& port);
+    bool sendToServer(resource::Header header, resource::Body body);
 
 public slots:
     void onReadyRead();
     void onDisconected();
+
+signals:
+    void sigShowText(const QString& str);
+    void sigShowImage(const QImage& img);
+    void sigUpdateGraph(const QJsonDocument& json);
 
 private:
     QByteArray data_;
