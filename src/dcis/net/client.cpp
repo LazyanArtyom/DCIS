@@ -5,7 +5,13 @@
 #include <utils/debugstream.h>
 
 // STL includes
+
+// QT includes
+#include <QFile>
 #include <QDebug>
+#include <QFileInfo>
+#include <QFileDialog>
+#include <QStandardPaths>
 
 
 namespace dcis::client {
@@ -13,7 +19,6 @@ namespace dcis::client {
 Client::Client(QObject* parent)
     : QObject(parent)
 {
-     nextBlockSize_ = 0;
 }
 
 Client::~Client()
@@ -27,50 +32,46 @@ void Client::onDisconected()
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Server disconected.");
 }
 
-void Client::handle(resource::Header header, resource::Body body)
+void Client::handle(const resource::Header& header, const QByteArray& body)
 {
-    QString msg = "Success: data size is " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
+    QString msg = "Success: data size is " + QString::number(body.size() + 128) + " bytes, Command: " + header.commandToString() + " ResourceType: " + header.typeToString();
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
     header_ = header;
     switch (header.resourceType)
     {
         case resource::ResourceType::Text:
         {
-            msg += "STRING";
-            handleString(body.data.toString());
+            handleString(QString(body));
             break;
         }
 
         case resource::ResourceType::Json:
         {
-            msg += "JSON";
-            handleJson(body.data.toJsonDocument());
+            handleJson(QJsonDocument::fromJson(body));
             break;
         }
 
-        case resource::ResourceType::Image:
+        case resource::ResourceType::Attachment:
         {
-            msg += "IMAGE";
-            handleImage(body.data.value<QImage>());
+            handleAttachment(body);
             break;
         }
 
         default:
         {
-            msg += "UNKNOWN";
             handleUnknown();
         }
     }
-
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Client::handleUnknown()
 {
 }
 
-void Client::handleImage(const QImage& img)
+void Client::handleAttachment(const QByteArray& data)
 {
+    /*
     switch (header_.command)
     {
         case resource::Command::Publish:
@@ -85,11 +86,12 @@ void Client::handleImage(const QImage& img)
         }
         default:
             return;
-    }
+    }*/
 }
 
 void Client::handleString(const QString& str)
 {
+    /*
     switch (header_.command)
     {
         case resource::Command::Publish:
@@ -104,11 +106,12 @@ void Client::handleString(const QString& str)
         }
         default:
             return;
-    }
+    }*/
 }
 
 void Client::handleJson(const QJsonDocument& json)
 {
+    /*
     switch (header_.command)
     {
         case resource::Command::Publish:
@@ -123,7 +126,7 @@ void Client::handleJson(const QJsonDocument& json)
         }
         default:
             return;
-    }
+    }*/
 }
 
 bool Client::connectToServer(const QString& ip, const QString& port)
@@ -152,83 +155,151 @@ bool Client::connectToServer(const QString& ip, const QString& port)
     }
 }
 
-bool Client::sendToServer(resource::Header header, resource::Body body)
+bool Client::sendToServer(const QByteArray& data)
 {
-    QString msg = "Trying to send to server " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+    QDataStream socketStream(socket_);
+    socketStream.setVersion(resource::DATASTREAM_VERSION);
 
-    data_.clear();
-    QDataStream output(&data_, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_4);
-
-    output << header << body;
-    socket_->write(data_);
+    socketStream << data;
 
     if(socket_->state() == QAbstractSocket::ConnectedState)
     {
         if (socket_->waitForBytesWritten())
         {
-            msg = "Succsesfully sent to server";
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Succsesfully sent to server" + QString::number(data.size()) + " bytes");
             return true;
         }
         else
         {
-            msg = "Error to send to server";
-            utils::DebugStream::getInstance().log(utils::LogLevel::Error, msg);
+            utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to send to server");
             return false;
         }
     }
-    else
+
+    return true;
+}
+
+bool Client::getAttachment()
+{
+    /*
+    QByteArray buffer;
+
+    QDataStream socketStream(socket_);
+    socketStream.setVersion(QDataStream::Qt_5_15);
+
+    socketStream.startTransaction();
+    socketStream >> buffer;
+
+    if(!socketStream.commitTransaction())
     {
-        msg = "Error to send to server. Connection issue.";
-        utils::DebugStream::getInstance().log(utils::LogLevel::Error, msg);
+        QString message = QString("%1 :: Waiting for more data to come..").arg(socket_->socketDescriptor());
+        //emit newMessage(message);
         return false;
     }
+
+    QString header = buffer.mid(0,128);
+    QString fileType = header.split(",")[0].split(":")[1];
+
+    buffer = buffer.mid(128);
+
+    if(fileType=="attachment"){
+        QString fileName = header.split(",")[1].split(":")[1];
+        QString ext = fileName.split(".")[1];
+        QString size = header.split(",")[2].split(":")[1].split(";")[0];
+
+      //  if (QMessageBox::Yes == QMessageBox::question(this, "QTCPServer", QString("You are receiving an attachment from sd:%1 of size: %2 bytes, called %3. Do you want to accept it?").arg(socket->socketDescriptor()).arg(size).arg(fileName)))
+        if (true)
+        {
+            QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)+"/"+fileName, QString("File (*.%1)").arg(ext));
+
+            QFile file(filePath);
+            if(file.open(QIODevice::WriteOnly)){
+                file.write(buffer);
+                QString message = QString("INFO :: Attachment from sd:%1 successfully stored on disk under the path %2").arg(socket->socketDescriptor()).arg(QString(filePath));
+                //emit newMessage(message);
+            }else {}
+                //QMessageBox::critical(this,"QTCPServer", "An error occurred while trying to write the attachment.");
+        }else{
+            QString message = QString("INFO :: Attachment from sd:%1 discarded").arg(socket->socketDescriptor());
+            //emit newMessage(message);
+        }
+    }else if(fileType=="message"){
+        QString message = QString("%1 :: %2").arg(socket->socketDescriptor()).arg(QString::fromStdString(buffer.toStdString()));
+        //emit newMessage(message);
+    }*/
+return true;
+}
+
+bool Client::senAttachment()
+{
+  if (socket_) {
+    if (socket_->isOpen()) {
+      QString filePath = QFileDialog::getOpenFileName(
+          new QWidget(), ("Select an attachment"),
+          QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+          ("File (*.json *.txt *.png *.jpg *.jpeg)"));
+/*
+      if (filePath.isEmpty()) {
+        QMessageBox::critical(this, "QTCPClient",
+                              "You haven't selected any attachment!");
+        return;
+      }*/
+
+      QFile m_file(filePath);
+      if (m_file.open(QIODevice::ReadOnly)) {
+
+        QFileInfo fileInfo(m_file.fileName());
+        QString fileName(fileInfo.fileName());
+
+        QDataStream socketStream(socket_);
+        socketStream.setVersion(QDataStream::Qt_5_15);
+
+        QByteArray header;
+        header.prepend(QString("fileType:attachment,fileName:%1,fileSize:%2;")
+                           .arg(fileName)
+                           .arg(m_file.size())
+                           .toUtf8());
+        header.resize(128);
+
+        QByteArray byteArray = m_file.readAll();
+        byteArray.prepend(header);
+
+        socketStream.setVersion(QDataStream::Qt_5_15);
+        socketStream << byteArray;
+      } else {}
+        //QMessageBox::critical(this, "QTCPClient",
+        //                      "Attachment is not readable!");
+    } else {}
+      //QMessageBox::critical(this, "QTCPClient",
+      //                      "Socket doesn't seem to be opened");
+  } else {}
+    //QMessageBox::critical(this, "QTCPClient", "Not connected");
+  return true;
 }
 
 void Client::onReadyRead()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from server ...");
-
+    QByteArray buffer;
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
 
-    QDataStream input(socket);
-    input.setVersion(QDataStream::Qt_6_4);
+    QDataStream socketStream(socket);
+    socketStream.setVersion(QDataStream::Qt_6_4);
+    socketStream.startTransaction();
+    socketStream >> buffer;
 
-    resource::Header header;
-    resource::Body body;
-
-    if (input.status() == QDataStream::Ok)
+    if (socketStream.commitTransaction())
     {
-        while (true)
-        {
-            if (nextBlockSize_ == 0)
-            {
-                if (socket->bytesAvailable() < (qint64)sizeof(resource::Header))
-                {
-                    break;
-                }
-                input >> header;
-                nextBlockSize_ = header.bodySize;
-            }
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Buffer size: : " + QString::number(buffer.size()) + " bytes");
 
-            if (socket->bytesAvailable() < nextBlockSize_)
-            {
-                break;
-            }
-
-            input >> body;
-            graph::Graph gr = graph::Graph::fromJSON(body.data.toJsonDocument());
-
-            nextBlockSize_ = 0;
-            handle(header, body);
-            break;
-        }
+        QByteArray headerData = buffer.mid(0, resource::Header::HEADER_SIZE);
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        resource::Header header;
+        ds >> header;
+        handle(header, buffer.mid(resource::Header::HEADER_SIZE));
     }
     else
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to read, bad package.");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from server...");
     }
 }
 

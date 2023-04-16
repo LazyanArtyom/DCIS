@@ -46,8 +46,8 @@ void MainWindow::setupUi()
     createMenu();
     createToolBar();
 
-    //setWorkspaceEnabled(false);
-    setWorkspaceEnabled(true);
+    setWorkspaceEnabled(false);
+    onConnectBtnClicked();
 }
 
 void MainWindow::setWorkspaceEnabled(bool enable)
@@ -71,33 +71,63 @@ Console* MainWindow::getConsole() const
     return console_;
 }
 
-void MainWindow::onUploadImage()
+void MainWindow::onUpload()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Open Image"),
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation),
-        tr("Image Files (*.png *.jpg *.bmp)"));
+    QString filePath = QFileDialog::getOpenFileName(
+          this, ("Select an attachment"),
+          QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+          ("File (*.json *.txt *.png *.jpg *.jpeg *.mp4)"));
 
     if (filePath.isEmpty())
-        return;
-
-    QImageReader imgReader(filePath);
-    if (!imgReader.canRead())
     {
-        QMessageBox msgBox;
-        msgBox.setText("Cannot read file");
-        msgBox.exec();
+        utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "You haven't selected any attachment!");
         return;
     }
 
-    QImage img = imgReader.read();
-    graphEditingTool_->showImage(img);
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QFileInfo fileInfo(file.fileName());
+        QString fileName(fileInfo.fileName());
 
-    client_->sendToServer(resource::Header(img.sizeInBytes(), resource::Command::Publish, resource::ResourceType::Image),
-                          resource::Body(img));
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Attachment;
+        header.command = resource::Command::Publish;
+        header.fileName = fileName;
+
+        QImageReader imgReader(filePath);
+        if (imgReader.canRead())
+        {
+            QImage img = imgReader.read();
+            graphEditingTool_->showImage(img);
+        }
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        QByteArray data = file.readAll();
+        header.bodySize = data.size();
+
+        data.prepend(headerData);
+
+        client_->sendToServer(data);
+    }
+    else
+    {
+        utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "Can't open file!");
+        return;
+    }
 }
 
 void MainWindow::onConnectBtnClicked()
 {
+    ip_->setText("127.0.0.1");
+    port_->setText("2323");
+
     if (client_->connectToServer(ip_->text(), port_->text()))
     {
         setWorkspaceEnabled(true);
@@ -106,7 +136,6 @@ void MainWindow::onConnectBtnClicked()
     {
         QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
     }
-
 }
 
 void MainWindow::createMenu()
@@ -160,11 +189,11 @@ void MainWindow::createToolBar()
     // tool bar
     toolBar_ = addToolBar("Main ToolBar");
 
-    QAction* actUploadImg = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload Image"));
-    toolBar_->addAction(actUploadImg);
+    QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
+    toolBar_->addAction(actUpload);
 
     // conections
-    connect(actUploadImg, &QAction::triggered, this, &MainWindow::onUploadImage);
+    connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
 }
 
 void MainWindow::createEntryWidget()
@@ -172,7 +201,7 @@ void MainWindow::createEntryWidget()
     // client
     client_ = new client::Client(this);
 
-    // Entry widget
+    // entry widget
     entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
 
@@ -190,10 +219,10 @@ void MainWindow::createEntryWidget()
     btnConnect_ = new QPushButton(tr("Connect"), entryWidget_);
     btnConnect_->setObjectName("btnConnect");
 
-    // Connections
+    // connections
     connect(btnConnect_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
 
-    // Layouts
+    // layouts
     centralWidget_->addWidget(entryWidget_);
 
     QHBoxLayout* horizontalLayoutEntry_ = new QHBoxLayout(entryWidget_);
@@ -214,18 +243,18 @@ void MainWindow::createEntryWidget()
 
 void MainWindow::createWorkingWiget()
 {
-    // Working widget
+    // working widget
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
 
-    // Graph editing tool
+    // graph editing tool
     graphEditingTool_ = new GraphEditingTool();
 
-    // Console
+    // console
     console_ = new Console();
     utils::DebugStream::getInstance().setEditor(console_);
 
-    // Layouts
+    // layouts
     centralWidget_->addWidget(workingWidget_);
 
     QHBoxLayout* hLayoutWorking = new QHBoxLayout(workingWidget_);

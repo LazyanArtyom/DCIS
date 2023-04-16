@@ -1,6 +1,7 @@
 #ifndef DCIS_COMMON_UTILS_DEBUGSTREAM_H_
 #define DCIS_COMMON_UTILS_DEBUGSTREAM_H_
 
+#include <QDebug>
 // App includes
 
 // Qt includes
@@ -31,7 +32,7 @@ public:
 
     void log(LogLevel level, const QString& text)
     {
-        if (level >= logLevel_)
+        if ( level <= logLevel_ )
         {
             logWindowWidget_->append("=> " + text);
         }

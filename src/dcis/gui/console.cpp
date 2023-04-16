@@ -17,10 +17,4 @@ Console::Console(QWidget* parent)
     setReadOnly(true);
 }
 
-void Console::log(const QString& txt)
-{
-    append("=> " + txt);
-}
-
-
 } // end namespace dcis::gui

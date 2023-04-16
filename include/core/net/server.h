@@ -28,11 +28,11 @@ public:
     bool run(const int port);
     void incomingConnection(qintptr socketDescriptor) override;
 
-    void publish(resource::Header header, resource::Body body);
-    void handle(resource::Header header, resource::Body body);
+    bool publish(const QByteArray& data);
+    void handle(const resource::Header& header, const QByteArray& body);
 
     void handleUnknown();
-    void handleImage(const QImage& str);
+    void handleAttachment(const QByteArray& data);
     void handleString(const QString& str);
     void handleJson(const QJsonDocument& json);
 

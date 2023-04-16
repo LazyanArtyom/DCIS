@@ -11,20 +11,23 @@
 
 namespace dcis::common::resource {
 
+// data version to sent packages
+const QDataStream::Version DATASTREAM_VERSION = QDataStream::Qt_6_4;
+
 // Message
 enum class ResourceType : uint32_t
 {
     Text = 0,
-    Image,
+    Attachment,
     Json
 };
 
 enum class Command : uint32_t
 {
-    // Server commands
+    // server commands
     Publish = 0,
 
-    // Client commands
+    // client commands
     ShowText,
     ShowImage,
     UpdateGraph,
@@ -35,12 +38,13 @@ enum class Command : uint32_t
 struct Header
 {
     Header() {}
-    Header(int size, Command cmd, ResourceType type)
-        : bodySize{size}, command{cmd}, resourceType{type} {}
+    Header(int size, QString name, Command cmd, ResourceType type)
+        : bodySize{size}, fileName{name}, command{cmd}, resourceType{type} {}
 
     friend QDataStream& operator << (QDataStream& stream, const Header &header)
     {
         stream << header.bodySize;
+        stream << header.fileName;
         stream << header.command;
         stream << header.resourceType;
 
@@ -50,13 +54,40 @@ struct Header
     friend QDataStream& operator >> (QDataStream& stream, Header& header)
     {
         stream >> header.bodySize;
+        stream >> header.fileName;
         stream >> header.command;
         stream >> header.resourceType;
 
         return stream;
     }
 
-    QString commandToString()
+    const QString typeToString() const
+    {
+        switch (resourceType)
+        {
+            case resource::ResourceType::Text:
+            {
+                return "STRING";
+            }
+
+            case resource::ResourceType::Json:
+            {
+                return "JSON";
+            }
+
+        case resource::ResourceType::Attachment:
+            {
+                return "ATTACHMENT";
+            }
+
+            default:
+            {
+                return "UNKNOWN";
+            }
+        }
+    }
+
+    const QString commandToString() const
     {
         switch(command) {
             case Command::Publish:
@@ -68,29 +99,15 @@ struct Header
     }
 
     int bodySize;
+    QString fileName;
     Command command;
     ResourceType resourceType;
-};
 
-struct Body
-{
-    Body() {}
-    Body(QVariant d) : data{d} {}
-
-    friend QDataStream& operator << (QDataStream& stream, const Body& body)
-    {
-        stream << body.data;
-        return stream;
-    }
-
-    friend QDataStream& operator >> (QDataStream& stream, Body& body)
-    {
-        stream >> body.data;
-        return stream;
-    }
-
-    QVariant data;
+    static const int HEADER_SIZE = 128;
 };
 
 } // end namespace dcis::common::resource
+
+//Q_DECLARE_METATYPE(dcis::common::resource::Header)
+
 #endif // DCIS_COMMON_RESOURCE_RESOURCE_H_

@@ -5,7 +5,6 @@
 
 // App includes
 #include <net/server.h>
-#include <utils/debugstream.h>
 
 // STL includes
 #include <memory>
@@ -29,9 +28,9 @@ public:
 public slots:
 
 private:
-    Server     *server_;
-    QTextEdit  *txtConsole_;
-    QTabWidget *centralTabWidget_;
+    Server*     server_;
+    QTextEdit*  txtConsole_;
+    QTabWidget* centralTabWidget_;
 
     //std::unique_ptr<utils::DebugStream> debugStream_;
 };

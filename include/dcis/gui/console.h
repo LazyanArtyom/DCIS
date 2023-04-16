@@ -14,9 +14,6 @@ class Console : public QTextEdit
 {
 public:
     Console(QWidget* parent = nullptr);
-
-    void log(const QString& txt);
-
 };
 
 } // end namespace dcis::gui

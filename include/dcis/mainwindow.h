@@ -47,7 +47,7 @@ public:
     Console* getConsole() const;
 
 public slots:
-    void onUploadImage();
+    void onUpload();
     void onConnectBtnClicked();
 
 private:

@@ -20,15 +20,19 @@ public:
     Client(QObject* parent = nullptr);
     ~Client();
 
-    void handle(resource::Header header, resource::Body body);
+    void handle(const resource::Header& header, const QByteArray& body);
 
     void handleUnknown();
-    void handleImage(const QImage& imag);
+    void handleAttachment(const QByteArray& data);
     void handleString(const QString& str);
     void handleJson(const QJsonDocument& json);
 
     bool connectToServer(const QString& ip, const QString& port);
-    bool sendToServer(resource::Header header, resource::Body body);
+    bool sendToServer(const QByteArray& data);
+
+
+    bool getAttachment();
+    bool senAttachment();
 
 public slots:
     void onReadyRead();
@@ -40,9 +44,7 @@ signals:
     void sigUpdateGraph(const QJsonDocument& json);
 
 private:
-    QByteArray data_;
     QTcpSocket* socket_;
-    quint16 nextBlockSize_;
     resource::Header header_;
 };
 

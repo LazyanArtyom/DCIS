@@ -19,7 +19,6 @@ Server::Server(QObject* parent)
     : QTcpServer(parent)
 {
     nextBlockSize_ = 0;
-    run(2323);
 }
 
 Server::~Server()
@@ -29,7 +28,7 @@ Server::~Server()
 
 bool Server::run(const int port)
 {
-    if (listen(QHostAddress::Any, 2323))
+    if (listen(QHostAddress::Any, port))
     {
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Starting server, listening to " + QString::number(port) + " port");
         return true;
@@ -44,45 +43,31 @@ bool Server::run(const int port)
 // slots
 void Server::onReadyRead()
 {
+    QByteArray buffer;
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
 
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from client: " + QString::number(socket->socketDescriptor()));
+    currentSocket_ = socket->socketDescriptor();
 
-    QDataStream input(socket);
-    input.setVersion(QDataStream::Qt_6_4);
+    QDataStream socketStream(socket);
+    socketStream.setVersion(QDataStream::Qt_6_4);
+    socketStream.startTransaction();
+    socketStream >> buffer;
 
-    if (input.status() == QDataStream::Ok)
+    if (socketStream.commitTransaction())
     {
-        resource::Header head;
-        while (true)
-        {
-            if (nextBlockSize_ == 0)
-            {
-                if (socket->bytesAvailable() < (qint64)sizeof(resource::Header))
-                {
-                    break;
-                }
-                input >> head;
-                nextBlockSize_ = head.bodySize;
-            }
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Buffer size: : " + QString::number(buffer.size()) + " bytes");
 
-            if (socket->bytesAvailable() < nextBlockSize_)
-            {
-                break;
-            }
-
-            resource::Body body;
-            input >> body;
-
-            nextBlockSize_ = 0;
-            handle(head, body);
-            break;
-        }
-
+        QByteArray headerData = buffer.mid(0, resource::Header::HEADER_SIZE);
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        resource::Header header;
+        ds >> header;
+        handle(header, buffer.mid(resource::Header::HEADER_SIZE));
     }
     else
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to read, bad package");
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from client: " +
+                                              QString::number(socket->socketDescriptor()) +
+                                              "  Bytes recived: " + QString::number(socket->bytesAvailable()) + " bytes");
     }
 }
 
@@ -145,10 +130,9 @@ void sendjson(Server* server)
     QJsonDocument jsonDoc;
     jsonDoc.setObject(jsonObj);
 
-    resource::Body body(jsonDoc);
-    resource::Header header(sizeof(body), resource::Command::Publish, resource::ResourceType::Json);
+    //resource::Header header(sizeof(body), resource::Command::Publish, resource::ResourceType::Json);
 
-    server->publish(header, body);
+    //server->publish(header, body);
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
@@ -168,56 +152,69 @@ void Server::incomingConnection(qintptr socketDescriptor)
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
-void Server::publish(resource::Header header, resource::Body body)
+bool Server::publish(const QByteArray& data)
 {
-    data_.clear();
-    QDataStream output(&data_, QIODevice::WriteOnly);
-    output.setVersion(QDataStream::Qt_6_4);
-
-    output << header << body;
-
-    for (auto &socket : sockets_)
+    for (auto& socket : sockets_)
     {
-        socket->write(data_);
+        if (socket->socketDescriptor() == currentSocket_)
+        {
+            continue;
+        }
+
+        QDataStream socketStream(socket);
+        socketStream.setVersion(resource::DATASTREAM_VERSION);
+
+        socketStream << data;
+
+        if(socket->state() == QAbstractSocket::ConnectedState)
+        {
+            if (socket->waitForBytesWritten())
+            {
+                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Succsesfully sent to server" + QString::number(data.size()) + " bytes");
+                continue;
+            }
+            else
+            {
+                utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to send to server");
+                continue;
+            }
+        }
     }
+
+    return true;
 }
 
-void Server::handle(resource::Header header, resource::Body body)
+void Server::handle(const resource::Header& header, const QByteArray& body)
 {
-    QString msg = "Success: data size is " + QString::number(header.bodySize) + " bytes, Command: " + header_.commandToString() + "DataType: ";
+    QString msg = "Success: data size is " + QString::number(body.size() + 128) + " bytes, Command: " + header.commandToString() + " ResourceType: " + header.typeToString();
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
     header_ = header;
     switch (header.resourceType)
     {
         case resource::ResourceType::Text:
         {
-            msg += "STRING";
-            handleString(body.data.toString());
+            handleString(QString(body));
             break;
         }
 
         case resource::ResourceType::Json:
         {
-            msg += "JSON";
-            handleJson(body.data.toJsonDocument());
+            handleJson(QJsonDocument::fromJson(body));
             break;
         }
 
-        case resource::ResourceType::Image:
+        case resource::ResourceType::Attachment:
         {
-            msg += "IMAGE";
-            handleImage(body.data.value<QImage>());
+            handleAttachment(body);
             break;
         }
 
         default:
         {
-            msg += "UNKNOWN";
             handleUnknown();
         }
     }
-
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Server::handleUnknown()
@@ -225,19 +222,25 @@ void Server::handleUnknown()
     // utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
 }
 
-void Server::handleImage(const QImage& img)
+void Server::handleAttachment(const QByteArray& data)
 {
     QDir dir;
     QString WORKING_DIR = dir.absolutePath() + UPLOADED_IMAGES_PATH;
     dir.mkdir(WORKING_DIR);
-    img.save(WORKING_DIR + "/test.png");
+    QFile file(WORKING_DIR + "/" + header_.fileName);
+    if(file.open(QIODevice::WriteOnly))
+    {
+        file.write(data);
+    }
 
-    QString msg = "Image saved at " + WORKING_DIR;
+    QString msg = "File saved at " + WORKING_DIR;
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 }
 
 void Server::handleString(const QString& str)
 {
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived message: " + str);
+    /*
     switch (header_.command)
     {
         case resource::Command::Publish:
@@ -248,11 +251,13 @@ void Server::handleString(const QString& str)
         default:
             return;
     }
-
+    */
 }
 
 void Server::handleJson(const QJsonDocument& json)
 {
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived Json");
+    /*
     switch (header_.command)
     {
         case resource::Command::Publish:
@@ -263,6 +268,7 @@ void Server::handleJson(const QJsonDocument& json)
         default:
             return;
     }
+    */
 }
 
 void Server::updateSockets()
