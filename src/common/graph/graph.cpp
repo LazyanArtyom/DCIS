@@ -277,12 +277,12 @@ const EdgeSetType& Graph::getEdges() const
     return edges_;
 }
 
-Graph Graph::fromJSON(QJsonDocument jsonDoc)
+Graph* Graph::fromJSON(QJsonDocument jsonDoc)
 {
     QJsonObject json = jsonDoc.object();
 
     bool isDirected = json.value("directed").toBool();
-    Graph graph(isDirected);
+    Graph* graph = new Graph(isDirected);
 
     foreach (const QJsonValue& node, json.value("nodes").toArray())
     {
@@ -290,7 +290,7 @@ Graph Graph::fromJSON(QJsonDocument jsonDoc)
         double x = node.toObject().value("x").toDouble();
         double y = node.toObject().value("y").toDouble();
 
-        graph.addNode(Node(name, QPointF(x, y)));
+        graph->addNode(Node(name, QPointF(x, y)));
     }
 
     foreach (const QJsonValue& edge, json.value("edges").toArray())
@@ -298,22 +298,22 @@ Graph Graph::fromJSON(QJsonDocument jsonDoc)
         std::string start = edge.toObject().value("start").toString().toStdString();
         std::string end = edge.toObject().value("end").toString().toStdString();
 
-        graph.setEdge(start, end);
+        graph->setEdge(start, end);
     }
 
     return graph;
 }
 
-QJsonDocument Graph::toJSON(const Graph& graph)
+QJsonDocument Graph::toJSON(Graph* graph)
 {
     QJsonObject jsonObj;
 
     //insert single datas first
-    jsonObj.insert("directed", graph.isDirected());
+    jsonObj.insert("directed", graph->isDirected());
 
     // fill nodes
     QJsonArray nodes;
-    for (const auto& node : graph.getNodes())
+    for (const auto& node : graph->getNodes())
     {
         QJsonObject jsonNode;
         jsonNode.insert("name", node->getName().c_str());
@@ -327,7 +327,7 @@ QJsonDocument Graph::toJSON(const Graph& graph)
 
     // fill edges
     QJsonArray edges;
-    for (const auto& edge : graph.getEdges())
+    for (const auto& edge : graph->getEdges())
     {
         QJsonObject jsonEdge;
         jsonEdge.insert("start", edge.first->getName().c_str());

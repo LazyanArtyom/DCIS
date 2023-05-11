@@ -48,7 +48,10 @@ public:
 
 public slots:
     void onUpload();
+    void onSetEditorFocus();
     void onConnectBtnClicked();
+    void onGraphChanged();
+    void onUpdateGraph(const QJsonDocument& json);
 
 private:
     void createMenu();

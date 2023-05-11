@@ -24,6 +24,9 @@ void GraphView::setScene(GraphScene* scene)
 {
     connect(scene, &GraphScene::sigGraphChanged, this, &GraphView::onRedraw);
     connect(scene, &GraphScene::sigNeedRedraw, this, &GraphView::onRedraw);
+    connect(scene, &GraphScene::sigItemMoved, this, [this] {
+        emit sigNodeMoved();
+    });
     QGraphicsView::setScene(scene);
 }
 
@@ -35,6 +38,7 @@ void GraphView::setSceneSize(int width, int height)
 void GraphView::onRedraw()
 {
     viewport()->update();
+
 }
 
 void GraphView::wheelEvent(QWheelEvent* event)

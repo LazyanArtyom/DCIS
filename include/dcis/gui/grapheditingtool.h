@@ -15,12 +15,27 @@ class GraphEditingTool : public QWidget
 {
     Q_OBJECT
 public:
+    struct SizeInfo
+    {
+        QSizeF imageSize;
+        QSizeF imageSizeZoomed;
+        QSizeF imageViewportSize;
+        QSizeF graphViewportSize;
+    };
+
     GraphEditingTool(QWidget* parent = nullptr);
 
     void showImage(const QImage& img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
+    graph::Graph* getGraph() const;
+    void updateGraph(graph::Graph* graph);
+
+    void setFocus(bool toImageEditor);
+    SizeInfo getSizeInfo() const;
+
 signals:
+    void sigNodeMoved();
     void sigGraphChanged();
 
 protected:

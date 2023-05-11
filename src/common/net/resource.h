@@ -92,7 +92,12 @@ struct Header
         switch(command) {
             case Command::Publish:
                 return "Publish";
-
+            case Command::UpdateGraph:
+                return "UpdateGraph";
+            case Command::ShowImage:
+                return "ShowImage";
+            case Command::ShowText:
+                return "ShowText";
             default:
                 return "Unknown command";
         }

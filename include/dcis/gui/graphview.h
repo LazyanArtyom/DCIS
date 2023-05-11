@@ -38,6 +38,7 @@ signals:
     void sigNodeIsolated(std::string name);
     void sigNodeAdded(QPointF pos, bool autoNaming);
     void sigNodeSelected(std::string name, QPointF pos);
+    void sigNodeMoved();
 
     void sigEdgeAdded();
     void sigEdgeAddedFrom(std::string name);
@@ -46,7 +47,6 @@ signals:
     void sigEdgeSelected(std::string uname, std::string vname);
 
     void sigUnSelected();
-    void sigNeedRefresh();
 
 private:
     bool isMoving_ = false;

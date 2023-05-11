@@ -129,6 +129,7 @@ void NodeItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
     getNode()->setEuclidePos(pos());
 
     emit gscene_->sigNeedRedraw();
+    emit gscene_->sigItemMoved();
     emit sigPositionChanged();
 
     QGraphicsItem::mouseMoveEvent(event);

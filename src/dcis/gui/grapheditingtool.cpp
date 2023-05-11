@@ -22,6 +22,10 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
 
         //txtConsole_->setText(txt);
     });
+    connect(graphView_, &gui::GraphView::sigNodeMoved, this , [this]() {
+
+        emit sigNodeMoved();
+    });
     connect(graphView_, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
@@ -89,7 +93,7 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
     vMainLayout->setContentsMargins(0, 0, 0, 0);
     vMainLayout->setSpacing(0);
 
-    setLayout(vMainLayout);
+    setLayout(vMainLayout); 
 
     vMainLayout->addWidget(imageEditor_);
 }
@@ -123,6 +127,58 @@ void GraphEditingTool::showNewNodeDialog(QPointF pos)
             emit sigGraphChanged();
         }
     }
+}
+
+graph::Graph* GraphEditingTool::getGraph() const
+{
+    return graph_;
+}
+
+void GraphEditingTool::updateGraph(graph::Graph* graph)
+{
+    graph_ = graph;
+    graphScene_->setGraph(graph);
+}
+
+void GraphEditingTool::setFocus(bool toImageEditor)
+{
+    if (toImageEditor)
+    {
+        graphView_->setAutoFillBackground(false);
+
+        // set the attribute to be transparent for mouse events
+        graphView_->setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+    else
+    {
+        graphView_->setAutoFillBackground(true);
+
+        // set the attribute to be transparent for mouse events
+        graphView_->setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    }
+}
+
+GraphEditingTool::SizeInfo GraphEditingTool::getSizeInfo() const
+{
+    SizeInfo info;
+
+    // Get the current transformation matrix
+    QTransform transform = imageEditor_->transform();
+
+    // Get the size of the image in scene coordinates
+    QRectF imageRect = imageEditor_->sceneRect();
+    info.imageSize = imageRect.size();
+
+    // Apply the transformation matrix to the image rectangle
+    QRectF transformedRect = transform.mapRect(imageRect);
+
+    // Get the size of the transformed rectangle
+    info.imageSizeZoomed = transformedRect.size();
+
+    info.imageViewportSize = imageEditor_->size();
+    info.graphViewportSize = graphView_->size();
+
+    return info;
 }
 
 void GraphEditingTool::showImage(const QImage& img)

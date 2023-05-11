@@ -20,6 +20,11 @@ graph::Graph* GraphScene::getGraph() const
 
 void GraphScene::setGraph(graph::Graph* graph)
 {
+    if (graph_ != nullptr)
+    {
+        delete graph_;
+    }
+
     graph_ = graph;
     onReload();
 }
@@ -50,16 +55,25 @@ EdgeItem* GraphScene::getEdgeItem(const std::string& uname, const std::string& v
 
 void GraphScene::clearAll()
 {
-    clear();
-
     if (!nodeItems_.empty())
     {
+        for (auto& nodeItem : nodeItems_)
+        {
+            nodeItem.second->deleteLater();
+        }
         nodeItems_.clear();
     }
+
     if (!edgeItems_.empty())
     {
+        for (auto& edgeItem : edgeItems_)
+        {
+            edgeItem.second->deleteLater();
+        }
         edgeItems_.clear();
     }
+
+    clear();
 }
 
 void GraphScene::onReload()
@@ -68,7 +82,8 @@ void GraphScene::onReload()
 
     for (const auto& node : getGraph()->getNodes())
     {
-        nodeItems_[node->getName()] = new NodeItem(this, node);
+        NodeItem* item = new NodeItem(this, node);
+        nodeItems_[node->getName()] = item;
     }
 
     for (auto it = getGraph()->getEdges().begin(); it != getGraph()->getEdges().end(); ++it)

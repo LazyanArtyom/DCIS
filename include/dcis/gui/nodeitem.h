@@ -48,7 +48,6 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
 signals:
-    void sigNeedRedraw();
     void sigPositionChanged();
 
 private:

@@ -46,8 +46,9 @@ void MainWindow::setupUi()
     createMenu();
     createToolBar();
 
-    setWorkspaceEnabled(false);
-    onConnectBtnClicked();
+    setWorkspaceEnabled(true);
+    //setWorkspaceEnabled(false);
+    //onConnectBtnClicked();
 }
 
 void MainWindow::setWorkspaceEnabled(bool enable)
@@ -95,6 +96,7 @@ void MainWindow::onUpload()
         header.command = resource::Command::Publish;
         header.fileName = fileName;
 
+
         QImageReader imgReader(filePath);
         if (imgReader.canRead())
         {
@@ -102,24 +104,46 @@ void MainWindow::onUpload()
             graphEditingTool_->showImage(img);
         }
 
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
+        if (client_->checkServerConnected())
+        {
+            QByteArray headerData;
+            QDataStream ds(&headerData, QIODevice::ReadWrite);
+            ds << header;
 
-        // header size 128 bytes
-        headerData.resize(resource::Header::HEADER_SIZE);
+            // header size 128 bytes
+            headerData.resize(resource::Header::HEADER_SIZE);
 
-        QByteArray data = file.readAll();
-        header.bodySize = data.size();
+            QByteArray resource = file.readAll();
 
-        data.prepend(headerData);
+            header.bodySize = resource.size();
 
-        client_->sendToServer(data);
+            resource.prepend(headerData);
+
+            client_->sendToServer(resource);
+        }
+        else
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "Server does not respond. Please reconnect!");
+        }
+
     }
     else
     {
         utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "Can't open file!");
         return;
+    }
+}
+
+void MainWindow::onSetEditorFocus()
+{
+    QAction* actSetFocus = reinterpret_cast<QAction*>(sender());
+    if (actSetFocus->isChecked())
+    {
+        graphEditingTool_->setFocus(true);
+    }
+    else
+    {
+        graphEditingTool_->setFocus(false);
     }
 }
 
@@ -136,6 +160,36 @@ void MainWindow::onConnectBtnClicked()
     {
         QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
     }
+}
+
+void MainWindow::onGraphChanged()
+{
+    graph::Graph* graph = graphEditingTool_->getGraph();
+    QJsonDocument jsonData = graph::Graph::toJSON(graph);
+
+    resource::Header header;
+    header.resourceType = resource::ResourceType::Json;
+    header.command = resource::Command::Publish;
+
+    QByteArray headerData;
+    QDataStream ds(&headerData, QIODevice::ReadWrite);
+    ds << header;
+
+    // header size 128 bytes
+    headerData.resize(resource::Header::HEADER_SIZE);
+
+    QByteArray resource = jsonData.toJson();
+    header.bodySize = resource.size();
+
+    resource.prepend(headerData);
+
+    client_->sendToServer(resource);
+}
+
+void MainWindow::onUpdateGraph(const QJsonDocument& json)
+{
+    graph::Graph* graph = graph::Graph::fromJSON(json);
+    graphEditingTool_->updateGraph(graph);
 }
 
 void MainWindow::createMenu()
@@ -192,8 +246,33 @@ void MainWindow::createToolBar()
     QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
     toolBar_->addAction(actUpload);
 
+    QAction* actSetFocus = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Set Focus"));
+    actSetFocus->setCheckable(true);
+    toolBar_->addAction(actSetFocus);
+
+    QAction* actPrintSize = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
+    toolBar_->addAction(actPrintSize);
+
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
+    connect(actSetFocus, &QAction::triggered, this, &MainWindow::onSetEditorFocus);
+    connect(actPrintSize, &QAction::triggered, this, [this]() {
+        GraphEditingTool::SizeInfo info = graphEditingTool_->getSizeInfo();
+
+        QString msg;
+
+        msg = "imageSize: w = " + QString::number(info.imageSize.width()) + " h = " + QString::number(info.imageSize.height());
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+        msg = "imageSizeZoomed: w = " + QString::number(info.imageSizeZoomed.width()) + " h = " + QString::number(info.imageSizeZoomed.height());
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+        msg = "imageViewportSize: w = " + QString::number(info.imageViewportSize.width()) + " h = " + QString::number(info.imageViewportSize.height());
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+        msg = "graphViewportSize: w = " + QString::number(info.graphViewportSize.width()) + " h = " + QString::number(info.graphViewportSize.height());
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+    });
 }
 
 void MainWindow::createEntryWidget()
@@ -254,6 +333,14 @@ void MainWindow::createWorkingWiget()
     console_ = new Console();
     utils::DebugStream::getInstance().setEditor(console_);
 
+    // connections
+    connect(graphEditingTool_, &GraphEditingTool::sigGraphChanged, this, &MainWindow::onGraphChanged);
+    connect(graphEditingTool_, &GraphEditingTool::sigNodeMoved, this, &MainWindow::onGraphChanged);
+    connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
+    connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img){
+        graphEditingTool_->showImage(img);
+    });
+
     // layouts
     centralWidget_->addWidget(workingWidget_);
 
@@ -266,7 +353,7 @@ void MainWindow::createWorkingWiget()
     hLayoutWorking->addWidget(vSplitter);
     vSplitter->setLineWidth(2);
     vSplitter->setOrientation(Qt::Vertical);
-    vSplitter->setChildrenCollapsible(false);
+    //vSplitter->setChildrenCollapsible(false);
 
     vSplitter->addWidget(graphEditingTool_);
     vSplitter->addWidget(console_);

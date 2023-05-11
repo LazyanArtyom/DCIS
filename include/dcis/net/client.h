@@ -29,10 +29,7 @@ public:
 
     bool connectToServer(const QString& ip, const QString& port);
     bool sendToServer(const QByteArray& data);
-
-
-    bool getAttachment();
-    bool senAttachment();
+    bool checkServerConnected() const;
 
 public slots:
     void onReadyRead();
@@ -44,8 +41,8 @@ signals:
     void sigUpdateGraph(const QJsonDocument& json);
 
 private:
-    QTcpSocket* socket_;
     resource::Header header_;
+    QTcpSocket* socket_ = nullptr;
 };
 
 } // end namespace dcis::client

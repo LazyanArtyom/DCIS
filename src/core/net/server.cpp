@@ -194,13 +194,13 @@ void Server::handle(const resource::Header& header, const QByteArray& body)
     {
         case resource::ResourceType::Text:
         {
-            handleString(QString(body));
+            handleString(body);
             break;
         }
 
         case resource::ResourceType::Json:
         {
-            handleJson(QJsonDocument::fromJson(body));
+            handleJson(body);
             break;
         }
 
@@ -235,11 +235,40 @@ void Server::handleAttachment(const QByteArray& data)
 
     QString msg = "File saved at " + WORKING_DIR;
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+    switch (header_.command)
+    {
+        case resource::Command::Publish:
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending Image to clients");
+            resource::Header header;
+            header.resourceType = resource::ResourceType::Attachment;
+            header.command = resource::Command::ShowImage;
+            header.fileName = header_.fileName;
+
+            QByteArray headerData;
+            QDataStream ds(&headerData, QIODevice::ReadWrite);
+            ds << header;
+
+            // header size 128 bytes
+            headerData.resize(resource::Header::HEADER_SIZE);
+
+            QByteArray resource = data;
+            header.bodySize = data.size();
+
+            resource.prepend(headerData);
+            publish(resource);
+            break;
+        }
+        default:
+            return;
+    }
 }
 
-void Server::handleString(const QString& str)
+void Server::handleString(const QByteArray& data)
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived message: " + str);
+    QString msg(data);
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived message: " + msg);
     /*
     switch (header_.command)
     {
@@ -254,21 +283,36 @@ void Server::handleString(const QString& str)
     */
 }
 
-void Server::handleJson(const QJsonDocument& json)
+void Server::handleJson(const QByteArray& data)
 {
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived Json");
-    /*
+
     switch (header_.command)
     {
         case resource::Command::Publish:
         {
-            publish(header_, resource::Body(json));
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending JSON to clients");
+            resource::Header header;
+            header.resourceType = resource::ResourceType::Json;
+            header.command = resource::Command::UpdateGraph;
+
+            QByteArray headerData;
+            QDataStream ds(&headerData, QIODevice::ReadWrite);
+            ds << header;
+
+            // header size 128 bytes
+            headerData.resize(resource::Header::HEADER_SIZE);
+
+            QByteArray resource = data;
+            header.bodySize = data.size();
+
+            resource.prepend(headerData);
+            publish(resource);
             break;
         }
         default:
             return;
     }
-    */
 }
 
 void Server::updateSockets()

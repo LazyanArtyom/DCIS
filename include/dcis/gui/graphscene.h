@@ -33,13 +33,14 @@ public slots:
     void onReload();
 
 signals:
+    void sigItemMoved();
     void sigNeedRedraw();
     void sigGraphChanged();
 
 private:
     using QGraphicsScene::clear;
 
-    graph::Graph* graph_;
+    graph::Graph* graph_ = nullptr;
     std::unique_ptr<QTimer> uniqueTimer_;
     std::unordered_map<std::string, NodeItem*> nodeItems_;
     std::unordered_map<std::pair<std::string, std::string>, EdgeItem*> edgeItems_;

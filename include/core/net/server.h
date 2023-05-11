@@ -33,8 +33,8 @@ public:
 
     void handleUnknown();
     void handleAttachment(const QByteArray& data);
-    void handleString(const QString& str);
-    void handleJson(const QJsonDocument& json);
+    void handleString(const QByteArray& data);
+    void handleJson(const QByteArray& data);
 
     void updateSockets();
 

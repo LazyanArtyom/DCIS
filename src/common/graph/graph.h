@@ -53,8 +53,8 @@ public:
     bool isolateNode(const std::string& name);
 
 
-    static Graph fromJSON(QJsonDocument jsonDoc);
-    static QJsonDocument toJSON(const Graph& graph);
+    static Graph* fromJSON(QJsonDocument jsonDoc);
+    static QJsonDocument toJSON(Graph* graph);
 
 private:
     EdgeSetType  edges_;
