@@ -10,16 +10,14 @@
 
 namespace dcis::gui {
 
-NodeItem::NodeItem(gui::GraphScene* gscene, graph::Node* node, QColor color)
+NodeItem::NodeItem(gui::GraphScene* gscene, graph::Node* node)
 {
     gscene_ = gscene;
-    color_ = std::move(color);
-    radius_ = 50;
+    radius_ = getDefaultRadius();
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setAcceptHoverEvents(true);
     setNode(node);
     isMoving_ = false;
-    selectedColor_ = getDefaultSelectedColor();
 }
 
 void NodeItem::setNode(graph::Node* node)
@@ -51,38 +49,19 @@ QRectF NodeItem::boundingRect() const
     };
 }
 
-const QList<QColor> &NodeItem::getColorTable()
+int NodeItem::getDefaultRadius()
 {
-    static QList<QColor> colorTable = {
-        QColor(244, 164, 96),
-        QColor(50, 205, 50),
-        QColor(230, 230, 250),
-        QColor(244, 164, 96),
-        QColor(245, 222, 179),
-        QColor(221, 160, 221),
-        QColor(135, 206, 235),
-        QColor(240, 230, 140),
-        QColor(255, 165, 0),
-        QColor(240, 255, 255),
-        QColor(0, 255, 255),
-        QColor(255, 255, 0),
-        QColor(240, 255, 255),
-        QColor(255, 228, 225),
-        QColor(220, 220, 220),
-        QColor(176, 196, 222)
-    };
-
-    return colorTable;
-};
+    return 20;
+}
 
 QColor NodeItem::getDefaultColor()
 {
-    return getColorTable()[0];
+    return Qt::green;
 }
 
 QColor NodeItem::getDefaultSelectedColor()
 {
-    return getColorTable()[1];
+    return Qt::darkGreen;
 }
 
 int NodeItem::type() const
@@ -95,17 +74,18 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
+    QColor color;
     if (isSelected())
     {
-        color_ = getSelectedColor();
+        color = getDefaultSelectedColor();
     }
     else
     {
-        color_ = getDefaultColor();
+        color = getDefaultColor();
     }
 
     painter->setPen(QPen(Qt::black, 2, Qt::SolidLine));
-    painter->setBrush(QBrush(color_));
+    painter->setBrush(QBrush(color));
     painter->drawEllipse(-radius_ / 2, -radius_ / 2, radius_, radius_);
 
     QFont font(font_, fontSize_);
@@ -151,26 +131,6 @@ void NodeItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsItem::hoverEnterEvent(event);
     setCursor(Qt::PointingHandCursor);
-}
-
-QColor NodeItem::getSelectedColor() const
-{
-    return selectedColor_;
-}
-
-QColor NodeItem::getColor() const
-{
-    return color_;
-}
-
-void NodeItem::setColor(const QColor& newColor)
-{
-    color_ = newColor;
-}
-
-void NodeItem::setSelectedColor(const QColor& newColor)
-{
-    selectedColor_ = newColor;
 }
 
 } // end namespace dcis::gui

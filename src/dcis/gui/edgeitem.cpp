@@ -11,14 +11,11 @@
 
 namespace dcis::gui {
 
-EdgeItem::EdgeItem(GraphScene* scene, NodeItem* startItem, NodeItem* endItem, QColor color, QGraphicsItem* parent)
-    : QGraphicsLineItem(parent), gscene_(scene), startItem_(startItem), endItem_(endItem), color_(color)
+EdgeItem::EdgeItem(GraphScene* scene, NodeItem* startItem, NodeItem* endItem, QGraphicsItem* parent)
+    : QGraphicsLineItem(parent), endItem_(endItem), gscene_(scene), startItem_(startItem)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setAcceptHoverEvents(true);
-    setPen(QPen(color_, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-
-    selectedColor_ = getColorTable()[1];
 
     onUpdatePosition();
     connect(startItem_, &NodeItem::sigPositionChanged, this, &EdgeItem::onUpdatePosition);
@@ -28,26 +25,12 @@ EdgeItem::EdgeItem(GraphScene* scene, NodeItem* startItem, NodeItem* endItem, QC
 
 QColor EdgeItem::getDefaultColor()
 {
-    return getColorTable()[0];
+    return Qt::red;
 }
 
 QColor EdgeItem::getDefaultSelectedColor()
 {
-    return getColorTable()[1];
-}
-
-const QList<QColor>& EdgeItem::getColorTable()
-{
-    static QList<QColor> colorTable;
-    colorTable.append(QColor(57, 89, 119));
-    colorTable.append(QColor(205, 92, 92));
-    colorTable.append(QColor(57, 89, 119));
-    colorTable.append(QColor(85, 107, 47));
-    colorTable.append(QColor(47, 79, 79));
-    colorTable.append(QColor(119, 136, 153));
-    colorTable.append(QColor(112, 128, 144));
-
-    return colorTable;
+    return Qt::darkRed;
 }
 
 int EdgeItem::type() const
@@ -95,33 +78,24 @@ void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
         return;
     }
 
+    QColor color;
     painter->setTransform(transform(), true);
     //updatePosition();
     if (isSelected())
     {
-        color_ = getSelectedColor();
+        color = getDefaultSelectedColor();
     }
     else
     {
-        color_ = getDefaultColor();
+        color = getDefaultColor();
     }
 
     QPen myPen = pen();
-    myPen.setColor(color_);
+    myPen.setColor(color);
     myPen.setWidth(4);
-    painter->setBrush(color_);
+    painter->setBrush(color);
     painter->setPen(myPen);
     painter->drawPath(shape());
-}
-
-QColor EdgeItem::getSelectedColor() const
-{
-    return selectedColor_;
-}
-
-void EdgeItem::setSelectedColor(QColor color)
-{
-    selectedColor_ = color;
 }
 
 void EdgeItem::onUpdatePosition()

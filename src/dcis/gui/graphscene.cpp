@@ -53,7 +53,7 @@ EdgeItem* GraphScene::getEdgeItem(const std::string& uname, const std::string& v
     return nullptr;
 }
 
-void GraphScene::clearAll()
+void GraphScene::clearAll(bool keepBackground)
 {
     if (!nodeItems_.empty())
     {
@@ -73,12 +73,26 @@ void GraphScene::clearAll()
         edgeItems_.clear();
     }
 
-    clear();
+    if (keepBackground)
+    {
+        foreach (QGraphicsItem* item, items())
+        {
+            if (dynamic_cast<QGraphicsPixmapItem*>(item) == nullptr)
+            {
+                removeItem(item);
+                delete item;
+            }
+        }
+    }
+    else
+    {
+        clear();
+    }
 }
 
 void GraphScene::onReload()
 {
-    clearAll();
+    clearAll(true);
 
     for (const auto& node : getGraph()->getNodes())
     {

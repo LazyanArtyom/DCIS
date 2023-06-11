@@ -27,7 +27,7 @@ public:
     NodeItem* getNodeItem(const std::string& name);
     EdgeItem* getEdgeItem(const std::string& uname, const std::string& vname);
 
-    void clearAll();
+    void clearAll(bool keepBackground = false);
 
 public slots:
     void onReload();

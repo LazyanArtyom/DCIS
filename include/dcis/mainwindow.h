@@ -4,9 +4,9 @@
 // App headers
 #include <net/client.h>
 #include <gui/console.h>
+#include <gui/graphview.h>
 #include <gui/graphinfo.h>
 #include <utils/debugstream.h>
-#include <gui/grapheditingtool.h>
 #include <gui/elementpropertiestable.h>
 
 // QT headers
@@ -48,7 +48,6 @@ public:
 
 public slots:
     void onUpload();
-    void onSetEditorFocus();
     void onConnectBtnClicked();
     void onGraphChanged();
     void onUpdateGraph(const QJsonDocument& json);
@@ -99,7 +98,7 @@ private:
 
     client::Client* client_;
     GraphInfo* graphInfo_;
-    GraphEditingTool* graphEditingTool_;
+    GraphView* graphView_;
 
     ElementPropertiesTable* elementPropertiesTable_;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;

@@ -101,7 +101,8 @@ void MainWindow::onUpload()
         if (imgReader.canRead())
         {
             QImage img = imgReader.read();
-            graphEditingTool_->showImage(img);
+            //imageEditor_->showImage(img);
+            graphView_->setImage(img);
         }
 
         if (client_->checkServerConnected())
@@ -134,19 +135,6 @@ void MainWindow::onUpload()
     }
 }
 
-void MainWindow::onSetEditorFocus()
-{
-    QAction* actSetFocus = reinterpret_cast<QAction*>(sender());
-    if (actSetFocus->isChecked())
-    {
-        graphEditingTool_->setFocus(true);
-    }
-    else
-    {
-        graphEditingTool_->setFocus(false);
-    }
-}
-
 void MainWindow::onConnectBtnClicked()
 {
     ip_->setText("127.0.0.1");
@@ -164,7 +152,7 @@ void MainWindow::onConnectBtnClicked()
 
 void MainWindow::onGraphChanged()
 {
-    graph::Graph* graph = graphEditingTool_->getGraph();
+    graph::Graph* graph = graphView_->getGraph();
     QJsonDocument jsonData = graph::Graph::toJSON(graph);
 
     resource::Header header;
@@ -189,7 +177,7 @@ void MainWindow::onGraphChanged()
 void MainWindow::onUpdateGraph(const QJsonDocument& json)
 {
     graph::Graph* graph = graph::Graph::fromJSON(json);
-    graphEditingTool_->updateGraph(graph);
+    graphView_->updateGraph(graph);
 }
 
 void MainWindow::createMenu()
@@ -255,9 +243,9 @@ void MainWindow::createToolBar()
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
-    connect(actSetFocus, &QAction::triggered, this, &MainWindow::onSetEditorFocus);
+    //connect(actSetFocus, &QAction::triggered, this, &MainWindow::onSetEditorFocus);
     connect(actPrintSize, &QAction::triggered, this, [this]() {
-        GraphEditingTool::SizeInfo info = graphEditingTool_->getSizeInfo();
+        GraphView::ImageInfo info = graphView_->getImageInfo();
 
         QString msg;
 
@@ -327,18 +315,18 @@ void MainWindow::createWorkingWiget()
     workingWidget_->setObjectName("workingWidget");
 
     // graph editing tool
-    graphEditingTool_ = new GraphEditingTool();
+    graphView_ = new GraphView();
 
     // console
     console_ = new Console();
     utils::DebugStream::getInstance().setEditor(console_);
 
     // connections
-    connect(graphEditingTool_, &GraphEditingTool::sigGraphChanged, this, &MainWindow::onGraphChanged);
-    connect(graphEditingTool_, &GraphEditingTool::sigNodeMoved, this, &MainWindow::onGraphChanged);
+    connect(graphView_, &GraphView::sigGraphChanged, this, &MainWindow::onGraphChanged);
+    connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img){
-        graphEditingTool_->showImage(img);
+        graphView_->setImage(img);
     });
 
     // layouts
@@ -355,7 +343,7 @@ void MainWindow::createWorkingWiget()
     vSplitter->setOrientation(Qt::Vertical);
     //vSplitter->setChildrenCollapsible(false);
 
-    vSplitter->addWidget(graphEditingTool_);
+    vSplitter->addWidget(graphView_);
     vSplitter->addWidget(console_);
     vSplitter->setSizes(QList<int>() << 700 << 200);
 }

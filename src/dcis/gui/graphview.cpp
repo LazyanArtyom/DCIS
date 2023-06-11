@@ -1,5 +1,7 @@
 #include <gui/graphview.h>
 
+#include <utils/debugstream.h>
+
 
 namespace dcis::gui {
 
@@ -10,7 +12,7 @@ GraphView::GraphView(QWidget* parent)
     setCacheMode(CacheBackground);
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform | QPainter::TextAntialiasing);
     setViewportUpdateMode(BoundingRectViewportUpdate);
-    setViewportUpdateMode(FullViewportUpdate);
+    //setViewportUpdateMode(FullViewportUpdate);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // When zooming, the view stay centered over the mouse
@@ -18,6 +20,84 @@ GraphView::GraphView(QWidget* parent)
     setResizeAnchor(AnchorViewCenter);
 
     setStyleSheet("background-color: rgba(0, 0, 0, 0);");
+
+
+    setBackgroundBrush(Qt::transparent); // Set transparent background
+
+
+
+
+    // graph view widget
+    graph_ = new graph::Graph(false);
+    graphScene_ = new gui::GraphScene(graph_);
+    setScene(graphScene_);
+
+    // connections
+    connect(this, &gui::GraphView::sigNodeSelected, this , [this](const std::string& nodeName, QPointF pos) {
+
+        //txtConsole_->setText(txt);
+    });
+    connect(this, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
+        if (!autoNaming)
+        {
+            showNewNodeDialog(pos);
+            return;
+        }
+
+        graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
+        emit sigGraphChanged();
+    });
+    connect(this, &gui::GraphView::sigNodeRemoved, this, [this](const std::string& nodeName) {
+        if (graph_->removeNode(nodeName))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(this, &gui::GraphView::sigNodeIsolated, this, [this](const std::string& nodeName) {
+        if (graph_->isolateNode(nodeName))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(this, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string& uname, const std::string& vname) {
+        if (graph_->removeEdge(uname, vname))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(this, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
+        if (graph_->setEdge(uname, vname))
+        {
+            emit sigGraphChanged();
+        }
+    });
+    connect(this, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
+        bool ok;
+        QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
+
+        auto newName = QInputDialog::getText(this, tr("Rename node"), "Name: ", QLineEdit::Normal,
+                                              QString::fromStdString(graph_->getNextNodeName()), &ok);
+        if (ok)
+        {
+            static QRegularExpressionMatch match = re.match(newName);
+            if (!match.hasMatch())
+            {
+                QMessageBox::critical(this, tr("Error"),
+                                      tr("Node's name contains only alphabetical or numeric characters\n")
+                                      + tr("Length of the name mustn't be greater than 30 or smaller than 1"));
+                return;
+            }
+            if (graph_->hasNode(newName.toStdString()))
+            {
+                QMessageBox::critical(this, tr("Error"), tr("This name has been used by another node"));
+            }
+            else
+            {
+                graph_->setNodeName(nodeName, newName.toStdString());
+                emit sigGraphChanged();
+            }
+        }
+    });
 }
 
 void GraphView::setScene(GraphScene* scene)
@@ -27,6 +107,8 @@ void GraphView::setScene(GraphScene* scene)
     connect(scene, &GraphScene::sigItemMoved, this, [this] {
         emit sigNodeMoved();
     });
+
+    connect(this, &GraphView::sigGraphChanged, scene, &gui::GraphScene::onReload);
     QGraphicsView::setScene(scene);
 }
 
@@ -35,58 +117,207 @@ void GraphView::setSceneSize(int width, int height)
     setSceneRect(0, 0, width, height);
 }
 
+void GraphView::zoomIn()
+{
+    scaleView(qreal(1.2));
+}
+
+void GraphView::zoomOut()
+{
+    scaleView(1 / qreal(1.2));
+}
+
+void GraphView::viewFit()
+{
+    fitInView(sceneRect(), Qt::KeepAspectRatio);
+    isResized_ = true;
+
+    if (sceneRect().width() > sceneRect().height())
+        isLandscape_ = true;
+    else
+        isLandscape_ = false;
+}
+
+void GraphView::scaleView(qreal scaleFactor)
+{
+    if(sceneRect().isEmpty())
+        return;
+
+    int imgLength;
+    int viewportLength;
+    qreal expRectLength;
+    QRectF rectExpectedRect = transform().scale(scaleFactor, scaleFactor).mapRect(sceneRect());
+
+    if (isLandscape_)
+    {
+        expRectLength = rectExpectedRect.width();
+        viewportLength = viewport()->rect().width();
+        imgLength = sceneRect().width();
+    }
+    else
+    {
+        expRectLength = rectExpectedRect.height();
+        viewportLength = viewport()->rect().height();
+        imgLength = sceneRect().height();
+    }
+
+    if (expRectLength < viewportLength / 2) // minimum zoom : half of viewport
+    {
+        if (!isResized_ || scaleFactor < 1)
+            return;
+    }
+    else if (expRectLength > imgLength * 10) // maximum zoom : x10
+    {
+        if (!isResized_ || scaleFactor > 1)
+            return;
+    }
+    else
+    {
+        isResized_ = false;
+    }
+
+    scale(scaleFactor, scaleFactor);
+}
+
+graph::Graph* GraphView::getGraph() const
+{
+    return graph_;
+}
+
+void GraphView::updateGraph(graph::Graph* graph)
+{
+    graph_ = graph;
+    graphScene_->setGraph(graph);
+}
+
+GraphView::ImageInfo GraphView::getImageInfo() const
+{
+    ImageInfo info;
+
+    // Get the current transformation matrix
+    //QTransform transform = transform();
+
+    // Get the size of the image in scene coordinates
+    //QRectF imageRect = imageEditor_->sceneRect();
+    //info.imageSize = imageRect.size();
+
+    // Apply the transformation matrix to the image rectangle
+    //QRectF transformedRect = transform.mapRect(imageRect);
+
+    // Get the size of the transformed rectangle
+    //info.imageSizeZoomed = transformedRect.size();
+
+    //info.imageViewportSize = size();
+    //info.graphViewportSize = graphView_->size();
+
+    return info;
+}
+
+void GraphView::setImage(const QImage& img)
+{
+    if (!scene()->sceneRect().isEmpty())
+        scene()->clear();
+
+    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(img));
+
+    scene()->addItem(pixmapItem);
+
+    fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
+    pixmapItem->setPos(scene()->width() / 2 - pixmapItem->boundingRect().width() / 2, scene()->height() / 2 - pixmapItem->boundingRect().height() / 2);
+}
+
+void GraphView::showNewNodeDialog(QPointF pos)
+{
+    bool ok;
+    QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,3}")));
+
+    QString newNodeName = QInputDialog::getText(this, "Add new node", "Name: ", QLineEdit::Normal,
+                                                QString::fromStdString(graph_->getNextNodeName()), &ok);
+    if (ok)
+    {
+        static QRegularExpressionMatch match = re.match(newNodeName);
+        if (!match.hasMatch())
+        {
+            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
+                                                 +
+                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
+            return;
+        }
+
+        graph::Node newNode(newNodeName.toStdString(), pos);
+        bool succeeded = graph_->addNode(newNode);
+        if (!succeeded)
+        {
+            QMessageBox::critical(this, "Error", "This name has been used by another node");
+        }
+        else
+        {
+            emit sigGraphChanged();
+        }
+    }
+}
+
 void GraphView::onRedraw()
 {
     viewport()->update();
-
 }
 
 void GraphView::wheelEvent(QWheelEvent* event)
 {
-    QGraphicsView::wheelEvent(event);
-
-    double scaleFactor = 1.05;
-    if (event->angleDelta().y() > 0 && currentScale_ <= scaleMax_)
+    if (event->modifiers() == Qt::ControlModifier)
     {
-        scale(scaleFactor, scaleFactor);
-        currentScale_ *= scaleFactor;
+        if (event->angleDelta().y() > 0)
+            zoomIn();
+        else
+            zoomOut();
     }
-    else
+    else if (event->modifiers() == Qt::ShiftModifier)
     {
-        scale(1 / scaleFactor, 1 / scaleFactor);
-        currentScale_ /= scaleFactor;
+        viewFit();
+    }
+    else if (event->modifiers() == Qt::NoModifier)
+    {
+        QGraphicsView::wheelEvent(event);
     }
 }
 
 void GraphView::resizeEvent(QResizeEvent *event)
 {
-    setSceneRect(0, 0, event->size().width(), event->size().height());
+    isResized_ = true;
     QGraphicsView::resizeEvent(event);
-}
-
-void GraphView::drawBackground(QPainter*, const QRectF&)
-{
-    // transparent background
 }
 
 void GraphView::mousePressEvent(QMouseEvent* event)
 {
-    for (auto item : scene()->selectedItems())
-    {
-        auto nodeItem = dynamic_cast<NodeItem*>(item);
-        if (nodeItem)
-        {
-            nodeItem->setSelectedColor(NodeItem::getDefaultSelectedColor());
-        }
-        else
-        {
-            auto edgeItem = dynamic_cast<EdgeItem*>(item);
-            if (edgeItem)
-            {
-                edgeItem->setSelectedColor(EdgeItem::getDefaultSelectedColor());
-            }
-        }
-    }
+    // Map mouse position to scene
+    QPointF scenePos = mapToScene(event->pos());
+
+    // Map scene position to background image coordinates
+    QPointF backgroundImagePos = scenePos;
+    QTransform backgroundTransform = scene()->backgroundBrush().transform().inverted();
+    backgroundImagePos = backgroundTransform.map(backgroundImagePos);
+
+    QString msg = "X: " + QString::number(backgroundImagePos.x()) + " Y: " + QString::number(backgroundImagePos.y());
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+
+    // Get the real background image size
+    QSizeF realBackgroundSize = scene()->backgroundBrush().texture().toImage().size();
+
+    qDebug() << "Real background image size:"
+             << realBackgroundSize.width() << "x" << realBackgroundSize.height();
+
+    // Get the zoomed image size
+    QRectF zoomedRect = mapToScene(viewport()->rect()).boundingRect();
+    QSizeF zoomedImageSize = zoomedRect.size();
+
+
+    QString msg2 = "Image Size X: " + QString::number(realBackgroundSize.width()) + " Y: " + QString::number(realBackgroundSize.height());
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg2);
+
+
+    QString msg3 = "XOOMED Image Size X: " + QString::number(zoomedImageSize.width()) + " Y: " + QString::number(zoomedImageSize.height());
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
 
     if (!isSelectTargetNode_)
     {

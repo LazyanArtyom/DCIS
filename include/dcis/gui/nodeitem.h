@@ -13,19 +13,20 @@ namespace dcis::gui {
 using namespace common;
 class GraphScene;
 
-class NodeItem : public QObject, public QGraphicsItem {
+class NodeItem : public QObject, public QGraphicsItem
+{
     Q_OBJECT
 public:
-    NodeItem(gui::GraphScene* gscene, graph::Node* node, QColor color = getColorTable()[0]);
+    NodeItem(gui::GraphScene* gscene, graph::Node* node);
 
     enum
     {
         Type = UserType + 5
     };
 
+    static int getDefaultRadius();
     static QColor getDefaultColor();
     static QColor getDefaultSelectedColor();
-    static const QList<QColor>& getColorTable();
 
     int type() const override;
     QRectF boundingRect() const override;
@@ -53,8 +54,6 @@ signals:
 private:
     int radius_;
     bool isMoving_;
-    QColor color_;
-    QColor selectedColor_;
 
     graph::Node* node_;
     gui::GraphScene* gscene_;

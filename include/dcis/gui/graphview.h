@@ -16,10 +16,33 @@ class GraphView : public QGraphicsView
 {
     Q_OBJECT
 public:
+    struct ImageInfo
+    {
+        QPointF pos;
+        qreal   scale;
+        qreal   rotation;
+        QSizeF  imageSize;
+        QSizeF  imageSizeZoomed;
+        QSizeF  imageViewportSize;
+        QSizeF  graphViewportSize;
+    };
+
     GraphView(QWidget* parent = nullptr);
 
     void setScene(GraphScene* scene);
     void setSceneSize(int width, int height);
+
+    void zoomIn();
+    void zoomOut();
+    void viewFit();
+    void scaleView(qreal scaleFactor);
+
+    graph::Graph* getGraph() const;
+    void updateGraph(graph::Graph* graph);
+
+    ImageInfo getImageInfo() const;
+    void setImage(const QImage& img);
+    void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
 public slots:
     void onRedraw();
@@ -30,9 +53,10 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
-    void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 signals:
+    void sigGraphChanged();
+
     void sigNodeEdited(std::string name);
     void sigNodeRemoved(std::string name);
     void sigNodeIsolated(std::string name);
@@ -58,6 +82,13 @@ private:
 
     qreal currentScale_ = 1.;
     const qreal scaleMax_ = 1.5;
+
+    bool isResized_ = false;
+    bool isLandscape_ = false;
+    QPixmap backgroundImage_;
+
+    graph::Graph* graph_;
+    gui::GraphScene* graphScene_;
 };
 
 } // end namespace dcis::gui

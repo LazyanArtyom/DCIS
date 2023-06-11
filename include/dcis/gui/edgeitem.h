@@ -30,12 +30,10 @@ public:
     EdgeItem(GraphScene* scene,
                      NodeItem* startItem,
                      NodeItem* endItem,
-                     QColor color = getDefaultColor(),
                      QGraphicsItem* parent = nullptr);
 
     static QColor getDefaultColor();
     static QColor getDefaultSelectedColor();
-    static const QList<QColor>& getColorTable();
 
     int type() const override;
     QPainterPath shape() const override;
@@ -43,9 +41,6 @@ public:
 
     graph::Edge getEdge() const;
     bool isInversionAvailable() const;
-
-    QColor getSelectedColor() const;
-    void setSelectedColor(QColor color);
 
 public slots:
     void onUpdatePosition();
@@ -55,12 +50,10 @@ protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
 private:
-    QColor color_;
     QPainterPath path_;
     NodeItem* endItem_;
     GraphScene* gscene_;
     NodeItem* startItem_;
-    QColor selectedColor_;
 };
 
 } // end namespace dcis::gui
