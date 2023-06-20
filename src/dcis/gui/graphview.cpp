@@ -190,27 +190,12 @@ void GraphView::updateGraph(graph::Graph* graph)
     graphScene_->setGraph(graph);
 }
 
-GraphView::ImageInfo GraphView::getImageInfo() const
+GraphView::ImageInfo GraphView::getImageInfo()
 {
-    ImageInfo info;
+    imageInfo_.sceneRectSize = QSizeF(scene()->sceneRect().width(), scene()->sceneRect().height());
+    imageInfo_.viewportSize = viewport()->size();
 
-    // Get the current transformation matrix
-    //QTransform transform = transform();
-
-    // Get the size of the image in scene coordinates
-    //QRectF imageRect = imageEditor_->sceneRect();
-    //info.imageSize = imageRect.size();
-
-    // Apply the transformation matrix to the image rectangle
-    //QRectF transformedRect = transform.mapRect(imageRect);
-
-    // Get the size of the transformed rectangle
-    //info.imageSizeZoomed = transformedRect.size();
-
-    //info.imageViewportSize = size();
-    //info.graphViewportSize = graphView_->size();
-
-    return info;
+    return imageInfo_;
 }
 
 void GraphView::setImage(const QImage& img)
@@ -218,6 +203,7 @@ void GraphView::setImage(const QImage& img)
     if (!scene()->sceneRect().isEmpty())
         scene()->clear();
 
+    imageInfo_.imageSize = QSizeF(img.width(), img.height());
     QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(img));
 
     scene()->addItem(pixmapItem);
@@ -289,35 +275,31 @@ void GraphView::resizeEvent(QResizeEvent *event)
 
 void GraphView::mousePressEvent(QMouseEvent* event)
 {
-    // Map mouse position to scene
-    QPointF scenePos = mapToScene(event->pos());
+    // Get the mouse click position in view coordinates
+            QPoint viewPos = event->pos();
 
-    // Map scene position to background image coordinates
-    QPointF backgroundImagePos = scenePos;
-    QTransform backgroundTransform = scene()->backgroundBrush().transform().inverted();
-    backgroundImagePos = backgroundTransform.map(backgroundImagePos);
+            // Get the corresponding scene coordinates
+            QPointF scenePos = mapToScene(viewPos);
 
-    QString msg = "X: " + QString::number(backgroundImagePos.x()) + " Y: " + QString::number(backgroundImagePos.y());
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-
-    // Get the real background image size
-    QSizeF realBackgroundSize = scene()->backgroundBrush().texture().toImage().size();
-
-    qDebug() << "Real background image size:"
-             << realBackgroundSize.width() << "x" << realBackgroundSize.height();
-
-    // Get the zoomed image size
-    QRectF zoomedRect = mapToScene(viewport()->rect()).boundingRect();
-    QSizeF zoomedImageSize = zoomedRect.size();
+            // Get the x and y coordinates
+            qreal x = scenePos.x();
+            qreal y = scenePos.y();
 
 
-    QString msg2 = "Image Size X: " + QString::number(realBackgroundSize.width()) + " Y: " + QString::number(realBackgroundSize.height());
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg2);
+            if (scene()->sceneRect().contains(scenePos))
+            {
+                QString mymsg = "Clicked at x:" + QString::number(x) + "y:" + QString::number(y);
+                utils::DebugStream::getInstance().log(utils::LogLevel::Info, mymsg);
+            }
+            else
+            {
+            }
 
-
-    QString msg3 = "XOOMED Image Size X: " + QString::number(zoomedImageSize.width()) + " Y: " + QString::number(zoomedImageSize.height());
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
+    if (!scene()->selectedItems().isEmpty())
+    {
+        QString msg3 = "Node selected X: " + QString::number(scene()->selectedItems()[0]->pos().x()) + " Y: " + QString::number(scene()->selectedItems()[0]->pos().y());
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
+    }
 
     if (!isSelectTargetNode_)
     {
@@ -393,6 +375,12 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
         QAction *act = menu.exec(event->globalPos());
         if (act)
         {
+            if (scene()->items().empty())
+            {
+                QMessageBox::warning(this, tr("Image is not loaded"), tr("Can't create node without loading an image."));
+                return;
+            }
+
             if (act->text() == "Create node...")
             {
                emit sigNodeAdded(mapToScene(event->pos()), false);

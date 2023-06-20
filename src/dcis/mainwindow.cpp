@@ -234,16 +234,22 @@ void MainWindow::createToolBar()
     QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
     toolBar_->addAction(actUpload);
 
-    QAction* actSetFocus = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Set Focus"));
-    actSetFocus->setCheckable(true);
-    toolBar_->addAction(actSetFocus);
+    QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("StartAttack"));
+    toolBar_->addAction(actStartAttack);
+
+    QAction* actStartExploration = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("StartExploration"));
+    toolBar_->addAction(actStartExploration);
 
     QAction* actPrintSize = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
     toolBar_->addAction(actPrintSize);
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
-    //connect(actSetFocus, &QAction::triggered, this, &MainWindow::onSetEditorFocus);
+
+    connect(actStartAttack, &QAction::triggered, this, [this]() {
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
+    });
+
     connect(actPrintSize, &QAction::triggered, this, [this]() {
         GraphView::ImageInfo info = graphView_->getImageInfo();
 
@@ -252,13 +258,10 @@ void MainWindow::createToolBar()
         msg = "imageSize: w = " + QString::number(info.imageSize.width()) + " h = " + QString::number(info.imageSize.height());
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
-        msg = "imageSizeZoomed: w = " + QString::number(info.imageSizeZoomed.width()) + " h = " + QString::number(info.imageSizeZoomed.height());
+        msg = "imageViewportSize: w = " + QString::number(info.viewportSize.width()) + " h = " + QString::number(info.viewportSize.height());
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
-        msg = "imageViewportSize: w = " + QString::number(info.imageViewportSize.width()) + " h = " + QString::number(info.imageViewportSize.height());
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-        msg = "graphViewportSize: w = " + QString::number(info.graphViewportSize.width()) + " h = " + QString::number(info.graphViewportSize.height());
+        msg = "graphSceneRectSize: w = " + QString::number(info.sceneRectSize.width()) + " h = " + QString::number(info.sceneRectSize.height());
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
     });
 }

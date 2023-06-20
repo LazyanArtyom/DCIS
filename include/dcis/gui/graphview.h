@@ -18,13 +18,9 @@ class GraphView : public QGraphicsView
 public:
     struct ImageInfo
     {
-        QPointF pos;
-        qreal   scale;
-        qreal   rotation;
         QSizeF  imageSize;
-        QSizeF  imageSizeZoomed;
-        QSizeF  imageViewportSize;
-        QSizeF  graphViewportSize;
+        QSizeF  viewportSize;
+        QSizeF  sceneRectSize;
     };
 
     GraphView(QWidget* parent = nullptr);
@@ -40,7 +36,7 @@ public:
     graph::Graph* getGraph() const;
     void updateGraph(graph::Graph* graph);
 
-    ImageInfo getImageInfo() const;
+    ImageInfo getImageInfo();
     void setImage(const QImage& img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
@@ -89,6 +85,7 @@ private:
 
     graph::Graph* graph_;
     gui::GraphScene* graphScene_;
+    ImageInfo imageInfo_;
 };
 
 } // end namespace dcis::gui
