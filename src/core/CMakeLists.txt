@@ -19,6 +19,7 @@ target_link_libraries(core PRIVATE
     common
     Qt6::Widgets
     Qt6::Network
+    Qt6::Location
     )
 
 set_target_properties(core PROPERTIES

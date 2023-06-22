@@ -34,6 +34,7 @@ target_link_libraries(dcis PRIVATE
     common
     Qt6::Widgets
     Qt6::Network
+    Qt6::Location
     )
 
 set_target_properties(dcis PROPERTIES
