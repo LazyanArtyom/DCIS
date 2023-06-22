@@ -22,7 +22,7 @@ MainWindow::~MainWindow()
 void MainWindow::setupUi()
 {
     setObjectName("DCIS");
-    //setWindowIcon(QIcon(":/Resources/icons/histogram.png"));
+    setWindowIcon(QIcon(":/resources/drone.png"));
     setWindowTitle(tr("DCIS - Drone Collective Intelligence System"));
 
     QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -48,7 +48,7 @@ void MainWindow::setupUi()
 
     setWorkspaceEnabled(true);
     //setWorkspaceEnabled(false);
-    //onConnectBtnClicked();
+    onConnectBtnClicked();
 }
 
 void MainWindow::setWorkspaceEnabled(bool enable)
@@ -231,38 +231,24 @@ void MainWindow::createToolBar()
     // tool bar
     toolBar_ = addToolBar("Main ToolBar");
 
-    QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
+    QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.png")), tr("Upload"));
     toolBar_->addAction(actUpload);
 
-    QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("StartAttack"));
-    toolBar_->addAction(actStartAttack);
-
-    QAction* actStartExploration = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("StartExploration"));
+    QAction* actStartExploration = new QAction(QIcon(QPixmap(":/resources/exploration.png")), tr("StartExploration"));
     toolBar_->addAction(actStartExploration);
 
-    QAction* actPrintSize = new QAction(QIcon(QPixmap(":/resources/upload.svg")), tr("Upload"));
-    toolBar_->addAction(actPrintSize);
+    QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
+    toolBar_->addAction(actStartAttack);
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
 
-    connect(actStartAttack, &QAction::triggered, this, [this]() {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
+    connect(actStartExploration, &QAction::triggered, this, [this]() {
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");
     });
 
-    connect(actPrintSize, &QAction::triggered, this, [this]() {
-        GraphView::ImageInfo info = graphView_->getImageInfo();
-
-        QString msg;
-
-        msg = "imageSize: w = " + QString::number(info.imageSize.width()) + " h = " + QString::number(info.imageSize.height());
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-        msg = "imageViewportSize: w = " + QString::number(info.viewportSize.width()) + " h = " + QString::number(info.viewportSize.height());
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-        msg = "graphSceneRectSize: w = " + QString::number(info.sceneRectSize.width()) + " h = " + QString::number(info.sceneRectSize.height());
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+    connect(actStartAttack, &QAction::triggered, this, [this]() {
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
     });
 }
 

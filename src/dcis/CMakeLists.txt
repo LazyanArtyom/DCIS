@@ -17,7 +17,10 @@ add_executable(dcis
 
 # Resources:
 set(dcis_icons
-    "resources/upload.svg"
+    "resources/upload.png"
+    "resources/attack.png"
+    "resources/drone.png"
+    "resources/exploration.png"
 )
 
 qt_add_resources(dcis "dcis"
