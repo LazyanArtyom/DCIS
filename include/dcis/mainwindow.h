@@ -29,6 +29,7 @@
 #include <QVBoxLayout>
 #include <QApplication>
 #include <QStackedWidget>
+#include <QGeoCoordinate>
 
 namespace dcis::gui {
 using namespace common;
@@ -101,6 +102,10 @@ private:
     GraphView* graphView_;
 
     ElementPropertiesTable* elementPropertiesTable_;
+    QString leftTop_;
+    QString rightBottom_;
+    size_t  height_ = -1;
+    size_t  width_  = -1;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 // App include
+#include <gui/coordinputdialog.h>
 
 // Qt includes
 #include <QDockWidget>
@@ -101,8 +102,17 @@ void MainWindow::onUpload()
         if (imgReader.canRead())
         {
             QImage img = imgReader.read();
+            height_ = img.height();
+            width_ = img.width();
             //imageEditor_->showImage(img);
             graphView_->setImage(img);
+            CCoordInputDialog oDialog;
+            if (oDialog.exec() == QDialog::Accepted) {
+                leftTop_ = oDialog.leftTopCoordinate();
+                rightBottom_ = oDialog.rightBottomCoordinate();
+            }
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, leftTop_);
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, rightBottom_);
         }
 
         if (client_->checkServerConnected())
