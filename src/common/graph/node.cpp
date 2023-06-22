@@ -23,6 +23,16 @@ void Node::setEuclidePos(QPointF euclidePos)
     euclidePos_ = euclidePos;
 }
 
+void Node::setNodeType(NodeType nodeType)
+{
+    nodeType_ = nodeType;
+}
+
+Node::NodeType Node::getNodeType()
+{
+    return nodeType_;
+}
+
 void Node::incPosDegree()
 {
     degPos_++;
@@ -80,6 +90,16 @@ int Node::getDirDegree() const
 int Node::getUndirDegree() const
 {
     return deg_;
+}
+
+void Node::setDrone(bool isDrone)
+{
+    drone_ = isDrone;
+}
+
+bool Node::isDrone()
+{
+    return drone_;
 }
 
 std::string Node::getName() const

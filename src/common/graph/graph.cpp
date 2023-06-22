@@ -289,8 +289,10 @@ Graph* Graph::fromJSON(QJsonDocument jsonDoc)
         std::string name = node.toObject().value("name").toString().toStdString();
         double x = node.toObject().value("x").toDouble();
         double y = node.toObject().value("y").toDouble();
-
-        graph->addNode(Node(name, QPointF(x, y)));
+        Node tmpNode(name, QPointF(x, y));
+        tmpNode.setNodeType(static_cast<Node::NodeType>(node.toObject().value("nodeType").toInt()));
+        tmpNode.setDrone(node.toObject().value("drone").toBool());
+        graph->addNode(tmpNode);
     }
 
     foreach (const QJsonValue& edge, json.value("edges").toArray())
@@ -320,6 +322,9 @@ QJsonDocument Graph::toJSON(Graph* graph)
         jsonNode.insert("x", node->getX());
         jsonNode.insert("y", node->getY());
 
+        jsonNode.insert("nodeType", (int)(node->getNodeType()));
+        jsonNode.insert("drone", node->isDrone());
+
         nodes.push_back(jsonNode);
 
     }
@@ -347,6 +352,28 @@ QJsonDocument Graph::toJSON(Graph* graph)
 bool Graph::isDirected() const
 {
     return isDirected_;
+}
+
+bool Graph::setNodeType(const std::string &nodeName, const Node::NodeType nodeType)
+{
+    auto selectedNode = getNode(nodeName);
+    if(selectedNode)
+    {
+        selectedNode->setNodeType(nodeType);
+        return true;
+    }
+    return false;
+}
+
+bool Graph::setDrone(const std::string &nodeName, const bool isDrone)
+{
+    auto selectedNode = getNode(nodeName);
+    if(selectedNode)
+    {
+        selectedNode->setDrone(isDrone);
+        return true;
+    }
+    return false;
 }
 
 } // end namespace dcis::common::graph

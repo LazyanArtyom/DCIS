@@ -49,6 +49,7 @@ public:
 
 public slots:
     void onUpload();
+    void onClearCycles();
     void onConnectBtnClicked();
     void onGraphChanged();
     void onUpdateGraph(const QJsonDocument& json);

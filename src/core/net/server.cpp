@@ -2,6 +2,7 @@
 
 // App includes
 #include <graph/graph.h>
+#include <graphprocessor/graphprocessor.h>
 #include <net/resource.h>
 #include <utils/debugstream.h>
 
@@ -269,23 +270,30 @@ void Server::handleString(const QByteArray& data)
 {
     QString msg(data);
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived message: " + msg);
-    /*
+
     switch (header_.command)
     {
-        case resource::Command::Publish:
+        case resource::Command::ClearCycles:
         {
-            publish(header_, resource::Body(str));
+            // clear cycles
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "ClearCycles");
             break;
         }
         default:
             return;
     }
-    */
+
 }
 
 void Server::handleJson(const QByteArray& data)
 {
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived Json");
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+    GraphProcessor::commonGraph* graph = GraphProcessor::commonGraph::fromJSON(jsonDocument);
+
+
+
 
     switch (header_.command)
     {

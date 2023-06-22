@@ -18,6 +18,7 @@ add_executable(dcis
 # Resources:
 set(dcis_icons
     "resources/upload.png"
+    "resources/clear_cycles.png"
     "resources/attack.png"
     "resources/drone.png"
     "resources/exploration.png"

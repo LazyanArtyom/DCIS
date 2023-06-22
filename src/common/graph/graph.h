@@ -56,6 +56,8 @@ public:
     static Graph* fromJSON(QJsonDocument jsonDoc);
     static QJsonDocument toJSON(Graph* graph);
 
+    bool setNodeType(const std::string &nodeName, const Node::NodeType nodeType);
+    bool setDrone(const std::string &nodeName, const bool isDrone);
 private:
     EdgeSetType  edges_;
     NodeSetType  nodes_;

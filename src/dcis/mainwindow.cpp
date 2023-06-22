@@ -145,6 +145,28 @@ void MainWindow::onUpload()
     }
 }
 
+void MainWindow::onClearCycles()
+{
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Map generated");
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Clearing cycles");
+    if (client_->checkServerConnected())
+    {
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Text;
+        header.command = resource::Command::ClearCycles;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        client_->sendToServer(headerData);
+    }
+    QMessageBox::information(this,"Info","cycles cleared");
+}
+
 void MainWindow::onConnectBtnClicked()
 {
     ip_->setText("127.0.0.1");
@@ -244,6 +266,9 @@ void MainWindow::createToolBar()
     QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.png")), tr("Upload"));
     toolBar_->addAction(actUpload);
 
+    QAction* actClearCycles = new QAction(QIcon(QPixmap(":/resources/clear_cycles.png")), tr("Clear Cycles"));
+    toolBar_->addAction(actClearCycles);
+
     QAction* actStartExploration = new QAction(QIcon(QPixmap(":/resources/exploration.png")), tr("StartExploration"));
     toolBar_->addAction(actStartExploration);
 
@@ -252,6 +277,8 @@ void MainWindow::createToolBar()
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
+
+    connect(actClearCycles, &QAction::triggered, this, &MainWindow::onClearCycles);
 
     connect(actStartExploration, &QAction::triggered, this, [this]() {
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");
