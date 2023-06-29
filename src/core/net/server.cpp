@@ -7,6 +7,7 @@
 
 // Qt includes
 #include <QDir>
+#include <QImageReader>
 
 // STL includes
 #include <iostream>
@@ -233,6 +234,13 @@ void Server::handleAttachment(const QByteArray& data)
         file.write(data);
     }
 
+    QImageReader imgReader(WORKING_DIR + "/" + header_.fileName);
+    if (imgReader.canRead())
+    {
+        QImage img = imgReader.read();
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()));
+    }
+
     QString msg = "File saved at " + WORKING_DIR;
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
 
@@ -305,8 +313,8 @@ void Server::handleJson(const QByteArray& data)
         delete commGraph_;
     commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
 
-
-
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "TOP_LEFT: " + commGraph_->getLeftTop());
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "BOTTOM_RIGHT: " + commGraph_->getRightBottom());
 
     switch (header_.command)
     {
