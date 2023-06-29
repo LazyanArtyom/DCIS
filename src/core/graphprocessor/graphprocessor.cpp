@@ -1,11 +1,13 @@
 #include <graphprocessor/graphprocessor.h>
-
+#include <utils/debugstream.h>
 
 
 // Qt includes
 #include <QDir>
 #include <QRandomGenerator>
-
+#include <QFile>
+#include <QTextStream>
+#include <QMessageBox>
 // STL includes
 #include <iostream>
 namespace dcis::GraphProcessor {
@@ -41,11 +43,13 @@ void GraphProcessor::initGraph()
 {
     CommonNodeListType commNodes = commGraph_->getNodes();
     CommonEdgeSetType commEdges = commGraph_->getEdges();
+    size_t id = 0;
     for(auto commNode : commNodes)
     {
-        Node* node = new Node(commNode);
+        Node* node = new Node(commNode, id);
         lstNodes_.push_back(node);
         commNodeToNodeMap_.insert(std::make_pair(commNode, node));
+        id++;
     }
     for(auto node : lstNodes_)
     {
@@ -138,7 +142,40 @@ void GraphProcessor::clearCycles()
 
 void GraphProcessor::generateGraph()
 {
+    std::vector<QString> vecFileNames(vecDronesStartNodes_.size());
+    for(size_t i = 0; i < vecFileNames.size(); ++i)
+    {
+        QDir dir;
+        QString WORKING_DIR = dir.absolutePath();
+        vecFileNames[i] = (WORKING_DIR + "drone_" + QString::number(i) + "_data");
+        QFile file(vecFileNames[i]);
+        if (file.open(QIODevice::ReadWrite))
+        {
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
+            QTextStream stream(&file);
+            stream << "droneID=" << i << "\n";
+            stream << "startNodeID=" << vecDronesStartNodes_[i]->getID() << "\n";
+            stream << "graphStart\n";
+            for(auto node : lstNodes_)
+            {
+                stream << "nodeID=" << node->getID() << "\n";
+                stream << "x=" << node->getCommonNode()->getEuclidePos().x() << "\n";
+                stream << "y=" << node->getCommonNode()->getEuclidePos().y() << "\n";
+                stream << "neighbourNodeIDs ";
+                for(auto neighbour : node->getNeighbours())
+                    stream << neighbour->getID() << " ";
+                stream << "\n";
+                stream << "currNeighbourInd=" << node->getCurrNeighbourId();
+            }
+            stream << "graphEnd\n";
 
+
+
+            file.close();
+        }
+        else
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "EEEERRRRROOORRRRR");
+    }
 }
 
 void GraphProcessor::generateMap()

@@ -2,7 +2,7 @@
 
 namespace dcis::GraphProcessor {
 
-Node::Node(commonNode* commNode) : commNode_(commNode)
+Node::Node(commonNode* commNode, size_t id) : commNode_(commNode), id_(id)
 {
 
 }
@@ -50,6 +50,11 @@ NodeVectorType &Node::getNeighbours()
 commonNode *Node::getCommonNode()
 {
     return commNode_;
+}
+
+size_t Node::getID()
+{
+    return id_;
 }
 
 } // end namespace dcis::GraphProcessor

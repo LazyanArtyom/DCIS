@@ -21,7 +21,7 @@ using CommonNodeToNodeMapType = std::unordered_map<commonNode*, Node*>;
 class Node
 {
 public:
-    explicit Node(commonNode* commNode);
+    explicit Node(commonNode* commNode, size_t id);
     void addNeighbour(Node* node);
     Node* getNeighbourById(size_t id);
     Node* getCurrNeighbour();
@@ -30,9 +30,10 @@ public:
     void  setCurrNeighbourId(size_t id);
     NodeVectorType& getNeighbours();
     commonNode* getCommonNode();
-
+    size_t getID();
 
 private:
+    size_t id_;
     commonNode* commNode_;
     NodeVectorType vecNodeNeighbours_;
     int currNeighbourId_ = -1;
