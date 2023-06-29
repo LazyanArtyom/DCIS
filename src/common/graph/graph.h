@@ -36,6 +36,12 @@ public:
     bool removeEdge(Node* u, Node* v);
     bool removeEdge(const std::string& uname, const std::string& vname);
 
+    void setLeftTop(const QString leftTop);
+    QString getLeftTop() const;
+
+    void setRightBottom(const QString rightBottom);
+    QString getRightBottom() const;
+
     const EdgeSetType& getEdges() const;
 
     bool hasNode(Node* node) const;
@@ -59,6 +65,8 @@ public:
     bool setNodeType(const std::string &nodeName, const Node::NodeType nodeType);
     bool setDrone(const std::string &nodeName, const bool isDrone);
 private:
+    QString leftTop_;
+    QString rightBottom_;
     EdgeSetType  edges_;
     NodeSetType  nodes_;
     NodeListType cachedNodes_;

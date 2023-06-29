@@ -31,6 +31,7 @@ enum class Command : uint32_t
     ShowText,
     ShowImage,
     ClearCycles,
+    GenerateGraph,
     UpdateGraph,
 };
 
@@ -99,6 +100,8 @@ struct Header
                 return "ShowImage";
             case Command::ClearCycles:
                 return "ClearCycles";
+        case Command::GenerateGraph:
+            return "GenerateGraph";
             case Command::ShowText:
                 return "ShowText";
             default:

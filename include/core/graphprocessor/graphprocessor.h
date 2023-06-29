@@ -14,7 +14,8 @@ namespace dcis::GraphProcessor {
 class GraphProcessor
 {
 public:
-    GraphProcessor(commonGraph* graph);
+    GraphProcessor();
+    void setCommGraph(commonGraph* graph);
     size_t  getDronesCount();
     Node* getDroneNode(size_t id);
     commonGraph* getCommGraph();
@@ -22,9 +23,10 @@ public:
     void initGraphDirs();
     void clearCycles();
     void generateMap();
+    void generateGraph();
 
 private:
-    commonGraph* commGraph_;
+    commonGraph* commGraph_ = nullptr;
     NodeVectorType vecDronesStartNodes_;
     NodeListType lstNodes_;
     Node* startNode_ = nullptr;

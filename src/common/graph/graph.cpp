@@ -140,6 +140,26 @@ bool Graph::removeEdge(const std::string& uname, const std::string& vname)
     return removeEdge(getNode(uname), getNode(vname));
 }
 
+void Graph::setLeftTop(const QString leftTop)
+{
+    leftTop_ = leftTop;
+}
+
+QString Graph::getLeftTop() const
+{
+    return leftTop_;
+}
+
+void Graph::setRightBottom(const QString rightBottom)
+{
+    rightBottom_ = rightBottom;
+}
+
+QString Graph::getRightBottom() const
+{
+    return rightBottom_;
+}
+
 bool Graph::addNode(const Node& node)
 {
     if (hasNode(node.getName()))
@@ -284,6 +304,11 @@ Graph* Graph::fromJSON(QJsonDocument jsonDoc)
     bool isDirected = json.value("directed").toBool();
     Graph* graph = new Graph(isDirected);
 
+    QString leftTop = json.value("leftTop").toString();
+    QString rightBottom = json.value("rightBottom").toString();
+    graph->setLeftTop(leftTop);
+    graph->setRightBottom(rightBottom);
+
     foreach (const QJsonValue& node, json.value("nodes").toArray())
     {
         std::string name = node.toObject().value("name").toString().toStdString();
@@ -312,6 +337,8 @@ QJsonDocument Graph::toJSON(Graph* graph)
 
     //insert single datas first
     jsonObj.insert("directed", graph->isDirected());
+    jsonObj.insert("leftTop", graph->getLeftTop());
+    jsonObj.insert("rightBottom", graph->getRightBottom());
 
     // fill nodes
     QJsonArray nodes;

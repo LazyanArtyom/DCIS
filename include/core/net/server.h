@@ -4,6 +4,7 @@
 // App includes
 #include <net/resource.h>
 #include <utils/debugstream.h>
+#include <graphprocessor/graphprocessor.h>
 
 // QT includes
 #include <QMap>
@@ -14,7 +15,6 @@
 
 namespace dcis::server {
 using namespace common;
-
 class Server : public QTcpServer
 {
     Q_OBJECT
@@ -48,6 +48,8 @@ private:
     SocketListType sockets_;
     qintptr currentSocket_;
     quint16 nextBlockSize_;
+    dcis::GraphProcessor::commonGraph* commGraph_ = nullptr;
+    dcis::GraphProcessor::GraphProcessor* graphProc_ = nullptr;
 
     const QString WORKING_DIRECTORY_PATH = "";
     const QString UPLOADED_IMAGES_PATH = WORKING_DIRECTORY_PATH + "/uploadedImages";

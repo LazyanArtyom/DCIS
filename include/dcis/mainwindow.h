@@ -50,6 +50,7 @@ public:
 public slots:
     void onUpload();
     void onClearCycles();
+    void onGenerateGraph();
     void onConnectBtnClicked();
     void onGraphChanged();
     void onUpdateGraph(const QJsonDocument& json);
@@ -105,8 +106,6 @@ private:
     ElementPropertiesTable* elementPropertiesTable_;
     QString leftTop_;
     QString rightBottom_;
-    size_t  height_ = -1;
-    size_t  width_  = -1;
    // std::unique_ptr<common::utils::DebugStream> debugStream_;
 };
 

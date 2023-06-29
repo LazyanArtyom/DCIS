@@ -2,7 +2,6 @@
 
 // App includes
 #include <graph/graph.h>
-#include <graphprocessor/graphprocessor.h>
 #include <net/resource.h>
 #include <utils/debugstream.h>
 
@@ -277,6 +276,18 @@ void Server::handleString(const QByteArray& data)
         {
             // clear cycles
             utils::DebugStream::getInstance().log(utils::LogLevel::Info, "ClearCycles");
+            if(graphProc_)
+                delete graphProc_;
+            graphProc_ = new dcis::GraphProcessor::GraphProcessor();
+            graphProc_->setCommGraph(commGraph_);
+            graphProc_->initGraph();
+            graphProc_->initGraphDirs();
+            graphProc_->clearCycles();
+            break;
+        }
+        case resource::Command::GenerateGraph:
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
             break;
         }
         default:
@@ -290,7 +301,9 @@ void Server::handleJson(const QByteArray& data)
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived Json");
 
     QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-    GraphProcessor::commonGraph* graph = GraphProcessor::commonGraph::fromJSON(jsonDocument);
+    if(commGraph_)
+        delete commGraph_;
+    commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
 
 
 

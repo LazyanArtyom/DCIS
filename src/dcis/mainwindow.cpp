@@ -102,8 +102,6 @@ void MainWindow::onUpload()
         if (imgReader.canRead())
         {
             QImage img = imgReader.read();
-            height_ = img.height();
-            width_ = img.width();
             //imageEditor_->showImage(img);
             graphView_->setImage(img);
             CCoordInputDialog oDialog;
@@ -167,6 +165,27 @@ void MainWindow::onClearCycles()
     QMessageBox::information(this,"Info","cycles cleared");
 }
 
+void MainWindow::onGenerateGraph()
+{
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Generating Graph");
+    if (client_->checkServerConnected())
+    {
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Text;
+        header.command = resource::Command::GenerateGraph;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        client_->sendToServer(headerData);
+    }
+    QMessageBox::information(this,"Info","Graph generated");
+}
+
 void MainWindow::onConnectBtnClicked()
 {
     ip_->setText("127.0.0.1");
@@ -185,6 +204,9 @@ void MainWindow::onConnectBtnClicked()
 void MainWindow::onGraphChanged()
 {
     graph::Graph* graph = graphView_->getGraph();
+    graph->setLeftTop(leftTop_);
+    graph->setRightBottom(rightBottom_);
+
     QJsonDocument jsonData = graph::Graph::toJSON(graph);
 
     resource::Header header;
@@ -269,6 +291,9 @@ void MainWindow::createToolBar()
     QAction* actClearCycles = new QAction(QIcon(QPixmap(":/resources/clear_cycles.png")), tr("Clear Cycles"));
     toolBar_->addAction(actClearCycles);
 
+    QAction* actGenerateGraph = new QAction(QIcon(QPixmap(":/resources/graph.png")), tr("Generate Drone Configs"));
+    toolBar_->addAction(actGenerateGraph);
+
     QAction* actStartExploration = new QAction(QIcon(QPixmap(":/resources/exploration.png")), tr("StartExploration"));
     toolBar_->addAction(actStartExploration);
 
@@ -279,6 +304,8 @@ void MainWindow::createToolBar()
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
 
     connect(actClearCycles, &QAction::triggered, this, &MainWindow::onClearCycles);
+
+    connect(actGenerateGraph, &QAction::triggered, this, &MainWindow::onGenerateGraph);
 
     connect(actStartExploration, &QAction::triggered, this, [this]() {
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");

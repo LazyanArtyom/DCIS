@@ -98,6 +98,20 @@ GraphView::GraphView(QWidget* parent)
             }
         }
     });
+    connect(this, &gui::GraphView::sigSetNodeType, this, [this](const std::string &nodeName, const graph::Node::NodeType &type) {
+        if (graph_->getNode(nodeName))
+        {
+            graph_->getNode(nodeName)->setNodeType(type);
+            emit sigGraphChanged();
+        }
+    });
+    connect(this, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const bool &isDrone) {
+        if (graph_->getNode(nodeName))
+        {
+            graph_->getNode(nodeName)->setDrone(isDrone);
+            emit sigGraphChanged();
+        }
+    });
 }
 
 void GraphView::setScene(GraphScene* scene)
@@ -410,9 +424,9 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
             QMenu menu;
             menu.addAction("&Set edge to (Select other node by mouse)");
             menu.addSeparator();
-            menu.addAction("Set node corner");
-            menu.addAction("Set node border");
-            menu.addAction("Set node inner");
+            menu.addAction("&Set node corner");
+            menu.addAction("&Set node border");
+            menu.addAction("&Set node inner");
             menu.addSeparator();
             menu.addAction("&Delete");
             menu.addAction("&Isolate");
@@ -420,11 +434,11 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
             menu.addSeparator();
             if(nodeItem->getNode()->isDrone())
             {
-                menu.addAction("Unset drone");
+                menu.addAction("&Unset drone");
             }
             else
             {
-                menu.addAction("Set drone");
+                menu.addAction("&Set drone");
             }
 
             QAction* act = menu.exec(event->globalPos());
@@ -447,23 +461,23 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                     isSelectTargetNode_ = true;
                     startItem_ = nodeItem;
                 }
-                if (act->text() == "Set node corner")
+                if (act->text() == "&Set node corner")
                 {
                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Corner);
                 }
-                if (act->text() == "Set node border")
+                if (act->text() == "&Set node border")
                 {
                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Border);
                 }
-                if (act->text() == "Set node inner")
+                if (act->text() == "&Set node inner")
                 {
                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Inner);
                 }
-                if (act->text() == "Set drone")
+                if (act->text() == "&Set drone")
                 {
                    emit sigSetDrone(nodeName, true);
                 }
-                if (act->text() == "Unset drone")
+                if (act->text() == "&Unset drone")
                 {
                    emit sigSetDrone(nodeName, false);
                 }

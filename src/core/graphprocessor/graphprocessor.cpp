@@ -10,9 +10,16 @@
 #include <iostream>
 namespace dcis::GraphProcessor {
 
-GraphProcessor::GraphProcessor(commonGraph* graph) : commGraph_(graph)
+GraphProcessor::GraphProcessor()
 {
 
+}
+
+void GraphProcessor::setCommGraph(commonGraph *graph)
+{
+    if(commGraph_)
+        delete commGraph_;
+     commGraph_ = graph;
 }
 
 size_t GraphProcessor::getDronesCount()
@@ -127,6 +134,11 @@ void GraphProcessor::clearCycles()
         if(currPoint == startNode_ && currPoint->getCurrNeighbourId() == startDirId && stepsCount >= neighboursCount_)
             break;
     }
+}
+
+void GraphProcessor::generateGraph()
+{
+
 }
 
 void GraphProcessor::generateMap()

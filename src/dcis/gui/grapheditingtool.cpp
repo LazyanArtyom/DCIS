@@ -87,7 +87,22 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
             }
         }
     });
-
+    connect(graphView_, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const bool &isDrone) {
+        auto node = graph_->getNode(nodeName);
+        if (node)
+        {
+            node->setDrone(isDrone);
+            emit sigGraphChanged();
+        }
+    });
+    connect(graphView_, &gui::GraphView::sigSetNodeType, this, [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
+        auto node = graph_->getNode(nodeName);
+        if (node)
+        {
+            node->setNodeType(nodeType);
+            emit sigGraphChanged();
+        }
+    });
     // layouts
     QVBoxLayout* vMainLayout = new QVBoxLayout();
     vMainLayout->setContentsMargins(0, 0, 0, 0);
