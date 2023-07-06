@@ -147,34 +147,47 @@ void GraphProcessor::generateGraph()
     {
         QDir dir;
         QString WORKING_DIR = dir.absolutePath();
-        vecFileNames[i] = (WORKING_DIR + "drone_" + QString::number(i) + "_data");
+        vecFileNames[i] = (WORKING_DIR + QDir::separator() + "drone_" + QString::number(i) + ".data");
         QFile file(vecFileNames[i]);
-        if (file.open(QIODevice::ReadWrite))
+        if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
             QTextStream stream(&file);
-            stream << "droneID=" << i << "\n";
-            stream << "startNodeID=" << vecDronesStartNodes_[i]->getID() << "\n";
-            stream << "graphStart\n";
+            //droneID
+            stream << i << "\n";
+            //dronesCount
+            stream << vecDronesStartNodes_.size() << "\n";
+            for(size_t j = 0; j < vecDronesStartNodes_.size(); ++j)
+            {
+                //droneID
+                stream << j << "\n" ;
+                //startNodeID
+                stream << vecDronesStartNodes_[j]->getID() << "\n";
+            }
+            //nodesCount
+            stream << lstNodes_.size() << "\n";
             for(auto node : lstNodes_)
             {
-                stream << "nodeID=" << node->getID() << "\n";
-                stream << "x=" << node->getCommonNode()->getEuclidePos().x() << "\n";
-                stream << "y=" << node->getCommonNode()->getEuclidePos().y() << "\n";
-                stream << "neighbourNodeIDs ";
+                //nodeID
+                stream << node->getID() << "\n";
+                //x
+                stream << node->getCommonNode()->getEuclidePos().x() << "\n";
+                //y
+                stream << node->getCommonNode()->getEuclidePos().y() << "\n";
+                //neighboursCount
+                stream << node->getNeighbours().size() << "\n";
                 for(auto neighbour : node->getNeighbours())
-                    stream << neighbour->getID() << " ";
-                stream << "\n";
-                stream << "currNeighbourInd=" << node->getCurrNeighbourId();
+                    //neighbourID
+                    stream << neighbour->getID() << "\n";
+                //currNeighbourInd
+                stream << node->getCurrNeighbourId() << "\n";
             }
-            stream << "graphEnd\n";
-
-
-
+            stream.flush();
             file.close();
         }
         else
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "EEEERRRRROOORRRRR");
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
     }
 }
 

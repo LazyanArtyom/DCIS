@@ -296,6 +296,7 @@ void Server::handleString(const QByteArray& data)
         case resource::Command::GenerateGraph:
         {
             utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
+            graphProc_->generateGraph();
             break;
         }
         default:
