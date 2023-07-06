@@ -56,11 +56,48 @@ int NodeItem::getDefaultRadius()
 
 QColor NodeItem::getDefaultColor()
 {
+    if (node_ != nullptr)
+    {
+        if (node_->isDrone())
+        {
+            return Qt::cyan;
+        }
+
+        switch (node_->getNodeType()) {
+            case graph::Node::NodeType::Border:
+                return Qt::magenta;
+            case graph::Node::NodeType::Corner:
+                return Qt::yellow;
+            case graph::Node::NodeType::Inner:
+                return Qt::green;
+            default:
+                return Qt::green;
+        }
+    }
     return Qt::green;
 }
 
 QColor NodeItem::getDefaultSelectedColor()
 {
+    if (node_ != nullptr)
+    {
+        if (node_->isDrone())
+        {
+            return Qt::darkCyan;
+        }
+
+        switch (node_->getNodeType()) {
+            case graph::Node::NodeType::Border:
+                return Qt::darkMagenta;
+            case graph::Node::NodeType::Corner:
+                return Qt::darkYellow;
+            case graph::Node::NodeType::Inner:
+                return Qt::darkGreen;
+            default:
+                return Qt::darkGreen;
+        }
+    }
+
     return Qt::darkGreen;
 }
 

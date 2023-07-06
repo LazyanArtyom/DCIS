@@ -24,9 +24,9 @@ public:
         Type = UserType + 5
     };
 
-    static int getDefaultRadius();
-    static QColor getDefaultColor();
-    static QColor getDefaultSelectedColor();
+    int getDefaultRadius();
+    QColor getDefaultColor();
+    QColor getDefaultSelectedColor();
 
     int type() const override;
     QRectF boundingRect() const override;
@@ -55,8 +55,8 @@ private:
     int radius_;
     bool isMoving_;
 
-    graph::Node* node_;
-    gui::GraphScene* gscene_;
+    graph::Node* node_ = nullptr;
+    gui::GraphScene* gscene_ = nullptr;
 
     const int fontSize_ = 10;
     const QString font_ = "Source Code Pro";

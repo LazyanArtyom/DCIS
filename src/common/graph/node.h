@@ -31,7 +31,8 @@ public:
     enum class NodeType {
         Inner,
         Border,
-        Corner
+        Corner,
+        None
     };
 
     QPointF getEuclidePos() const;
