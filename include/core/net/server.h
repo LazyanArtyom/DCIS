@@ -50,6 +50,8 @@ private:
     quint16 nextBlockSize_;
     dcis::GraphProcessor::commonGraph* commGraph_ = nullptr;
     dcis::GraphProcessor::GraphProcessor* graphProc_ = nullptr;
+    size_t imgW_ = 0;
+    size_t imgH_ = 0;
 
     const QString WORKING_DIRECTORY_PATH = "";
     const QString UPLOADED_IMAGES_PATH = WORKING_DIRECTORY_PATH + "/uploadedImages";

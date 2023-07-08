@@ -1,13 +1,15 @@
 #include <graphprocessor/graphprocessor.h>
 #include <utils/debugstream.h>
+#include <coordmapper.h>
 
 
 // Qt includes
 #include <QDir>
-#include <QRandomGenerator>
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QGeoCoordinate>
+#include <QRandomGenerator>
 // STL includes
 #include <iostream>
 namespace dcis::GraphProcessor {
@@ -142,6 +144,10 @@ void GraphProcessor::clearCycles()
 
 void GraphProcessor::generateGraph()
 {
+    CCoordMapper oGeoCoordMapper(commGraph_->getLeftTop(), commGraph_->getRightBottom(), imgW_, imgH_);
+    double lat = 0;
+    double lon = 0;
+
     std::vector<QString> vecFileNames(vecDronesStartNodes_.size());
     for(size_t i = 0; i < vecFileNames.size(); ++i)
     {
@@ -171,10 +177,11 @@ void GraphProcessor::generateGraph()
             {
                 //nodeID
                 stream << node->getID() << "\n";
+                oGeoCoordMapper.pixelToWgs(node->getCommonNode()->getEuclidePos(), lat, lon);
                 //x
-                stream << node->getCommonNode()->getEuclidePos().x() << "\n";
+                stream << lon << "\n";
                 //y
-                stream << node->getCommonNode()->getEuclidePos().y() << "\n";
+                stream << lat << "\n";
                 //neighboursCount
                 stream << node->getNeighbours().size() << "\n";
                 for(auto neighbour : node->getNeighbours())
@@ -235,6 +242,12 @@ void GraphProcessor::generateMap()
             }
         }
     }
+}
+
+void GraphProcessor::setImgSize(size_t imgW, size_t imgH)
+{
+    imgW_ = imgW;
+    imgH_ = imgH;
 }
 
 } // end namespace dcis::GraphProcessor

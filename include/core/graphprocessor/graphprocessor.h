@@ -24,6 +24,7 @@ public:
     void clearCycles();
     void generateMap();
     void generateGraph();
+    void setImgSize(size_t imgW, size_t imgH);
 
 private:
     commonGraph* commGraph_ = nullptr;
@@ -32,6 +33,8 @@ private:
     Node* startNode_ = nullptr;
     CommonNodeToNodeMapType commNodeToNodeMap_;
     size_t neighboursCount_ = 0;
+    size_t imgW_ = 0;
+    size_t imgH_ = 0;
 };
 
 #endif // GRAPHPROCESSOR_H

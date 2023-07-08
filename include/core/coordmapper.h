@@ -8,12 +8,14 @@
 class CCoordMapper
 {
 public:
-    CCoordMapper(QString sLeftTop, QString sRightBottom)
+    CCoordMapper(QString sLeftTop, QString sRightBottom, size_t imgW, size_t imgH)
     {
         QStringList parts = sLeftTop.split(' ');
         m_oLeftTop = QGeoCoordinate(parts[0].trimmed().toDouble(), parts[1].trimmed().toDouble());
         parts = sRightBottom.split(' ');
         m_oRightBottom = QGeoCoordinate(parts[0].trimmed().toDouble(), parts[1].trimmed().toDouble());
+        m_iImgW = imgW;
+        m_iImgH = imgH;
     }
 
     void pixelToWgs(const QPointF& pixel, double& lat, double& lon) {

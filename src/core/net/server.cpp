@@ -239,6 +239,8 @@ void Server::handleAttachment(const QByteArray& data)
     {
         QImage img = imgReader.read();
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, "IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()));
+        imgW_ = img.width();
+        imgH_ = img.height();
     }
 
     QString msg = "File saved at " + WORKING_DIR;
@@ -296,6 +298,7 @@ void Server::handleString(const QByteArray& data)
         case resource::Command::GenerateGraph:
         {
             utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
+            graphProc_->setImgSize(imgW_, imgH_);
             graphProc_->generateGraph();
             break;
         }
