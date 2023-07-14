@@ -97,6 +97,11 @@ void Node::setDrone(bool isDrone)
     drone_ = isDrone;
 }
 
+void Node::setAttacker(bool isAttacker)
+{
+    attacker_ = isAttacker;
+}
+
 void Node::setIp(const std::string &ip)
 {
     ip_ = ip;
@@ -120,6 +125,11 @@ std::string Node::getPort() const
 bool Node::isDrone()
 {
     return drone_;
+}
+
+bool Node::isAttacker()
+{
+    return attacker_;
 }
 
 std::string Node::getName() const

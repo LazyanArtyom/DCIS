@@ -113,6 +113,16 @@ GraphView::GraphView(QWidget* parent)
             emit sigGraphChanged();
         }
     });
+
+    connect(this, &gui::GraphView::sigSetAttacker, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+        if (graph_->getNode(nodeName))
+        {
+            graph_->getNode(nodeName)->setAttacker(isDrone);
+            graph_->getNode(nodeName)->setIp(ip);
+            graph_->getNode(nodeName)->setPort(port);
+            emit sigGraphChanged();
+        }
+    });
 }
 
 void GraphView::setScene(GraphScene* scene)
@@ -442,6 +452,15 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 menu.addAction("&Set drone");
             }
 
+            if(nodeItem->getNode()->isAttacker())
+            {
+                menu.addAction("&Unset attacker");
+            }
+            else
+            {
+                menu.addAction("&Set attacker");
+            }
+
             QAction* act = menu.exec(event->globalPos());
             if (act != nullptr)
             {
@@ -495,6 +514,29 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 if (act->text() == "&Unset drone")
                 {
                    emit sigSetDrone(nodeName, "", "", false);
+                }
+
+                if (act->text() == "&Set attacker")
+                {
+                   std::string ip, port;
+                   DroneIpInputDialog oDialog;
+                   if (oDialog.exec() == QDialog::Accepted)
+                   {
+                       ip = oDialog.getIp().toStdString();
+                       port = oDialog.getPort().toStdString();
+                   }
+
+                   if (ip.empty() || port.empty())
+                   {
+                       QMessageBox::warning(this, tr("Drone Ip or Port is not set"), tr("Can't set drone without ip and port."));
+                       return;
+                   }
+
+                   emit sigSetAttacker(nodeName, ip, port, true);
+                }
+                if (act->text() == "&Unset attacker")
+                {
+                   emit sigSetAttacker(nodeName, "", "", false);
                 }
             }
             else

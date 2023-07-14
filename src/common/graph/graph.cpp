@@ -317,6 +317,10 @@ Graph* Graph::fromJSON(QJsonDocument jsonDoc)
         Node tmpNode(name, QPointF(x, y));
         tmpNode.setNodeType(static_cast<Node::NodeType>(node.toObject().value("nodeType").toInt()));
         tmpNode.setDrone(node.toObject().value("drone").toBool());
+        tmpNode.setAttacker(node.toObject().value("attacker").toBool());
+        tmpNode.setIp(node.toObject().value("ip").toString().toStdString());
+        tmpNode.setIp(node.toObject().value("port").toString().toStdString());
+
         graph->addNode(tmpNode);
     }
 
@@ -351,6 +355,9 @@ QJsonDocument Graph::toJSON(Graph* graph)
 
         jsonNode.insert("nodeType", (int)(node->getNodeType()));
         jsonNode.insert("drone", node->isDrone());
+        jsonNode.insert("attacker", node->isAttacker());
+        jsonNode.insert("ip", node->getIp().c_str());
+        jsonNode.insert("port", node->getPort().c_str());
 
         nodes.push_back(jsonNode);
 

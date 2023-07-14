@@ -97,6 +97,17 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
             emit sigGraphChanged();
         }
     });
+    connect(graphView_, &gui::GraphView::sigSetAttacker, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isAttacker) {
+        auto node = graph_->getNode(nodeName);
+        if (node)
+        {
+            node->setAttacker(isAttacker);
+            node->setIp(ip);
+            node->setIp(port);
+            emit sigGraphChanged();
+        }
+    });
+
     connect(graphView_, &gui::GraphView::sigSetNodeType, this, [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
         auto node = graph_->getNode(nodeName);
         if (node)

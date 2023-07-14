@@ -53,14 +53,16 @@ public:
     int getDirDegree() const;
     int getUndirDegree() const;
 
+    bool isDrone();
+    bool isAttacker();
     void setDrone(bool isDrone);
+    void setAttacker(bool isAttacker);
+
     void setIp(const std::string& ip);
     void setPort(const std::string& port);
 
     std::string getIp() const;
     std::string getPort() const;
-
-    bool isDrone();
 
     double getX() const;
     double getY() const;
@@ -75,6 +77,7 @@ private:
     int degPos_ = 0;
     int degNeg_ = 0;
     bool drone_ = false;
+    bool attacker_ = false;
     std::string name_;
     std::string ip_;
     std::string port_;

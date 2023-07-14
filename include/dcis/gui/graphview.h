@@ -62,6 +62,7 @@ signals:
 
     void sigSetNodeType(std::string name, graph::Node::NodeType nodeType);
     void sigSetDrone(std::string name, std::string ip, std::string port, bool isDrone);
+    void sigSetAttacker(std::string name, std::string ip, std::string port, bool isDrone);
 
     void sigEdgeAdded();
     void sigEdgeAddedFrom(std::string name);
