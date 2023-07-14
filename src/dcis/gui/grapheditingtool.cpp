@@ -87,11 +87,13 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
             }
         }
     });
-    connect(graphView_, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const bool &isDrone) {
+    connect(graphView_, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
         auto node = graph_->getNode(nodeName);
         if (node)
         {
             node->setDrone(isDrone);
+            node->setIp(ip);
+            node->setIp(port);
             emit sigGraphChanged();
         }
     });

@@ -27,4 +27,20 @@ private slots:
     void accept();
 };
 
+class DroneIpInputDialog : public QDialog
+{
+public:
+    explicit DroneIpInputDialog(QWidget *parent = nullptr);
+    QString getIp() const;
+    QString getPort() const;
+
+private:
+    QLineEdit*   ipLineEdit_ = nullptr;
+    QLineEdit*   portLineEdit_ = nullptr;
+    QPushButton* okButton_ = nullptr;
+
+private slots:
+    void accept();
+};
+
 #endif // COORDINPUTDIALOG_H

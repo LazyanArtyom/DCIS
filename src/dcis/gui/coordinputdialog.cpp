@@ -66,3 +66,48 @@ void CCoordInputDialog::accept()
     // Perform any additional validation or checks here if needed
     QDialog::accept();
 }
+
+DroneIpInputDialog::DroneIpInputDialog(QWidget *parent)
+    : QDialog(parent)
+{
+    setWindowTitle("DroneIpInput Dialog");
+
+    ipLineEdit_ = new QLineEdit(this);
+    portLineEdit_ = new QLineEdit(this);
+
+    QFormLayout *pFormLayout = new QFormLayout();
+    pFormLayout->addRow("Drone IP:", ipLineEdit_);
+    pFormLayout->addRow("Drone Port:", portLineEdit_);
+
+    okButton_ = new QPushButton("OK", this);
+    okButton_->setDisabled(true);
+
+    auto slot = [&]() {
+        okButton_->setEnabled(!ipLineEdit_->text().isEmpty() &&
+                                !portLineEdit_->text().isEmpty());
+    };
+
+    connect(ipLineEdit_, &QLineEdit::textEdited, this, slot);
+    connect(portLineEdit_, &QLineEdit::textEdited, this, slot);
+    connect(okButton_, &QPushButton::clicked, this, &DroneIpInputDialog::accept);
+
+    QVBoxLayout *pMainLayout = new QVBoxLayout(this);
+    pMainLayout->addLayout(pFormLayout);
+    pMainLayout->addWidget(okButton_);
+}
+
+QString DroneIpInputDialog::getIp() const
+{
+    return ipLineEdit_->text();
+}
+
+QString DroneIpInputDialog::getPort() const
+{
+    return portLineEdit_->text();
+}
+
+void DroneIpInputDialog::accept()
+{
+    // Perform any additional validation or checks here if needed
+    QDialog::accept();
+}

@@ -1,5 +1,6 @@
 #include <gui/graphview.h>
 
+#include <gui/coordinputdialog.h>
 #include <utils/debugstream.h>
 
 
@@ -23,8 +24,6 @@ GraphView::GraphView(QWidget* parent)
 
 
     setBackgroundBrush(Qt::transparent); // Set transparent background
-
-
 
 
     // graph view widget
@@ -105,10 +104,12 @@ GraphView::GraphView(QWidget* parent)
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const bool &isDrone) {
+    connect(this, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
         if (graph_->getNode(nodeName))
         {
             graph_->getNode(nodeName)->setDrone(isDrone);
+            graph_->getNode(nodeName)->setIp(ip);
+            graph_->getNode(nodeName)->setPort(port);
             emit sigGraphChanged();
         }
     });
@@ -475,11 +476,25 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 }
                 if (act->text() == "&Set drone")
                 {
-                   emit sigSetDrone(nodeName, true);
+                   std::string ip, port;
+                   DroneIpInputDialog oDialog;
+                   if (oDialog.exec() == QDialog::Accepted)
+                   {
+                       ip = oDialog.getIp().toStdString();
+                       port = oDialog.getPort().toStdString();
+                   }
+
+                   if (ip.empty() || port.empty())
+                   {
+                       QMessageBox::warning(this, tr("Drone Ip or Port is not set"), tr("Can't set drone without ip and port."));
+                       return;
+                   }
+
+                   emit sigSetDrone(nodeName, ip, port, true);
                 }
                 if (act->text() == "&Unset drone")
                 {
-                   emit sigSetDrone(nodeName, false);
+                   emit sigSetDrone(nodeName, "", "", false);
                 }
             }
             else

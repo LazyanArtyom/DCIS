@@ -54,6 +54,12 @@ public:
     int getUndirDegree() const;
 
     void setDrone(bool isDrone);
+    void setIp(const std::string& ip);
+    void setPort(const std::string& port);
+
+    std::string getIp() const;
+    std::string getPort() const;
+
     bool isDrone();
 
     double getX() const;
@@ -70,6 +76,8 @@ private:
     int degNeg_ = 0;
     bool drone_ = false;
     std::string name_;
+    std::string ip_;
+    std::string port_;
     QPointF euclidePos_;
     NodeType nodeType_ = NodeType::Inner;
 };
