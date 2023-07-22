@@ -5,11 +5,13 @@
 
 // Qt includes
 #include <QDir>
-#include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
 #include <QGeoCoordinate>
 #include <QRandomGenerator>
+#include <QTcpSocket>
+#include <QProcess>
+
 // STL includes
 #include <iostream>
 namespace dcis::GraphProcessor {
@@ -73,6 +75,10 @@ void GraphProcessor::initGraph()
         if(node -> getCommonNode()->isDrone())
         {
             vecDronesStartNodes_.push_back(node);
+        }
+        if(node -> getCommonNode()->isAttacker())
+        {
+            vecAttackerNodes_.push_back(node);
         }
     }
 
@@ -148,18 +154,21 @@ void GraphProcessor::generateGraph()
     double lat = 0;
     double lon = 0;
 
-    std::vector<QString> vecFileNames(vecDronesStartNodes_.size());
-    for(size_t i = 0; i < vecFileNames.size(); ++i)
+    ///////Exploration
+    vecExplorationFileNames_.resize(vecDronesStartNodes_.size());
+    for(size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
     {
         QDir dir;
         QString WORKING_DIR = dir.absolutePath();
-        vecFileNames[i] = (WORKING_DIR + QDir::separator() + "drone_" + QString::number(i) + ".data");
-        QFile file(vecFileNames[i]);
+        vecExplorationFileNames_[i] = (WORKING_DIR + QDir::separator() + "exploration_" + QString::number(i)+ QDir::separator() + "drone.data");
+        QFile file(vecExplorationFileNames_[i]);
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
             QTextStream stream(&file);
+            //drone type // 0 for exploration
+            stream << 0 << "\n";
             //droneID
             stream << i << "\n";
             //dronesCount
@@ -195,6 +204,53 @@ void GraphProcessor::generateGraph()
         }
         else
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
+    }
+
+    //////Attack
+    vecAttackFileNames_.resize(vecAttackerNodes_.size());
+    for(size_t i = 0; i < vecAttackFileNames_.size(); ++i)
+    {
+        QDir dir;
+        QString WORKING_DIR = dir.absolutePath();
+        vecAttackFileNames_[i] = (WORKING_DIR + QDir::separator() + "attack_" + QString::number(i)+ QDir::separator() + "drone.data");
+        QFile file(vecAttackFileNames_[i]);
+        if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
+        {
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
+            QTextStream stream(&file);
+            //drone type // 1 for attack
+            stream << 1 << "\n";
+            oGeoCoordMapper.pixelToWgs(vecAttackerNodes_[i]->getCommonNode()->getEuclidePos(), lat, lon);
+            //x
+            stream << lon << "\n";
+            //y
+            stream << lat << "\n";
+            stream.flush();
+            file.close();
+        }
+        else
+            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
+    }
+}
+
+void GraphProcessor::startExploration()
+{
+    for(size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
+    {
+        sendFileToDrone(QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getIp()),
+                        QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getPort()).toUShort(),
+                        vecExplorationFileNames_[i]);
+    }
+}
+
+void GraphProcessor::startAttack()
+{
+    for(size_t i = 0; i < vecAttackFileNames_.size(); ++i)
+    {
+        sendFileToDrone(QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getIp()),
+                        QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getPort()).toUShort(),
+                        vecAttackFileNames_[i]);
     }
 }
 
@@ -248,6 +304,82 @@ void GraphProcessor::setImgSize(size_t imgW, size_t imgH)
 {
     imgW_ = imgW;
     imgH_ = imgH;
+}
+
+void GraphProcessor::sendFileToDrone(QString serverIP, quint16 port, QFile file)
+{
+    /*
+    if (!file.open(QIODevice::ReadOnly)) {
+        // Handle file not found or other errors
+        dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File not found");
+        return;
+    }
+
+    QTcpSocket socket;
+    socket.connectToHost(serverIP, port);
+
+    if (socket.waitForConnected()) {
+        QByteArray fileData = file.readAll();
+        socket.write(fileData);
+        socket.waitForBytesWritten();
+        socket.disconnectFromHost();
+        file.close();
+        dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "File sent successfully");
+    } else {
+        // Handle connection error
+        dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: Failed to connect to the drone");
+    }*/
+
+    //QString sshPath = "/home/agit";
+    //QString username = "pi";
+    //QString password = "raspberry";
+
+    //QString remoteFilePath = "/path/on/remote/server/destination_file";
+    //QString localFilePath = "/path/on/local/machine/source_file";
+    //QString remoteCommand = "drone.py";
+
+    // SSH connection parameters
+    //QStringList sshArgs;
+    //sshArgs << "-p" << QString::number(port) << username + "@" + serverIP;
+
+    // File copy parameters
+    //QStringList scpArgs;
+    //scpArgs << "-P" << QString::number(port) << localFilePath << username + "@" + ipAddress + ":" + remoteFilePath;
+
+    // Remote command execution parameters
+    //QStringList sshExecArgs;
+    //sshExecArgs << "-p" << QString::number(port) << username + "@" + serverIP << remoteCommand;
+
+    // Start the SSH process for the connection
+    //QProcess sshProcess;
+    //sshProcess.setProgram(sshPath);
+    //sshProcess.setArguments(sshArgs);
+    //sshProcess.start();
+    //sshProcess.waitForFinished();
+
+    // Copy the file to the remote server using SCP
+    //QProcess scpProcess;
+    //scpProcess.setProgram("scp");
+    //scpProcess.setArguments(scpArgs);
+    //scpProcess.start();
+    //scpProcess.waitForFinished();
+
+    // Execute the remote command
+    //QProcess sshExecProcess;
+    //sshExecProcess.setProgram(sshPath);
+    //sshExecProcess.setArguments(sshExecArgs);
+    //sshExecProcess.start();
+    //sshExecProcess.waitForFinished();
+
+    // Check if there were any errors in the processes
+    //if (sshProcess.exitCode() != 0 || /*scpProcess.exitCode() != 0 ||*/ sshExecProcess.exitCode() != 0) {
+    //    qDebug() << "Error occurred during SSH, SCP, or remote command execution.";
+    //    qDebug() << "SSH Process error: " << sshProcess.errorString();
+        //qDebug() << "SCP Process error: " << scpProcess.errorString();
+    //    qDebug() << "Remote Command Process error: " << sshExecProcess.errorString();
+    //} else {
+    //    qDebug() << "SSH, SCP, and remote command executed successfully.";
+    //}
 }
 
 } // end namespace dcis::GraphProcessor

@@ -297,9 +297,22 @@ void Server::handleString(const QByteArray& data)
         }
         case resource::Command::GenerateGraph:
         {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
-            graphProc_->setImgSize(imgW_, imgH_);
-            graphProc_->generateGraph();
+            if(graphProc_)
+            {
+                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
+                graphProc_->setImgSize(imgW_, imgH_);
+                graphProc_->generateGraph();
+            }
+            break;
+        }
+        case resource::Command::StartExploration:
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartExploration");
+            break;
+        }
+        case resource::Command::StartAttack:
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartAttack");
             break;
         }
         default:

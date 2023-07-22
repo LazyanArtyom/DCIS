@@ -1,8 +1,8 @@
 #ifndef GRAPHPROCESSOR_H
 #define GRAPHPROCESSOR_H
 
-
-
+// Qt includes
+#include <QFile>
 // App includes
 #include <graphprocessor/node.h>
 
@@ -24,11 +24,18 @@ public:
     void clearCycles();
     void generateMap();
     void generateGraph();
+    void startExploration();
+    void startAttack();
     void setImgSize(size_t imgW, size_t imgH);
 
 private:
+    void sendFileToDrone(QString serverIP, quint16 port, QFile file);
+
     commonGraph* commGraph_ = nullptr;
     NodeVectorType vecDronesStartNodes_;
+    NodeVectorType vecAttackerNodes_;
+    std::vector<QString> vecExplorationFileNames_;
+    std::vector<QString> vecAttackFileNames_;
     NodeListType lstNodes_;
     Node* startNode_ = nullptr;
     CommonNodeToNodeMapType commNodeToNodeMap_;

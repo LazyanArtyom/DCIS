@@ -162,7 +162,7 @@ void MainWindow::onClearCycles()
 
         client_->sendToServer(headerData);
     }
-    QMessageBox::information(this,"Info","cycles cleared");
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Cycles Cleared");
 }
 
 void MainWindow::onGenerateGraph()
@@ -183,7 +183,46 @@ void MainWindow::onGenerateGraph()
 
         client_->sendToServer(headerData);
     }
-    QMessageBox::information(this,"Info","Graph generated");
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Graph Generated");
+}
+
+void MainWindow::onStartExploration()
+{
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");
+    if (client_->checkServerConnected())
+    {
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Text;
+        header.command = resource::Command::StartExploration;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        client_->sendToServer(headerData);
+    }
+}
+void MainWindow::onStartAttack()
+{
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
+    if (client_->checkServerConnected())
+    {
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Text;
+        header.command = resource::Command::StartAttack;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        client_->sendToServer(headerData);
+    }
 }
 
 void MainWindow::onConnectBtnClicked()
@@ -307,13 +346,9 @@ void MainWindow::createToolBar()
 
     connect(actGenerateGraph, &QAction::triggered, this, &MainWindow::onGenerateGraph);
 
-    connect(actStartExploration, &QAction::triggered, this, [this]() {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");
-    });
+    connect(actStartExploration, &QAction::triggered, this, &MainWindow::onStartExploration);
 
-    connect(actStartAttack, &QAction::triggered, this, [this]() {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
-    });
+    connect(actStartAttack, &QAction::triggered, this, &MainWindow::onStartAttack);
 }
 
 void MainWindow::createEntryWidget()
