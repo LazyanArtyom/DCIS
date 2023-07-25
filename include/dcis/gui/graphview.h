@@ -28,6 +28,8 @@ public:
     void setScene(GraphScene* scene);
     void setSceneSize(int width, int height);
 
+    void generateGraph(int row, int col);
+
     void zoomIn();
     void zoomOut();
     void viewFit();

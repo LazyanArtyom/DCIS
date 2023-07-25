@@ -142,6 +142,20 @@ void GraphView::setSceneSize(int width, int height)
     setSceneRect(0, 0, width, height);
 }
 
+void GraphView::generateGraph(int row, int col)
+{
+    int rowOffset = getImageInfo().imageSize.width() / row;
+    int colOffset = getImageInfo().imageSize.height() / col;
+
+    for (int row = 0; row <= getImageInfo().imageSize.width(); row += rowOffset)
+    {
+        for (int col = 0; col <= getImageInfo().imageSize.height(); col += colOffset)
+        {
+            emit sigNodeAdded(QPointF(row, col), true);
+        }
+    }
+}
+
 void GraphView::zoomIn()
 {
     scaleView(qreal(1.2));

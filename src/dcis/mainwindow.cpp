@@ -339,6 +339,23 @@ void MainWindow::createToolBar()
     QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
     toolBar_->addAction(actStartAttack);
 
+    QAction* actGenerate10x10 = new QAction("actGenerate10x10", this);
+    QAction* actGenerate20x20 = new QAction("actGenerate20x20", this);
+    QAction* actGenerate30x30 = new QAction("actGenerate30x30", this);
+
+    QToolButton* dropdownButton = new QToolButton(this);
+    dropdownButton->setText("GenerateGraphTemplate"); // Text for the dropdown button
+    dropdownButton->setIcon(QIcon(":/resources/clear_cycles.png"));
+    //dropdownButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon); // Show icon and text
+    toolBar_->addWidget(dropdownButton);
+
+    QMenu* dropdownMenu = new QMenu(this);
+    dropdownButton->setMenu(dropdownMenu);
+
+    dropdownMenu->addAction(actGenerate10x10);
+    dropdownMenu->addAction(actGenerate20x20);
+    dropdownMenu->addAction(actGenerate30x30);
+
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
 
@@ -349,6 +366,16 @@ void MainWindow::createToolBar()
     connect(actStartExploration, &QAction::triggered, this, &MainWindow::onStartExploration);
 
     connect(actStartAttack, &QAction::triggered, this, &MainWindow::onStartAttack);
+
+    connect(actGenerate10x10, &QAction::triggered, this, [this](){
+        graphView_->generateGraph(10, 10);
+    });
+    connect(actGenerate20x20, &QAction::triggered, this, [this](){
+        graphView_->generateGraph(20, 20);
+    });
+    connect(actGenerate30x30, &QAction::triggered, this, [this](){
+        graphView_->generateGraph(30, 30);
+    });
 }
 
 void MainWindow::createEntryWidget()
