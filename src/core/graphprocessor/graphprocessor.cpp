@@ -161,6 +161,11 @@ void GraphProcessor::generateGraph()
         QDir dir;
         QString WORKING_DIR = dir.absolutePath();
         vecExplorationFileNames_[i] = (WORKING_DIR + QDir::separator() + "exploration_" + QString::number(i)+ QDir::separator() + "drone.data");
+        dir = QFileInfo(vecExplorationFileNames_[i]).dir();
+        if (!dir.exists())
+        {
+            dir.mkpath(".");
+        }
         QFile file(vecExplorationFileNames_[i]);
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
