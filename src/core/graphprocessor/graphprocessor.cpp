@@ -14,6 +14,7 @@
 
 // STL includes
 #include <iostream>
+#include <set>
 namespace dcis::GraphProcessor {
 
 GraphProcessor::GraphProcessor()
@@ -68,7 +69,7 @@ void GraphProcessor::initGraph()
                 node -> addNeighbour(commNodeToNodeMap_[edge.first]);
             }
         }
-        if(startNode_ == nullptr && node->getCommonNode()->getNodeType() == commonNode::NodeType::Corner)
+        if(startNode_ == nullptr && node->getCommonNode()->getNodeType() == commonNode::NodeType::Border)
         {
             startNode_ = node;
         }
@@ -103,7 +104,8 @@ void GraphProcessor::initGraphDirs()
     nodeIter = nodeIter->getCurrNeighbour();
     for(;nodeIter != startNode_; nodeIter = nodeIter->getCurrNeighbour())
     {
-        for(size_t i = 0; i < Neighbours.size(); i++)
+        Neighbours = nodeIter->getNeighbours();
+        for(size_t i = 0; i < nodeIter->getNeighbours().size(); i++)
         {
             if((Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Border ||
                     Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Corner) &&
@@ -137,15 +139,20 @@ void GraphProcessor::clearCycles()
 {
     auto currPoint = startNode_;
     size_t startDirId = startNode_->getCurrNeighbourId();
-    size_t stepsCount = 0;
+    std::set<std::pair<Node*, Node*>> uniqueSteps;
     while(true)
     {
         currPoint->incrCurrNeighbourId();
+        uniqueSteps.insert(std::make_pair(currPoint, currPoint->getCurrNeighbour()));
         currPoint = currPoint->getCurrNeighbour();
-        stepsCount++;
-        if(currPoint == startNode_ && currPoint->getCurrNeighbourId() == startDirId && stepsCount >= neighboursCount_)
+        if(currPoint == startNode_ && currPoint->getCurrNeighbourId() == startDirId && uniqueSteps.size() >= neighboursCount_)
             break;
     }
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Start Node : " + QString::number(startNode_->getID()));
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Curr Neidh id : " + QString::number(startDirId));
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Neigh count : " + QString::number(neighboursCount_));
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "uniqueSteps count : " + QString::number(uniqueSteps.size()));
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Cycles Cleared");
 }
 
 void GraphProcessor::generateGraph()
@@ -153,11 +160,12 @@ void GraphProcessor::generateGraph()
     CCoordMapper oGeoCoordMapper(commGraph_->getLeftTop(), commGraph_->getRightBottom(), imgW_, imgH_);
     double lat = 0;
     double lon = 0;
-
+    qDebug() << "####1111";
     ///////Exploration
     vecExplorationFileNames_.resize(vecDronesStartNodes_.size());
     for(size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
     {
+        qDebug() << "####2222";
         QDir dir;
         QString WORKING_DIR = dir.absolutePath();
         vecExplorationFileNames_[i] = (WORKING_DIR + QDir::separator() + "exploration_" + QString::number(i)+ QDir::separator() + "drone.data");
@@ -169,6 +177,7 @@ void GraphProcessor::generateGraph()
         QFile file(vecExplorationFileNames_[i]);
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
+            qDebug() << "####3333";
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
             QTextStream stream(&file);
@@ -237,6 +246,7 @@ void GraphProcessor::generateGraph()
         else
             dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
     }
+    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Graph Generated");
 }
 
 void GraphProcessor::startExploration()

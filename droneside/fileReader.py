@@ -44,6 +44,9 @@ def startProcessing():
                 return True
         return False
 
+    print("strt node id: ", drones[0].startNodeID)
+    print("start dir: ", vecDronesStartDir[0])
+    print(nodes[drones[0].startNodeID].NeighLst)
     while not checkCompleted():
         for droneNum in range(len(vecDronesCurrPos)):
             tmpInd = nodes[vecDronesCurrPos[droneNum]].CurrInd
@@ -53,41 +56,42 @@ def startProcessing():
             print(tmpInd)
             nodes[vecDronesCurrPos[droneNum]].CurrInd = tmpInd
             vecDronesCurrPos[droneNum] = nodes[vecDronesCurrPos[droneNum]].NeighLst[tmpInd]
+            print(vecDronesCurrPos[droneNum])
             if drones[droneNum].ID == droneId:
                 # Agit generate command for send drone to new pos
+                print("drone go")
+                #nodes[vecDronesCurrPos[droneNum]].X
+                #nodes[vecDronesCurrPos[droneNum]].Y
                 # to get coords see
                 if isDroneAlowedToFinish(droneNum):
+                    print("Allowed")
                     exit(0)
                     # Agit generate command for landing
 
 
 if __name__ == '__main__':
-    file_path = r"C:/Users/Atash/Desktop/build-DCIS-Desktop_Qt_6_5_0_MSVC2019_64bit-Debug/drone_0.data"  # Replace with the actual file path
+    file_path = r"C:\Users\hayra\Desktop\IIAP WORK\new\build-DCIS-Desktop_Qt_6_5_1_MSVC2019_64bit-Debug\exploration_0\drone.data"  # Replace with the actual file path
 
     try:
         with open(file_path, 'r') as file:
             droneType = int(file.readline().strip())
-            if droneType == 0: #exploration
-                droneId = int(file.readline().strip())
-                dronesCount = int(file.readline().strip())
-                for num in range(0, dronesCount):
-                    aDroneID = int(file.readline().strip())
-                    aStartNodeID = int(file.readline().strip())
-                    drones.append(Drone(aDroneID, aStartNodeID))
-                nodesCount = int(file.readline().strip())
-                for num in range(0, nodesCount):
-                    tmpNode = Node()
-                    tmpNode.ID = int(file.readline().strip())
-                    tmpNode.X = float(file.readline().strip())
-                    tmpNode.Y = float(file.readline().strip())
-                    neighCount = int(file.readline().strip())
-                    for num1 in range(0, neighCount):
-                        tmpNode.NeighLst.append(int(file.readline().strip()))
-                    tmpNode.CurrInd = int(file.readline().strip())
-                    nodes.append(tmpNode)
-            else: #Attack
+            droneId = int(file.readline().strip())
+            dronesCount = int(file.readline().strip())
+            for num in range(0, dronesCount):
+                aDroneID = int(file.readline().strip())
+                aStartNodeID = int(file.readline().strip())
+                drones.append(Drone(aDroneID, aStartNodeID))
+            nodesCount = int(file.readline().strip())
+            for num in range(0, nodesCount):
+                tmpNode = Node()
+                tmpNode.ID = int(file.readline().strip())
                 tmpNode.X = float(file.readline().strip())
                 tmpNode.Y = float(file.readline().strip())
+                neighCount = int(file.readline().strip())
+                for num1 in range(0, neighCount):
+                    tmpNode.NeighLst.append(int(file.readline().strip()))
+                tmpNode.CurrInd = int(file.readline().strip())
+                nodes.append(tmpNode)
     except FileNotFoundError:
         print("File not found!")
     except IOError:
@@ -96,5 +100,5 @@ if __name__ == '__main__':
     print(nodes)
     print('\n\n')
     print(drones)
-    if droneType == 0:  # exploration
-        startProcessing()
+
+    startProcessing()
