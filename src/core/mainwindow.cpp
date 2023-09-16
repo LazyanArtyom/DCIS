@@ -3,6 +3,7 @@
 // App includes
 #include <graph/graph.h>
 #include <utils/debugstream.h>
+//#include <graphprocessor/graphprocessor.h>
 
 // Qt includes
 #include <QVBoxLayout>
@@ -67,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent)
     // server
     server_ = new Server(this);
     server_->run(2323);
+
+//    GraphProcessor::GraphProcessor*  process = new GraphProcessor::GraphProcessor();
+//    process->sendFileToDrone("proxy55.rt3.io", 30375, QFile(""));
 }
 
 MainWindow::~MainWindow()

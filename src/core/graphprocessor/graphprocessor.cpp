@@ -321,8 +321,75 @@ void GraphProcessor::setImgSize(size_t imgW, size_t imgH)
     imgH_ = imgH;
 }
 
-void GraphProcessor::sendFileToDrone(QString serverIP, quint16 port, QFile file)
+void GraphProcessor::sendFileToDrone(QString serverIPp, quint16 portp, QFile file)
 {
+
+    // Replace these values with your own
+    QString username = "user";
+    QString serverIP = "proxy55.rt3.io";
+    //QString hostname = "proxy50.rt3.io";
+    int port = 33890;  // Replace with your desired SSH port
+
+    //QString remoteCommand = "mkdir jujul";
+
+    QString privateKeyPath = "C:\\Users\\Atash\\.ssh\\id_rsa";
+    //QString localFilePath = "C:\\Users\\Atash\\Desktop\\build-DCIS-Desktop_Qt_6_5_0_MSVC2019_64bit-Debug\\CMakeCache.txt";
+    //QString localFilePath = "/c/Users/Atash/Desktop/build-DCIS-Desktop_Qt_6_5_0_MSVC2019_64bit-Debug/CMakeCache.txt";
+    QString localFilePath = file.fileName();
+    localFilePath.replace("/","\\");
+    QString remoteFilePath = "/home/user";
+
+    // Specify the SCP command and its arguments
+    QString scpCommand = "scp";
+    QStringList scpArguments;
+
+    // Add the SSH key, port, source, and destination as arguments
+    scpArguments << "-P" << QString::number(port) << "-i" << privateKeyPath
+                << localFilePath << username + "@" + serverIP + ":" + remoteFilePath;
+
+    // Create a QProcess instance and start the SCP process
+    QProcess scpProcess;
+    scpProcess.start(scpCommand, scpArguments);
+    scpProcess.waitForFinished();
+    qDebug() << scpArguments;
+    // Check if the process started successfully
+    if (scpProcess.state() == QProcess::Running) {
+        qDebug() << "SCP transfer in progress...";
+    } else {
+        qDebug() << "Failed to start the SCP process. Error:" << scpProcess.errorString();
+    }
+
+    // Specify the SSH command and its arguments
+    QString sshCommand = "ssh";
+    QStringList sshArguments;
+
+    // Add the username, hostname, and port as arguments
+    sshArguments << "-p" << QString::number(port) << username + "@" + serverIP;
+
+    QString remoteCommand = "python3 /home/user/Desktop/DCIS/droneside/droneprocessor.py > run_dron.log";
+    sshArguments << remoteCommand;
+
+    // Create a QProcess instance and start the SSH process
+    QProcess sshProcess;
+    sshProcess.start(sshCommand, sshArguments);
+    sshProcess.waitForStarted();
+
+    if (sshProcess.state() == QProcess::Running) {
+            qDebug() << "SSH connection established. Running remote command: " << remoteCommand;
+
+            // Wait for the SSH process to finish
+            sshProcess.waitForFinished();
+
+            // Read and print the command output (stdout)
+            QByteArray output = sshProcess.readAllStandardOutput();
+            qDebug() << "Command output:\n" << output;
+
+            // Read and print any errors (stderr)
+            QByteArray error = sshProcess.readAllStandardError();
+            qDebug() << "Command error (if any):\n" << error;
+        } else {
+            qDebug() << "Failed to start the SSH process. Error:" << sshProcess.errorString();
+        }
     /*
     if (!file.open(QIODevice::ReadOnly)) {
         // Handle file not found or other errors

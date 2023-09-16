@@ -307,7 +307,11 @@ void Server::handleString(const QByteArray& data)
         }
         case resource::Command::StartExploration:
         {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartExploration");
+            if(graphProc_)
+            {
+                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartExploration");
+                graphProc_->startExploration();
+            }
             break;
         }
         case resource::Command::StartAttack:

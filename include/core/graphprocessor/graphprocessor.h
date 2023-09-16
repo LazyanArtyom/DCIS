@@ -27,9 +27,9 @@ public:
     void startExploration();
     void startAttack();
     void setImgSize(size_t imgW, size_t imgH);
+    void sendFileToDrone(QString serverIP, quint16 port, QFile file);
 
 private:
-    void sendFileToDrone(QString serverIP, quint16 port, QFile file);
 
     commonGraph* commGraph_ = nullptr;
     NodeVectorType vecDronesStartNodes_;
