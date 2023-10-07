@@ -369,7 +369,7 @@ void GraphProcessor::sendFileToDrone(QString serverIP, int port, QFile file)
     // Add the username, hostname, and port as arguments
     sshArguments /*<< "-p" << QString::number(port)*/ << username + "@" + serverIP;
 
-    QString remoteCommand = "python3 /home/user/Desktop/DCIS/droneside/droneprocessor.py > run_dron.log";
+    QString remoteCommand = "python3 /home/user/Desktop/DCIS/droneside/droneprocessor.py -data /home/user/drone.data > run_dron.log";
     sshArguments << remoteCommand;
 
     // Create a QProcess instance and start the SSH process
