@@ -108,8 +108,7 @@ if __name__ == '__main__':
                         help='To run application on simulator.',
                         default=False,
                         action='store_true',
-                        required=False,
-                        type=bool
+                        required=False
                         )
     parser.add_argument('-ip',
                         help='The drone IP or serial port path.',
