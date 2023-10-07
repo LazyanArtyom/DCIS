@@ -1,4 +1,6 @@
 from dronecontrole import DronController
+from argparse import ArgumentParser
+import os
 
 
 class Node:
@@ -53,7 +55,7 @@ class DronDataProcessor:
         except IOError:
             print("Error reading the file!")
 
-    def startProcessing(self):
+    def startProcessing(self, dronIp, isSimMode):
         vecDronesCurrPos = []
         vecDronesStartDir = []
         vecCompleted = []
@@ -76,7 +78,7 @@ class DronDataProcessor:
                     return True
             return False
 
-        self.droneControl.startup()
+        self.droneControl.startup(dronIp, isSimMode)
         self.droneControl.goto(self.nodes[self.drones[self.droneId].startNodeID].X, self.nodes[self.drones[self.droneId].startNodeID].Y)
         print('Go to home')
         while not checkCompleted():
@@ -101,7 +103,28 @@ class DronDataProcessor:
 
 
 if __name__ == '__main__':
-    file_path = r"C:\Users\Atash\Desktop\build-DCIS-Desktop_Qt_6_5_0_MSVC2019_64bit-Debug\exploration_0\drone.data"  # Replace with the actual file path
+    parser = ArgumentParser('Tool to travers the researched points.')
+    parser.add_argument('-sim',
+                        help='To run application on simulator.',
+                        default=False,
+                        action='store_true',
+                        required=False,
+                        type=bool
+                        )
+    parser.add_argument('-ip',
+                        help='The drone IP or serial port path.',
+                        default='/dev/serial0',
+                        required=False,
+                        type=str
+                        )
+    parser.add_argument('-data',
+                        help='The drone data file path.',
+                        required=True,
+                        type=str
+                        )
+    args = parser.parse_args()
+
+    file_path = os.path.abspath(args.data)  # Replace with the actual file path
 
     processor = DronDataProcessor(file_path)
     processor.readFileContent()
@@ -110,4 +133,4 @@ if __name__ == '__main__':
     print('\n\n')
     print(processor.drones)
 
-    processor.startProcessing()
+    processor.startProcessing(args.ip, args.sim)

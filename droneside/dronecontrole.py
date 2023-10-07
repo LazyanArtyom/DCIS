@@ -121,8 +121,11 @@ class DronController:
         self.vehicle.send_mavlink(msg)
         time.sleep(1)
 
-    def startup(self):
-        self.vehicle = connect('/dev/serial0', baud=57600, wait_ready=True)
+    def startup(self, dronIp='/dev/serial0', isSimMode=False):
+        if isSimMode:
+            self.vehicle = connect(dronIp)
+        else:
+            self.vehicle = connect('/dev/serial0', baud=57600, wait_ready=True)
         while not self.vehicle.is_armable:
             time.sleep(1)
         self.vehicle.mode = VehicleMode("GUIDED")
