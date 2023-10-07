@@ -254,7 +254,7 @@ void GraphProcessor::startExploration()
     for(size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
     {
         sendFileToDrone(QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getIp()),
-                        QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getPort()).toUShort(),
+                        QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getPort()).toInt(),
                         vecExplorationFileNames_[i]);
     }
 }
@@ -263,6 +263,8 @@ void GraphProcessor::startAttack()
 {
     for(size_t i = 0; i < vecAttackFileNames_.size(); ++i)
     {
+        qDebug() << "IP CORE = " << vecAttackerNodes_[i]->getCommonNode()->getIp() << " Port CORE = " << vecAttackerNodes_[i]->getCommonNode()->getPort();
+
         sendFileToDrone(QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getIp()),
                         QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getPort()).toUShort(),
                         vecAttackFileNames_[i]);
@@ -321,14 +323,15 @@ void GraphProcessor::setImgSize(size_t imgW, size_t imgH)
     imgH_ = imgH;
 }
 
-void GraphProcessor::sendFileToDrone(QString serverIPp, quint16 portp, QFile file)
+void GraphProcessor::sendFileToDrone(QString serverIP, int port, QFile file)
 {
+    qDebug() << "serverIPp: " << serverIP << " portp: " << port;
 
     // Replace these values with your own
     QString username = "user";
-    QString serverIP = "proxy55.rt3.io";
+    //QString serverIP = "178.160.253.146";
     //QString hostname = "proxy50.rt3.io";
-    int port = 33890;  // Replace with your desired SSH port
+    //int port = 37608;  // Replace with your desired SSH port
 
     //QString remoteCommand = "mkdir jujul";
 
@@ -344,7 +347,7 @@ void GraphProcessor::sendFileToDrone(QString serverIPp, quint16 portp, QFile fil
     QStringList scpArguments;
 
     // Add the SSH key, port, source, and destination as arguments
-    scpArguments << "-P" << QString::number(port) << "-i" << privateKeyPath
+    scpArguments /*<< "-P" << QString::number(port)*/ << "-i" << privateKeyPath
                 << localFilePath << username + "@" + serverIP + ":" + remoteFilePath;
 
     // Create a QProcess instance and start the SCP process
@@ -364,7 +367,7 @@ void GraphProcessor::sendFileToDrone(QString serverIPp, quint16 portp, QFile fil
     QStringList sshArguments;
 
     // Add the username, hostname, and port as arguments
-    sshArguments << "-p" << QString::number(port) << username + "@" + serverIP;
+    sshArguments /*<< "-p" << QString::number(port)*/ << username + "@" + serverIP;
 
     QString remoteCommand = "python3 /home/user/Desktop/DCIS/droneside/droneprocessor.py > run_dron.log";
     sshArguments << remoteCommand;

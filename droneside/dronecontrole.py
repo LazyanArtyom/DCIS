@@ -137,6 +137,6 @@ class DronController:
         os.system('raspistill -o ~/Desktop/run_images/image_{0}{1}_{2}.jpg'.format(i, j, self.image_count))
         print('INFO  Photo shoting was done successfully.')
 
-    def missinon_end(self):
-        self.vehicle.mode = VehicleMode("LAND")
+    def missinon_end(self, mode='LAND'):
+        self.vehicle.mode = VehicleMode(mode)
         self.wait_for_altituide()

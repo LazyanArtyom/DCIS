@@ -319,7 +319,7 @@ Graph* Graph::fromJSON(QJsonDocument jsonDoc)
         tmpNode.setDrone(node.toObject().value("drone").toBool());
         tmpNode.setAttacker(node.toObject().value("attacker").toBool());
         tmpNode.setIp(node.toObject().value("ip").toString().toStdString());
-        tmpNode.setIp(node.toObject().value("port").toString().toStdString());
+        tmpNode.setPort(node.toObject().value("port").toString().toStdString());
 
         graph->addNode(tmpNode);
     }
