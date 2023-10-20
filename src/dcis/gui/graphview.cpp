@@ -3,6 +3,10 @@
 #include <gui/coordinputdialog.h>
 #include <utils/debugstream.h>
 
+#include <iostream>
+#include <sstream>
+#include <string>
+
 
 namespace dcis::gui {
 
@@ -144,16 +148,51 @@ void GraphView::setSceneSize(int width, int height)
 
 void GraphView::generateGraph(int row, int col)
 {
+    row = 2; col = 2;
     int rowOffset = getImageInfo().imageSize.width() / row;
     int colOffset = getImageInfo().imageSize.height() / col;
 
-    for (int row = 0; row <= getImageInfo().imageSize.width(); row += rowOffset)
+    int rows = getImageInfo().imageSize.width();
+    int cols = getImageInfo().imageSize.height();
+
+    for (int row = 0; row <= rows; row += rowOffset)
     {
-        for (int col = 0; col <= getImageInfo().imageSize.height(); col += colOffset)
+        for (int col = 0; col <= cols; col += colOffset)
         {
-            emit sigNodeAdded(QPointF(row, col), true);
+            std::stringstream nodeName;
+            nodeName << "N" << row << ":" << col;
+            //emit sigNodeAdded(QPointF(row, col), true);
+            graph_->addNode(graph::Node(nodeName.str(), QPointF(row, col)));
+            qDebug() << "Added: " << nodeName.str();
         }
     }
+
+    for (int row = 0; row < rows; row += rowOffset)
+    {
+        for (int col = 0; col < cols; col += colOffset)
+        {
+            if (row < rows - colOffset)
+            {
+                std::stringstream edgeName1, edgeName2;
+                edgeName1 << "N" << row << ":" << col;
+                edgeName2 << "N" << (row + colOffset) << ":" << col;
+                //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
+                qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
+                graph_->setEdge(edgeName1.str(), edgeName2.str());
+            }
+            if (col < cols - colOffset)
+            {
+                std::stringstream edgeName1, edgeName2;
+                edgeName1 << "N" << row << ":" << col;
+                edgeName2 << "N" << row << ":" << (col + colOffset);
+                //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
+                qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
+                graph_->setEdge(edgeName1.str(), edgeName2.str());
+            }
+        }
+     }
+
+    emit sigGraphChanged();
 }
 
 void GraphView::zoomIn()

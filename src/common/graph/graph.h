@@ -61,6 +61,8 @@ public:
 
     static Graph* fromJSON(QJsonDocument jsonDoc);
     static QJsonDocument toJSON(Graph* graph);
+    static bool save(Graph* graph, const QString& filePath);
+    static Graph* load(const QString& filePath);
 
     bool setNodeType(const std::string &nodeName, const Node::NodeType nodeType);
     bool setDrone(const std::string &nodeName, const bool isDrone);

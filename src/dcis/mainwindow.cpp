@@ -273,6 +273,57 @@ void MainWindow::onUpdateGraph(const QJsonDocument& json)
     graphView_->updateGraph(graph);
 }
 
+void MainWindow::onSaveGraph()
+{
+    qDebug() << "1 ";
+    QString filePath;
+    if (currentFilePath_.isEmpty())
+    {
+        qDebug() << "2 ";
+        QString defaultPath = QDir::currentPath() + "/untitled.json";
+
+        qDebug() << "AAAAAA: " << defaultPath;
+        filePath = QFileDialog::getSaveFileName(this, tr("Save File"), defaultPath, tr("JSON Files (*.json)"));
+        if (filePath.isEmpty())
+        {
+            qDebug() << "3 ";
+            return;
+        }
+    } else
+    {
+        filePath = currentFilePath_;
+    }
+
+    graph::Graph* currentGraph = graphView_->getGraph();
+    if (currentGraph == nullptr)
+    {
+        return;
+    }
+
+    if (graph::Graph::save(currentGraph, filePath))
+    {
+        currentFilePath_ = filePath; // Update the current file path
+    }
+}
+
+void MainWindow::onLoadGraph()
+{
+    qDebug() << "KKKKK ";
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), QDir::currentPath(), tr("JSON Files (*.json)"));
+    if (!filePath.isEmpty())
+    {
+        graph::Graph* graph = graph::Graph::load(filePath);
+        graphView_->updateGraph(graph);
+        currentFilePath_ = filePath; // Update the current file path
+    }
+    else
+    {
+        return;
+    }
+
+    onGraphChanged();
+}
+
 void MainWindow::createMenu()
 {
     // file
@@ -339,6 +390,14 @@ void MainWindow::createToolBar()
     QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
     toolBar_->addAction(actStartAttack);
 
+    QAction* actSaveGraph = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("SaveGraph"));
+    toolBar_->addAction(actSaveGraph);
+    QAction* actLoadGraph = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("LoadGraph"));
+    toolBar_->addAction(actLoadGraph);
+
+    //QAction* actLoad = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
+    //toolBar_->addAction(actStartAttack);
+
     QAction* actGenerate10x10 = new QAction("actGenerate10x10", this);
     QAction* actGenerate20x20 = new QAction("actGenerate20x20", this);
     QAction* actGenerate30x30 = new QAction("actGenerate30x30", this);
@@ -366,6 +425,10 @@ void MainWindow::createToolBar()
     connect(actStartExploration, &QAction::triggered, this, &MainWindow::onStartExploration);
 
     connect(actStartAttack, &QAction::triggered, this, &MainWindow::onStartAttack);
+
+    connect(actLoadGraph, &QAction::triggered, this, &MainWindow::onLoadGraph);
+
+    connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
 
     connect(actGenerate10x10, &QAction::triggered, this, [this](){
         graphView_->generateGraph(10, 10);

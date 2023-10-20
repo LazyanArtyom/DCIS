@@ -57,6 +57,9 @@ public slots:
     void onGraphChanged();
     void onUpdateGraph(const QJsonDocument& json);
 
+    void onSaveGraph();
+    void onLoadGraph();
+
 private:
     void createMenu();
     void createToolBar();
@@ -104,6 +107,8 @@ private:
     client::Client* client_;
     GraphInfo* graphInfo_;
     GraphView* graphView_;
+
+    QString currentFilePath_ = "";
 
     ElementPropertiesTable* elementPropertiesTable_;
     QString leftTop_;

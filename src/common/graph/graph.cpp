@@ -3,6 +3,9 @@
 // App includes
 #include <utils/debugstream.h>
 
+// Qt includes
+#include <QFile>
+
 namespace dcis::common::graph
 {
 
@@ -381,6 +384,36 @@ QJsonDocument Graph::toJSON(Graph* graph)
     jsonDoc.setObject(jsonObj);
 
     return jsonDoc;
+}
+
+bool Graph::save(Graph* graph, const QString& filePath)
+{
+    QFile saveFile(filePath);
+    if (!saveFile.open(QIODevice::WriteOnly))
+    {
+        qDebug("Couldn't open save file.");
+        return false;
+    }
+
+    QJsonDocument jsonDoc = toJSON(graph);
+    saveFile.write(jsonDoc.toJson());
+    return true;
+}
+
+Graph* Graph::load(const QString& filePath)
+{
+    QFile loadFile(filePath);
+    if (!loadFile.open(QIODevice::ReadOnly))
+    {
+        qWarning("Couldn't open save file.");
+        return nullptr;
+    }
+
+    QByteArray saveData = loadFile.readAll();
+    QJsonDocument loadDoc(QJsonDocument::fromJson(saveData));
+
+    Graph* graph = fromJSON(loadDoc);
+    return graph;
 }
 
 bool Graph::isDirected() const
