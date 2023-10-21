@@ -87,29 +87,28 @@ class DronDataProcessor:
         print('Go to home')
         while not checkCompleted():
             for droneNum in range(len(vecDronesCurrPos)):
-                if vecDroneLanded[droneNum]:
-                    continue
-                tmpInd = self.nodes[vecDronesCurrPos[droneNum]].CurrInd
-                tmpInd += 1
-                if tmpInd >= len(self.nodes[vecDronesCurrPos[droneNum]].NeighLst):
-                    tmpInd = 0
-                print(tmpInd)
-                self.nodes[vecDronesCurrPos[droneNum]].CurrInd = tmpInd
-                vecDronesCurrPos[droneNum] = self.nodes[vecDronesCurrPos[droneNum]].NeighLst[tmpInd]
-                print('Node id is', vecDronesCurrPos[droneNum])
-                if self.drones[droneNum].ID == self.droneId:
-                    # Agit generate command for send drone to new pos
-                    # to get coords see
-                    print('Drone next coords is', self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
-                    self.droneControl.goto(self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
-                    if isDroneAlowedToFinish(droneNum):
-                        vecDroneLanded[droneNum] = True
-                        self.droneControl.missinon_end(mode='RTL')
-                        exit(0)
-                        # Agit generate command for landing
-                else:
-                    if isDroneAlowedToFinish(droneNum):
-                        vecDroneLanded[droneNum] = True
+                if vecDroneLanded[droneNum] == False:
+                    tmpInd = self.nodes[vecDronesCurrPos[droneNum]].CurrInd
+                    tmpInd += 1
+                    if tmpInd >= len(self.nodes[vecDronesCurrPos[droneNum]].NeighLst):
+                        tmpInd = 0
+                    print(tmpInd)
+                    self.nodes[vecDronesCurrPos[droneNum]].CurrInd = tmpInd
+                    vecDronesCurrPos[droneNum] = self.nodes[vecDronesCurrPos[droneNum]].NeighLst[tmpInd]
+                    print('Node id is', vecDronesCurrPos[droneNum])
+                    if self.drones[droneNum].ID == self.droneId:
+                        # Agit generate command for send drone to new pos
+                        # to get coords see
+                        print('Drone next coords is', self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
+                        self.droneControl.goto(self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
+                        if isDroneAlowedToFinish(droneNum):
+                            vecDroneLanded[droneNum] = True
+                            self.droneControl.missinon_end(mode='RTL')
+                            exit(0)
+                            # Agit generate command for landing
+                    else:
+                        if isDroneAlowedToFinish(droneNum):
+                            vecDroneLanded[droneNum] = True
 
 
 if __name__ == '__main__':
