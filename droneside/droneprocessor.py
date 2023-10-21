@@ -59,6 +59,7 @@ class DronDataProcessor:
         vecDronesCurrPos = []
         vecDronesStartDir = []
         vecCompleted = []
+        vecDroneLanded = []
 
         for drone in self.drones:
             vecDronesCurrPos.append(drone.startNodeID)
@@ -77,12 +78,17 @@ class DronDataProcessor:
                     vecCompleted[i] = True
                     return True
             return False
+        
+        for droneNum in range(len(vecDronesCurrPos)):
+            vecDroneLanded[droneNum] = False
 
         self.droneControl.startup(dronIp, isSimMode)
         self.droneControl.goto(self.nodes[self.drones[self.droneId].startNodeID].X, self.nodes[self.drones[self.droneId].startNodeID].Y)
         print('Go to home')
         while not checkCompleted():
             for droneNum in range(len(vecDronesCurrPos)):
+                if vecDroneLanded[droneNum]:
+                    continue
                 tmpInd = self.nodes[vecDronesCurrPos[droneNum]].CurrInd
                 tmpInd += 1
                 if tmpInd >= len(self.nodes[vecDronesCurrPos[droneNum]].NeighLst):
@@ -97,9 +103,13 @@ class DronDataProcessor:
                     print('Drone next coords is', self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
                     self.droneControl.goto(self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
                     if isDroneAlowedToFinish(droneNum):
+                        vecDroneLanded[droneNum] = True
                         self.droneControl.missinon_end(mode='RTL')
                         exit(0)
                         # Agit generate command for landing
+                else:
+                    if isDroneAlowedToFinish(droneNum):
+                        vecDroneLanded[droneNum] = True
 
 
 if __name__ == '__main__':
