@@ -80,7 +80,7 @@ class DronDataProcessor:
             return False
         
         for droneNum in range(len(vecDronesCurrPos)):
-            vecDroneLanded[droneNum] = False
+            vecDroneLanded.append(False)
 
         self.droneControl.startup(dronIp, isSimMode)
         self.droneControl.goto(self.nodes[self.drones[self.droneId].startNodeID].X, self.nodes[self.drones[self.droneId].startNodeID].Y)
