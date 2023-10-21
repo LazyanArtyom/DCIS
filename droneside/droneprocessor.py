@@ -65,6 +65,7 @@ class DronDataProcessor:
             vecDronesCurrPos.append(drone.startNodeID)
             vecDronesStartDir.append(self.nodes[drone.startNodeID].CurrInd)
             vecCompleted.append(False)
+            vecDroneLanded.append(False)
 
         def checkCompleted():
             res = True
@@ -79,9 +80,6 @@ class DronDataProcessor:
                     return True
             return False
         
-        for droneNum in range(len(vecDronesCurrPos)):
-            vecDroneLanded.append(False)
-
         self.droneControl.startup(dronIp, isSimMode)
         self.droneControl.goto(self.nodes[self.drones[self.droneId].startNodeID].X, self.nodes[self.drones[self.droneId].startNodeID].Y)
         print('Go to home')
