@@ -99,14 +99,13 @@ class DronDataProcessor:
                         # to get coords see
                         print('Drone next coords is', self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
                         self.droneControl.goto(self.nodes[vecDronesCurrPos[droneNum]].X, self.nodes[vecDronesCurrPos[droneNum]].Y)
-                        if isDroneAlowedToFinish(droneNum):
-                            vecDroneLanded[droneNum] = True
+                    if isDroneAlowedToFinish(droneNum):
+                        vecDroneLanded[droneNum] = True
+                        if self.drones[droneNum].ID == self.droneId:
                             self.droneControl.missinon_end(mode='RTL')
                             exit(0)
                             # Agit generate command for landing
-                    else:
-                        if isDroneAlowedToFinish(droneNum):
-                            vecDroneLanded[droneNum] = True
+                        
 
 
 if __name__ == '__main__':
