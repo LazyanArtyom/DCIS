@@ -143,6 +143,67 @@ void MainWindow::onUpload()
     }
 }
 
+void MainWindow::onCreateGrid()
+{
+   QDialog *popup = new QDialog(this);
+   QVBoxLayout *layout = new QVBoxLayout;
+
+   QCheckBox *checkBox1 = new QCheckBox("10x10");
+   QCheckBox *checkBox2 = new QCheckBox("20x20");
+   QCheckBox *checkBox3 = new QCheckBox("30x30");
+   layout->addWidget(checkBox1);
+   layout->addWidget(checkBox2);
+   layout->addWidget(checkBox3);
+
+   QLabel *rowsLabel = new QLabel("Rows:");
+   QLineEdit *rowsLineEdit = new QLineEdit;
+   QLabel *colsLabel = new QLabel("Cols:");
+   QLineEdit *colsLineEdit = new QLineEdit;
+
+   layout->addWidget(rowsLabel);
+   layout->addWidget(rowsLineEdit);
+   layout->addWidget(colsLabel);
+   layout->addWidget(colsLineEdit);
+
+   QPushButton *okButton = new QPushButton("OK");
+   QPushButton *cancelButton = new QPushButton("Cancel");
+
+   connect(okButton, &QPushButton::clicked, popup, &QDialog::accept);
+   connect(cancelButton, &QPushButton::clicked, popup, &QDialog::reject);
+
+   layout->addWidget(okButton);
+   layout->addWidget(cancelButton);
+
+   popup->setLayout(layout);
+   int result = popup->exec();
+
+   if (result == QDialog::Accepted)
+   {
+       if (checkBox1->isChecked())
+       {
+           graphView_->generateGraph(10, 10);
+       }
+       else if (checkBox2->isChecked())
+       {
+           graphView_->generateGraph(20, 20);
+       }
+       else if (checkBox3->isChecked())
+       {
+           graphView_->generateGraph(30, 30);
+       }
+       else
+       {
+           graphView_->generateGraph(rowsLineEdit->text().toInt(), colsLineEdit->text().toInt());
+       }
+       // Handle the OK button click
+       // You can access the values of the fields here
+   }
+   else
+   {
+       // Handle the Cancel button click
+   }
+}
+
 void MainWindow::onClearCycles()
 {
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Map generated");
@@ -374,6 +435,7 @@ void MainWindow::createToolBar()
 {
     // tool bar
     toolBar_ = addToolBar("Main ToolBar");
+    toolBar_->setIconSize(QSize(32, 32));
 
     QAction* actUpload = new QAction(QIcon(QPixmap(":/resources/upload.png")), tr("Upload"));
     toolBar_->addAction(actUpload);
@@ -390,30 +452,14 @@ void MainWindow::createToolBar()
     QAction* actStartAttack = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
     toolBar_->addAction(actStartAttack);
 
-    QAction* actSaveGraph = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("SaveGraph"));
+    QAction* actSaveGraph = new QAction(QIcon(QPixmap(":/resources/save_graph.png")), tr("SaveGraph"));
     toolBar_->addAction(actSaveGraph);
-    QAction* actLoadGraph = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("LoadGraph"));
+
+    QAction* actLoadGraph = new QAction(QIcon(QPixmap(":/resources/load_graph.png")), tr("LoadGraph"));
     toolBar_->addAction(actLoadGraph);
 
-    //QAction* actLoad = new QAction(QIcon(QPixmap(":/resources/attack.png")), tr("StartAttack"));
-    //toolBar_->addAction(actStartAttack);
-
-    QAction* actGenerate10x10 = new QAction("actGenerate10x10", this);
-    QAction* actGenerate20x20 = new QAction("actGenerate20x20", this);
-    QAction* actGenerate30x30 = new QAction("actGenerate30x30", this);
-
-    QToolButton* dropdownButton = new QToolButton(this);
-    dropdownButton->setText("GenerateGraphTemplate"); // Text for the dropdown button
-    dropdownButton->setIcon(QIcon(":/resources/clear_cycles.png"));
-    //dropdownButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon); // Show icon and text
-    toolBar_->addWidget(dropdownButton);
-
-    QMenu* dropdownMenu = new QMenu(this);
-    dropdownButton->setMenu(dropdownMenu);
-
-    dropdownMenu->addAction(actGenerate10x10);
-    dropdownMenu->addAction(actGenerate20x20);
-    dropdownMenu->addAction(actGenerate30x30);
+    QAction* actCreateGrid = new QAction(QIcon(QPixmap(":/resources/grid.png")), tr("Grid"));
+    toolBar_->addAction(actCreateGrid);
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
@@ -430,15 +476,7 @@ void MainWindow::createToolBar()
 
     connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
 
-    connect(actGenerate10x10, &QAction::triggered, this, [this](){
-        graphView_->generateGraph(10, 10);
-    });
-    connect(actGenerate20x20, &QAction::triggered, this, [this](){
-        graphView_->generateGraph(20, 20);
-    });
-    connect(actGenerate30x30, &QAction::triggered, this, [this](){
-        graphView_->generateGraph(30, 30);
-    });
+    connect(actCreateGrid, &QAction::triggered, this, &MainWindow::onCreateGrid);
 }
 
 void MainWindow::createEntryWidget()

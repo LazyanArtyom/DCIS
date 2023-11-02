@@ -49,6 +49,7 @@ public:
 
 public slots:
     void onUpload();
+    void onCreateGrid();
     void onClearCycles();
     void onGenerateGraph();
     void onStartExploration();

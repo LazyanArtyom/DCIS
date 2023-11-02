@@ -148,43 +148,44 @@ void GraphView::setSceneSize(int width, int height)
 
 void GraphView::generateGraph(int row, int col)
 {
-    row = 2; col = 2;
-    int rowOffset = getImageInfo().imageSize.width() / row;
-    int colOffset = getImageInfo().imageSize.height() / col;
+    graph_->clear();
+
+    int rowOffset = getImageInfo().imageSize.width() / (row - 1);
+    int colOffset = getImageInfo().imageSize.height() / (col - 1);
 
     int rows = getImageInfo().imageSize.width();
     int cols = getImageInfo().imageSize.height();
 
-    for (int row = 0; row <= rows; row += rowOffset)
+    for (int row = 0, i = 0; row <= rows; row += rowOffset, ++i)
     {
-        for (int col = 0; col <= cols; col += colOffset)
+        for (int col = 0, j = 0; col <= cols; col += colOffset, ++j)
         {
             std::stringstream nodeName;
-            nodeName << "N" << row << ":" << col;
+            nodeName << "N" << i << ":" << j;
             //emit sigNodeAdded(QPointF(row, col), true);
             graph_->addNode(graph::Node(nodeName.str(), QPointF(row, col)));
             qDebug() << "Added: " << nodeName.str();
         }
     }
 
-    for (int row = 0; row < rows; row += rowOffset)
+    for (int row = 0, i = 0; row < rows; row += rowOffset, ++i)
     {
-        for (int col = 0; col < cols; col += colOffset)
+        for (int col = 0, j = 0; col < cols; col += colOffset, ++j)
         {
-            if (row < rows - colOffset)
+            if (row < rows)
             {
                 std::stringstream edgeName1, edgeName2;
-                edgeName1 << "N" << row << ":" << col;
-                edgeName2 << "N" << (row + colOffset) << ":" << col;
+                edgeName1 << "N" << i << ":" << j;
+                edgeName2 << "N" << (i + 1) << ":" << j;
                 //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
                 qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
                 graph_->setEdge(edgeName1.str(), edgeName2.str());
             }
-            if (col < cols - colOffset)
+            if (col < cols)
             {
                 std::stringstream edgeName1, edgeName2;
-                edgeName1 << "N" << row << ":" << col;
-                edgeName2 << "N" << row << ":" << (col + colOffset);
+                edgeName1 << "N" << i << ":" << j;
+                edgeName2 << "N" << i << ":" << (j + 1);
                 //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
                 qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
                 graph_->setEdge(edgeName1.str(), edgeName2.str());

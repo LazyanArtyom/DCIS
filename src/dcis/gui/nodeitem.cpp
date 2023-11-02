@@ -25,6 +25,7 @@ void NodeItem::setNode(graph::Node* node)
     node_ = node;
     setPos(node_->getEuclidePos());
     QFontMetrics fm(QFont(font_, fontSize_));
+
     radius_ = std::max(radius_, fm.horizontalAdvance(QString::fromStdString(node_->getName() + "  ")));
 }
 
