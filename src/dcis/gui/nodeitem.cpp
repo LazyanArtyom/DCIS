@@ -52,53 +52,16 @@ QRectF NodeItem::boundingRect() const
 
 int NodeItem::getDefaultRadius()
 {
-    return 20;
+    return 40;
 }
 
 QColor NodeItem::getDefaultColor()
 {
-    if (node_ != nullptr)
-    {
-        if (node_->isDrone())
-        {
-            return Qt::cyan;
-        }
-
-        switch (node_->getNodeType()) {
-            case graph::Node::NodeType::Border:
-                return Qt::magenta;
-            case graph::Node::NodeType::Corner:
-                return Qt::yellow;
-            case graph::Node::NodeType::Inner:
-                return Qt::green;
-            default:
-                return Qt::green;
-        }
-    }
     return Qt::green;
 }
 
 QColor NodeItem::getDefaultSelectedColor()
 {
-    if (node_ != nullptr)
-    {
-        if (node_->isDrone())
-        {
-            return Qt::darkCyan;
-        }
-
-        switch (node_->getNodeType()) {
-            case graph::Node::NodeType::Border:
-                return Qt::darkMagenta;
-            case graph::Node::NodeType::Corner:
-                return Qt::darkYellow;
-            case graph::Node::NodeType::Inner:
-                return Qt::darkGreen;
-            default:
-                return Qt::darkGreen;
-        }
-    }
-
     return Qt::darkGreen;
 }
 
@@ -112,25 +75,68 @@ void NodeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
     Q_UNUSED(option);
     Q_UNUSED(widget);
 
-    QColor color;
     if (isSelected())
     {
-        color = getDefaultSelectedColor();
+        painter->setOpacity(0.5);
     }
     else
     {
-        color = getDefaultColor();
+        painter->setOpacity(1);
     }
 
+    if (node_ != nullptr)
+    {
+        if (node_->isDrone())
+        {
+            if (node_->isAttacker())
+            {
+                QPixmap iconPixmap(":/resources/set_attacker.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            else
+            {
+                QPixmap iconPixmap(":/resources/set_drone.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+        }
+
+        switch (node_->getNodeType()) {
+            case graph::Node::NodeType::Border:
+            {
+                QPixmap iconPixmap(":/resources/set_border.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            case graph::Node::NodeType::Corner:
+            {
+                QPixmap iconPixmap(":/resources/set_corner.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            case graph::Node::NodeType::Inner:
+            {
+                QPixmap iconPixmap(":/resources/set_inner.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            default:
+                break;
+        }
+    }
+    /*
+    QColor color = getDefaultColor();
     painter->setPen(QPen(Qt::black, 2, Qt::SolidLine));
     painter->setBrush(QBrush(color));
     painter->drawEllipse(-radius_ / 2, -radius_ / 2, radius_, radius_);
+*/
 
-    QFont font(font_, fontSize_);
-    painter->setFont(font);
-    QString txt = QString::fromStdString(getNode()->getName());
-    QFontMetrics fm(font);
-    painter->drawText(-fm.horizontalAdvance(txt) / 2, fm.height() / 3, txt);
+    //QFont font(font_, fontSize_);
+    //painter->setFont(font);
+    //QString txt = QString::fromStdString(getNode()->getName());
+    //QFontMetrics fm(font);
+    //painter->drawText(-fm.horizontalAdvance(txt) / 2, fm.height() / 3, txt);
 }
 
 void NodeItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)

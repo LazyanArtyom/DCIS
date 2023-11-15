@@ -25,6 +25,11 @@ set(dcis_icons
     "resources/graph.png"
     "resources/attack.png"
     "resources/drone.png"
+    "resources/set_drone.png"
+    "resources/set_attacker.png"
+    "resources/set_inner.png"
+    "resources/set_corner.png"
+    "resources/set_border.png"
     "resources/exploration.png"
     "resources/background.png"
 )
