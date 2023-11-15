@@ -31,13 +31,14 @@
 #include <QStackedWidget>
 #include <QGeoCoordinate>
 
+#include <QVBoxLayout>
+
 namespace dcis::gui {
 using namespace common;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
@@ -46,6 +47,9 @@ public:
     void setWorkspaceEnabled(bool enable);
 
     Console* getConsole() const;
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 public slots:
     void onUpload();
@@ -75,7 +79,6 @@ private:
     QAction* actCredits_;
     QAction* actNewGraph_;
     QAction* actOpenGraph_;
-
     QAction* actionBFS_;
     QAction* actionDFS_;
     QAction* actAddNode_;
@@ -97,10 +100,11 @@ private:
     QDockWidget* dockWidget_;
     QStackedWidget* centralWidget_;
 
-    QWidget*     entryWidget_;
-    QLineEdit*   ip_;
-    QLineEdit*   port_;
-    QPushButton* btnConnect_;
+    QLabel* backgroundLabel_;
+    QLineEdit*   ipLineEdit_;
+    QLineEdit*   portLineEdit_;
+    QPushButton* connectButton_;
+    QWidget*     entryWidget_ = nullptr;
 
     Console* console_;
     QWidget* workingWidget_;
@@ -111,10 +115,9 @@ private:
 
     QString currentFilePath_ = "";
 
-    ElementPropertiesTable* elementPropertiesTable_;
     QString leftTop_;
     QString rightBottom_;
-   // std::unique_ptr<common::utils::DebugStream> debugStream_;
+    ElementPropertiesTable* elementPropertiesTable_;
 };
 
 } // end namespace dcis::ui

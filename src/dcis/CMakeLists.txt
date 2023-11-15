@@ -26,6 +26,7 @@ set(dcis_icons
     "resources/attack.png"
     "resources/drone.png"
     "resources/exploration.png"
+    "resources/background.png"
 )
 
 qt_add_resources(dcis "dcis"

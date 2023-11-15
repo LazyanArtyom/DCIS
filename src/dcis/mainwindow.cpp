@@ -41,15 +41,22 @@ void MainWindow::setupUi()
     setCentralWidget(centralWidget_);
     centralWidget_->setObjectName("centralTabWidget");
 
+    /*dockWidget_ = new QDockWidget(this);
+    addDockWidget(Qt::RightDockWidgetArea, dockWidget_);
+    dockWidget_->setObjectName("dockWidget");
+    dockWidget_->setMinimumWidth(200);
+    dockWidget_->setFeatures(QDockWidget::DockWidgetFloatable
+                            | QDockWidget::DockWidgetMovable
+                            | QDockWidget::DockWidgetClosable);
+                            */
+
     createEntryWidget();
     createWorkingWiget();
     createGraphInfoWidget();
     createMenu();
     createToolBar();
 
-    setWorkspaceEnabled(true);
-    //setWorkspaceEnabled(false);
-    onConnectBtnClicked();
+    setWorkspaceEnabled(false);
 }
 
 void MainWindow::setWorkspaceEnabled(bool enable)
@@ -57,13 +64,13 @@ void MainWindow::setWorkspaceEnabled(bool enable)
     if (enable)
     {
         toolBar_->show();
-        dockWidget_->show();
+        //dockWidget_->show();
         centralWidget_->setCurrentWidget(workingWidget_);
     }
     else
     {
         toolBar_->hide();
-        dockWidget_->hide();
+        //dockWidget_->hide();
         centralWidget_->setCurrentWidget(entryWidget_);
     }
 }
@@ -71,6 +78,21 @@ void MainWindow::setWorkspaceEnabled(bool enable)
 Console* MainWindow::getConsole() const
 {
     return console_;
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+
+    if (entryWidget_ != nullptr)
+    {
+       entryWidget_->setGeometry(0, 0, width(), height()); // Set the initial size of the window
+       entryWidget_->resize(size());
+
+       backgroundLabel_->resize(entryWidget_->size());
+    }
+
+
+    QMainWindow::resizeEvent(event);
 }
 
 void MainWindow::onUpload()
@@ -105,7 +127,8 @@ void MainWindow::onUpload()
             //imageEditor_->showImage(img);
             graphView_->setImage(img);
             CCoordInputDialog oDialog;
-            if (oDialog.exec() == QDialog::Accepted) {
+            if (oDialog.exec() == QDialog::Accepted)
+            {
                 leftTop_ = oDialog.leftTopCoordinate();
                 rightBottom_ = oDialog.rightBottomCoordinate();
             }
@@ -195,8 +218,6 @@ void MainWindow::onCreateGrid()
        {
            graphView_->generateGraph(rowsLineEdit->text().toInt(), colsLineEdit->text().toInt());
        }
-       // Handle the OK button click
-       // You can access the values of the fields here
    }
    else
    {
@@ -288,10 +309,13 @@ void MainWindow::onStartAttack()
 
 void MainWindow::onConnectBtnClicked()
 {
-    ip_->setText("127.0.0.1");
-    port_->setText("2323");
+    if (ipLineEdit_->text().isEmpty() || portLineEdit_->text().isEmpty())
+    {
+        QMessageBox::warning(this, tr("Connection issue"), tr("Please fill the IP and Port fields."));
+        return;
+    }
 
-    if (client_->connectToServer(ip_->text(), port_->text()))
+    if (client_->connectToServer(ipLineEdit_->text(), portLineEdit_->text()))
     {
         setWorkspaceEnabled(true);
     }
@@ -336,18 +360,13 @@ void MainWindow::onUpdateGraph(const QJsonDocument& json)
 
 void MainWindow::onSaveGraph()
 {
-    qDebug() << "1 ";
     QString filePath;
     if (currentFilePath_.isEmpty())
     {
-        qDebug() << "2 ";
         QString defaultPath = QDir::currentPath() + "/untitled.json";
-
-        qDebug() << "AAAAAA: " << defaultPath;
         filePath = QFileDialog::getSaveFileName(this, tr("Save File"), defaultPath, tr("JSON Files (*.json)"));
         if (filePath.isEmpty())
         {
-            qDebug() << "3 ";
             return;
         }
     } else
@@ -369,7 +388,6 @@ void MainWindow::onSaveGraph()
 
 void MainWindow::onLoadGraph()
 {
-    qDebug() << "KKKKK ";
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), QDir::currentPath(), tr("JSON Files (*.json)"));
     if (!filePath.isEmpty())
     {
@@ -463,81 +481,94 @@ void MainWindow::createToolBar()
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
-
     connect(actClearCycles, &QAction::triggered, this, &MainWindow::onClearCycles);
-
     connect(actGenerateGraph, &QAction::triggered, this, &MainWindow::onGenerateGraph);
-
     connect(actStartExploration, &QAction::triggered, this, &MainWindow::onStartExploration);
-
     connect(actStartAttack, &QAction::triggered, this, &MainWindow::onStartAttack);
-
     connect(actLoadGraph, &QAction::triggered, this, &MainWindow::onLoadGraph);
-
     connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
-
     connect(actCreateGrid, &QAction::triggered, this, &MainWindow::onCreateGrid);
 }
 
 void MainWindow::createEntryWidget()
 {
-    // client
     client_ = new client::Client(this);
 
-    // entry widget
     entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
+    entryWidget_->setWindowTitle("Background Image Example");
+    entryWidget_->setGeometry(0, 0, 500, 500);
 
-    QWidget* connectWidget = new QWidget(entryWidget_);
-    connectWidget->setMaximumWidth(500);
+    backgroundLabel_ = new QLabel(entryWidget_);
+    backgroundLabel_->setPixmap(QPixmap(":/resources/background.png"));
+    backgroundLabel_->setScaledContents(true);
 
-    ip_ = new QLineEdit(entryWidget_);
-    ip_->setObjectName("ip");
-    ip_->setPlaceholderText(tr("server ip"));
+    QLabel* textLabel = new QLabel("Drone Collective \n Intelligence System", entryWidget_);
+    textLabel->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
+    textLabel->setMaximumHeight(300);
+    QFont montserratFont("Montserrat", 59, QFont::DemiBold);
+    textLabel->setFont(montserratFont);
 
-    port_ = new QLineEdit(entryWidget_);
-    port_->setObjectName("port");
-    port_->setPlaceholderText(tr("port"));
+    ipLineEdit_ = new QLineEdit(entryWidget_);
+    ipLineEdit_->setMaximumWidth(500);
+    ipLineEdit_->setMinimumHeight(50);
+    ipLineEdit_->setStyleSheet("font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
+    ipLineEdit_->setPlaceholderText("ip");
+    ipLineEdit_->setText("127.0.0.1");
 
-    btnConnect_ = new QPushButton(tr("Connect"), entryWidget_);
-    btnConnect_->setObjectName("btnConnect");
+    portLineEdit_ = new QLineEdit(entryWidget_);
+    portLineEdit_->setMaximumWidth(500);
+    portLineEdit_->setMinimumHeight(50);
+    portLineEdit_->setStyleSheet("font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
+    portLineEdit_->setPlaceholderText("port");
+    portLineEdit_->setText("2323");
 
-    // connections
-    connect(btnConnect_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
+    connectButton_ = new QPushButton("Connect", entryWidget_);
+    connectButton_->setStyleSheet("font-size: 20px; padding: 10px; background-color: #b8865e; color: #333;"
+                                        "}"
+                                        "QPushButton:hover {"
+                                        "background-color: #ad7e59;"
+                                        "}");
+    connectButton_->setCursor(Qt::PointingHandCursor); // Set hand cursor on hover
+    connectButton_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    connectButton_->setMaximumWidth(500);
+    connectButton_->setMinimumHeight(30);
 
-    // layouts
+    entryWidget_->setStyleSheet("background: transparent;");
+    backgroundLabel_->resize(entryWidget_->size());
+    backgroundLabel_->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+    // Connections
+    connect(connectButton_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
+
+    // Layouts
+    QVBoxLayout* mainLayout = new QVBoxLayout(entryWidget_);
+    mainLayout->addWidget(textLabel);
+
+    QVBoxLayout* inputLayout = new QVBoxLayout;
+    inputLayout->setSpacing(10);
+    inputLayout->setAlignment(Qt::AlignCenter);
+
+    inputLayout->addWidget(ipLineEdit_);
+    inputLayout->addWidget(portLineEdit_);
+    inputLayout->addWidget(connectButton_);
+
+    mainLayout->addLayout(inputLayout);
+    entryWidget_->setLayout(mainLayout);
     centralWidget_->addWidget(entryWidget_);
-
-    QHBoxLayout* horizontalLayoutEntry_ = new QHBoxLayout(entryWidget_);
-    entryWidget_->setLayout(horizontalLayoutEntry_);
-    horizontalLayoutEntry_->setSpacing(6);
-    horizontalLayoutEntry_->setContentsMargins(11, 11, 11, 11);
-
-    horizontalLayoutEntry_->addWidget(connectWidget, Qt::AlignCenter);
-
-    QHBoxLayout* horizontalLayoutConnect = new QHBoxLayout(connectWidget);
-    horizontalLayoutConnect->setSpacing(3);
-    connectWidget->setLayout(horizontalLayoutConnect);
-
-    horizontalLayoutConnect->addWidget(ip_);
-    horizontalLayoutConnect->addWidget(port_);
-    horizontalLayoutConnect->addWidget(btnConnect_);
 }
 
 void MainWindow::createWorkingWiget()
 {
-    // working widget
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
 
-    // graph editing tool
     graphView_ = new GraphView();
 
-    // console
     console_ = new Console();
     utils::DebugStream::getInstance().setEditor(console_);
 
-    // connections
+    // Connections
     connect(graphView_, &GraphView::sigGraphChanged, this, &MainWindow::onGraphChanged);
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
@@ -545,7 +576,7 @@ void MainWindow::createWorkingWiget()
         graphView_->setImage(img);
     });
 
-    // layouts
+    // Layouts
     centralWidget_->addWidget(workingWidget_);
 
     QHBoxLayout* hLayoutWorking = new QHBoxLayout(workingWidget_);
@@ -566,17 +597,9 @@ void MainWindow::createWorkingWiget()
 
 void MainWindow::createGraphInfoWidget()
 {
-    dockWidget_ = new QDockWidget(this);
-    addDockWidget(Qt::RightDockWidgetArea, dockWidget_);
-    dockWidget_->setObjectName("dockWidget");
-    dockWidget_->setMinimumWidth(200);
-    dockWidget_->setFeatures(QDockWidget::DockWidgetFloatable
-                            | QDockWidget::DockWidgetMovable
-                            | QDockWidget::DockWidgetClosable);
-
     // graph info widget
-    graphInfo_ = new GraphInfo(dockWidget_);
-    graphInfo_->setMinimumSize(200, 200);
+    //graphInfo_ = new GraphInfo(dockWidget_);
+    //graphInfo_->setMinimumSize(200, 200);
 
     // properties table
     //elementPropertiesTable_ = new gui::ElementPropertiesTable(graph_);
