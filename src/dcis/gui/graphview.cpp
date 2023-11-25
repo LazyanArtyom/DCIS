@@ -162,22 +162,20 @@ void GraphView::generateGraph(int row, int col)
         {
             std::stringstream nodeName;
             nodeName << "N" << i << ":" << j;
-            //emit sigNodeAdded(QPointF(row, col), true);
             graph_->addNode(graph::Node(nodeName.str(), QPointF(row, col)));
             qDebug() << "Added: " << nodeName.str();
         }
     }
 
-    for (int row = 0, i = 0; row < rows; row += rowOffset, ++i)
+    for (int row = 0, i = 0; row <= rows; row += rowOffset, ++i)
     {
-        for (int col = 0, j = 0; col < cols; col += colOffset, ++j)
+        for (int col = 0, j = 0; col <= cols; col += colOffset, ++j)
         {
             if (row < rows)
             {
                 std::stringstream edgeName1, edgeName2;
                 edgeName1 << "N" << i << ":" << j;
                 edgeName2 << "N" << (i + 1) << ":" << j;
-                //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
                 qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
                 graph_->setEdge(edgeName1.str(), edgeName2.str());
             }
@@ -186,7 +184,6 @@ void GraphView::generateGraph(int row, int col)
                 std::stringstream edgeName1, edgeName2;
                 edgeName1 << "N" << i << ":" << j;
                 edgeName2 << "N" << i << ":" << (j + 1);
-                //graphView.sigEdgeSet(edgeName1.str(), edgeName2.str());
                 qDebug() << "setEdge: " << edgeName1.str() << " | " << edgeName2.str();
                 graph_->setEdge(edgeName1.str(), edgeName2.str());
             }
