@@ -137,6 +137,7 @@ void GraphProcessor::initGraphDirs()
 
 void GraphProcessor::clearCycles()
 {
+    qDebug()<<" skzbi klir";
     auto currPoint = startNode_;
     size_t startDirId = startNode_->getCurrNeighbourId();
     std::set<std::pair<Node*, Node*>> uniqueSteps;
@@ -147,6 +148,7 @@ void GraphProcessor::clearCycles()
         currPoint = currPoint->getCurrNeighbour();
         if(currPoint == startNode_ && currPoint->getCurrNeighbourId() == startDirId && uniqueSteps.size() >= neighboursCount_)
             break;
+        qDebug()<<"klir";
     }
     dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Start Node : " + QString::number(startNode_->getID()));
     dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Curr Neidh id : " + QString::number(startDirId));
