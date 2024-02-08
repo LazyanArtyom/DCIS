@@ -134,7 +134,7 @@ void GraphProcessor::initGraphDirs()
     for(auto node : lstNodes_)
     {
         if(node->getCommonNode()->getNodeType() == commonNode::NodeType::Inner)
-            node->setCurrNeighbourId(QRandomGenerator::global()->bounded(node->getNeighbours().size()));
+            node->setCurrNeighbourId(QRandomGenerator::global()->bounded((int)node->getNeighbours().size()));
     }
 }
 
