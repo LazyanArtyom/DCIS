@@ -153,7 +153,6 @@ void NodeItem::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
     getNode()->setEuclidePos(pos());
 
     emit gscene_->sigNeedRedraw();
-    emit gscene_->sigItemMoved();
     emit sigPositionChanged();
 
     QGraphicsItem::mouseMoveEvent(event);
@@ -166,6 +165,8 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     {
         setSelected(false);
         isMoving_ = false;
+
+        emit gscene_->sigItemMoved();
     }
     //emit this->_gscene->graphChanged();
     setCursor(Qt::OpenHandCursor);
