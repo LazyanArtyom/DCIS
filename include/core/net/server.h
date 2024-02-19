@@ -28,7 +28,7 @@ public:
     bool run(const int port);
     void incomingConnection(qintptr socketDescriptor) override;
 
-    bool publish(const QByteArray& data);
+    bool publish(const QByteArray& data, bool currentSocket = false);
     void handle(const resource::Header& header, const QByteArray& body);
 
     void handleUnknown();
@@ -36,6 +36,7 @@ public:
     void handleString(const QByteArray& data);
     void handleJson(const QByteArray& data);
 
+    void syncSockets();
     void updateSockets();
 
 public slots:
@@ -53,8 +54,10 @@ private:
     size_t imgW_ = 0;
     size_t imgH_ = 0;
 
+    int masterSocket_ = -1;
+    QString CURRENT_IMAGE_PATH;
     const QString WORKING_DIRECTORY_PATH = "";
-    const QString UPLOADED_IMAGES_PATH = WORKING_DIRECTORY_PATH + "/uploadedImages";
+    const QString UPLOADED_IMAGES_PATH = "/uploadedImages";
 };
 
 } // end namespace dcis::server

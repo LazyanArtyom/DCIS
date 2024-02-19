@@ -123,6 +123,9 @@ void MainWindow::onUpload()
         QImageReader imgReader(filePath);
         if (imgReader.canRead())
         {
+            graph::Graph* graph = new graph::Graph(true);
+            graphView_->updateGraph(graph);
+
             QImage img = imgReader.read();
             //imageEditor_->showImage(img);
             graphView_->setImage(img);
@@ -354,6 +357,7 @@ void MainWindow::onGraphChanged()
 
 void MainWindow::onUpdateGraph(const QJsonDocument& json)
 {
+    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "*************** Updating graph ***************\n");
     graph::Graph* graph = graph::Graph::fromJSON(json);
     graphView_->updateGraph(graph);
 }
@@ -573,6 +577,8 @@ void MainWindow::createWorkingWiget()
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img){
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "*************** Showing image ***************\n");
+
         graphView_->setImage(img);
     });
 

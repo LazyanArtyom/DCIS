@@ -7,6 +7,7 @@
 
 // Qt includes
 #include <QDir>
+#include <QThread>
 #include <QImageReader>
 
 // STL includes
@@ -75,6 +76,7 @@ void Server::onReadyRead()
 void Server::onDisconected()
 {
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Server disconected");
+
     updateSockets();
 }
 
@@ -149,15 +151,25 @@ void Server::incomingConnection(qintptr socketDescriptor)
 
     sockets_[socketDescriptor] = socket;
 
+    if (sockets_.count() == 1)
+    {
+        masterSocket_ = socketDescriptor;
+    }
+
     QString msg = "Client:" + QString::number(socketDescriptor) + " connected";
     utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+    if (sockets_.count() > 1)
+    {
+        syncSockets();
+    }
 }
 
-bool Server::publish(const QByteArray& data)
+bool Server::publish(const QByteArray& data, bool currentSocket)
 {
     for (auto& socket : sockets_)
     {
-        if (socket->socketDescriptor() == currentSocket_)
+        if (socket->socketDescriptor() == currentSocket_ && !currentSocket)
         {
             continue;
         }
@@ -167,6 +179,7 @@ bool Server::publish(const QByteArray& data)
 
         socketStream << data;
 
+        QThread::msleep(100);
         if(socket->state() == QAbstractSocket::ConnectedState)
         {
             if (socket->waitForBytesWritten())
@@ -228,13 +241,16 @@ void Server::handleAttachment(const QByteArray& data)
     QDir dir;
     QString WORKING_DIR = dir.absolutePath() + UPLOADED_IMAGES_PATH;
     dir.mkdir(WORKING_DIR);
-    QFile file(WORKING_DIR + "/" + header_.fileName);
+
+    CURRENT_IMAGE_PATH = WORKING_DIR + "/" + header_.fileName;
+
+    QFile file(CURRENT_IMAGE_PATH);
     if(file.open(QIODevice::WriteOnly))
     {
         file.write(data);
     }
 
-    QImageReader imgReader(WORKING_DIR + "/" + header_.fileName);
+    QImageReader imgReader(CURRENT_IMAGE_PATH);
     if (imgReader.canRead())
     {
         QImage img = imgReader.read();
@@ -362,17 +378,75 @@ void Server::handleJson(const QByteArray& data)
         }
         default:
             return;
+        }
+}
+
+void Server::syncSockets()
+{
+    // Send image
+    {
+        QFile file(CURRENT_IMAGE_PATH);
+        if (file.open(QIODevice::ReadOnly))
+        {
+            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending Image to clients");
+            resource::Header header;
+            header.resourceType = resource::ResourceType::Attachment;
+            header.command = resource::Command::ShowImage;
+            header.fileName = header_.fileName;
+
+            QByteArray headerData;
+            QDataStream ds(&headerData, QIODevice::ReadWrite);
+            ds << header;
+
+            // header size 128 bytes
+            headerData.resize(resource::Header::HEADER_SIZE);
+
+            QByteArray resource = file.readAll();
+            header.bodySize = resource.size();
+
+            resource.prepend(headerData);
+            publish(resource);
+        }
+
+    }
+    // Sent Graph
+    {
+        QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
+        QByteArray data = json.toJson();
+        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending JSON to clients");
+        resource::Header header;
+        header.resourceType = resource::ResourceType::Json;
+        header.command = resource::Command::UpdateGraph;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(resource::Header::HEADER_SIZE);
+
+        QByteArray resource = data;
+        header.bodySize = data.size();
+
+        resource.prepend(headerData);
+        publish(resource);
     }
 }
 
 void Server::updateSockets()
 {
+    bool changeMasterSocket = false;
     for (auto socket = sockets_.begin(); socket != sockets_.end();)
     {
         if (!(socket.value()->state() == QTcpSocket::ConnectedState))
         {
             QString msg = "Client:" + QString::number(socket.key()) + " disconnected.";
             utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+
+            if (socket.key() == masterSocket_)
+            {
+                changeMasterSocket = true;
+            }
 
             socket.value()->close();
             socket.value()->deleteLater();
@@ -382,6 +456,11 @@ void Server::updateSockets()
         {
             ++socket;
         }
+    }
+
+    if (changeMasterSocket && !sockets_.empty())
+    {
+        masterSocket_ = sockets_.begin().key();
     }
 }
 
