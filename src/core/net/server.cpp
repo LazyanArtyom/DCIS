@@ -3,7 +3,6 @@
 // App includes
 #include <graph/graph.h>
 #include <net/resource.h>
-#include <utils/debugstream.h>
 
 // Qt includes
 #include <QDir>
@@ -16,30 +15,188 @@
 
 namespace dcis::server {
 
-// public
-Server::Server(QObject* parent)
-    : QTcpServer(parent)
+Server::Server(common::utils::TerminalWidget* terminalWidget, QObject* parent)
+    : terminalWidget_(terminalWidget), QTcpServer(parent)
 {
-    nextBlockSize_ = 0;
 }
 
 Server::~Server()
 {
-   // utils::log(utils::LogLevel::INFO, "End Server.");
+}
+
+void Server::addClient(common::user::UserInfo userInfo)
+{
+    QTcpSocket* socket = clientMap_.value(common::user::UserInfo { currentSocket_ });
+    clientMap_.remove(common::user::UserInfo { currentSocket_ });
+
+    userInfo.socketDescriptor = currentSocket_;
+    clientMap_[userInfo] = socket;
+
+    QString msg = "Client:" + userInfo.name + " connected\n";
+    terminalWidget_->appendText(msg);
 }
 
 bool Server::run(const int port)
 {
     if (listen(QHostAddress::Any, port))
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Starting server, listening to " + QString::number(port) + " port");
+        terminalWidget_->appendText("Starting server, listening to " + QString::number(port) + " port\n");
         return true;
     }
     else
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Filed to start server at " + QString::number(port) + " port");
+        terminalWidget_->appendText("Filed to start server at " + QString::number(port) + " port\n");
         return false;
     }
+}
+
+void Server::incomingConnection(qintptr socketDescriptor)
+{
+    currentSocket_ = socketDescriptor;
+
+    QTcpSocket* socket = new QTcpSocket();
+    socket->setSocketDescriptor(currentSocket_);
+    socket->setSocketOption(QAbstractSocket:: KeepAliveOption, 1);
+
+    connect(socket, &QTcpSocket::readyRead, this, &Server::onReadyRead);
+    connect(socket, &QTcpSocket::disconnected, this, &Server::onDisconected);
+
+    common::user::UserInfo userInfo;
+    userInfo.socketDescriptor = socketDescriptor;
+
+    clientMap_[userInfo] = socket;
+
+    // Send cmd to get info about client
+    sendCommand(common::resource::Command::ServerGetUserInfo, socketDescriptor);
+}
+
+bool Server::publish(const QByteArray& data, qintptr socketDesc)
+{
+    QTcpSocket* socket = clientMap_.value(common::user::UserInfo{ socketDesc });
+
+    QDataStream socketStream(socket);
+    socketStream.setVersion(common::resource::DATASTREAM_VERSION);
+
+    socketStream << data;
+
+    QThread::msleep(100);
+    if(socket->state() == QAbstractSocket::ConnectedState)
+    {
+        if (socket->waitForBytesWritten())
+        {
+            terminalWidget_->appendText("Succsesfully sent to server" + QString::number(data.size()) + " bytes\n");
+        }
+        else
+        {
+            terminalWidget_->appendText("Error to send to client\n");
+            return false;
+        }
+        socket->flush();
+    }
+
+    return true;
+}
+
+bool Server::publishAll(const QByteArray& data, QSet<qintptr> excludeSockets)
+{
+    for (const auto& [client, socket] : clientMap_.asKeyValueRange())
+    {
+        if (!excludeSockets.contains(client.socketDescriptor))
+        {
+            publish(data, client.socketDescriptor);
+        }
+    }
+
+    return true;
+}
+
+void Server::sendText(const QString& text, common::resource::Command cmd, qintptr socketDescriptor)
+{
+    common::resource::Header header;
+    header.resourceType = common::resource::ResourceType::Text;
+    header.command = cmd;
+
+    QByteArray resource = text.toUtf8();
+    header.bodySize = resource.size();
+
+    QByteArray headerData;
+    QDataStream ds(&headerData, QIODevice::ReadWrite);
+    ds << header;
+
+    // header size 128 bytes
+    headerData.resize(common::resource::Header::HEADER_SIZE);
+
+    resource.prepend(headerData);
+    publish(resource, socketDescriptor);
+}
+
+void Server::sendJson(const QJsonDocument& json, common::resource::Command cmd, qintptr socketDescriptor)
+{
+    common::resource::Header header;
+    header.resourceType = common::resource::ResourceType::Json;
+    header.command = cmd;
+
+    QByteArray headerData;
+    QDataStream ds(&headerData, QIODevice::ReadWrite);
+    ds << header;
+
+    // header size 128 bytes
+    headerData.resize(common::resource::Header::HEADER_SIZE);
+
+    QByteArray resource = json.toJson();
+    header.bodySize = resource.size();
+
+    resource.prepend(headerData);
+    publish(resource, socketDescriptor);
+}
+
+void Server::sendAttachment(const QString& filePath, common::resource::Command cmd, qintptr socketDescriptor)
+{
+    QFile file(filePath);
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QFileInfo fileInfo(file.fileName());
+        QString fileName(fileInfo.fileName());
+
+        common::resource::Header header;
+        header.resourceType = common::resource::ResourceType::Attachment;
+        header.command = cmd;
+        header.fileName = fileName;
+
+        QByteArray headerData;
+        QDataStream ds(&headerData, QIODevice::ReadWrite);
+        ds << header;
+
+        // header size 128 bytes
+        headerData.resize(common::resource::Header::HEADER_SIZE);
+
+        QByteArray resource = file.readAll();
+
+        header.bodySize = resource.size();
+
+        resource.prepend(headerData);
+        publish(resource, socketDescriptor);
+    }
+    else
+    {
+        terminalWidget_->appendText("Can't open file!\n");
+        return;
+    }
+}
+
+void Server::sendCommand(const common::resource::Command cmd, qintptr socketDescriptor)
+{
+    common::resource::Header header;
+    header.resourceType = common::resource::ResourceType::Command;
+    header.command = cmd;
+
+    QByteArray headerData;
+    QDataStream ds(&headerData, QIODevice::ReadWrite);
+    ds << header;
+
+    // header size 128 bytes
+    headerData.resize(common::resource::Header::HEADER_SIZE);
+    publish(headerData, socketDescriptor);
 }
 
 // slots
@@ -51,176 +208,63 @@ void Server::onReadyRead()
     currentSocket_ = socket->socketDescriptor();
 
     QDataStream socketStream(socket);
-    socketStream.setVersion(QDataStream::Qt_6_4);
+    socketStream.setVersion(common::resource::DATASTREAM_VERSION);
     socketStream.startTransaction();
     socketStream >> buffer;
 
     if (socketStream.commitTransaction())
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Buffer size: : " + QString::number(buffer.size()) + " bytes");
+        terminalWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
 
-        QByteArray headerData = buffer.mid(0, resource::Header::HEADER_SIZE);
+        QByteArray headerData = buffer.mid(0, common::resource::Header::HEADER_SIZE);
         QDataStream ds(&headerData, QIODevice::ReadWrite);
-        resource::Header header;
+        common::resource::Header header;
         ds >> header;
-        handle(header, buffer.mid(resource::Header::HEADER_SIZE));
+        handle(header, buffer.mid(common::resource::Header::HEADER_SIZE));
     }
     else
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Reading from client: " +
+        /*terminalWidget_->appendText("Reading from client: " +
                                               QString::number(socket->socketDescriptor()) +
-                                              "  Bytes recived: " + QString::number(socket->bytesAvailable()) + " bytes");
+                                              "  Bytes recived: " + QString::number(socket->bytesAvailable()) + " bytes\n");*/
     }
 }
 
 void Server::onDisconected()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Server disconected");
-
     updateSockets();
 }
 
-void sendjson(Server* server)
-{
-// debugstream
-    QJsonObject jsonObj;
-
-    //insert single datas first
-    jsonObj.insert("directed", true);
-
-    // fill nodes
-    QJsonArray nodes;
-    QJsonObject jsonNode;
-    jsonNode.insert("name", "Node1");
-    jsonNode.insert("x", 1.1);
-    jsonNode.insert("y", 11.11);
-    nodes.push_back(jsonNode);
-
-    QJsonObject jsonNode2;
-    jsonNode2.insert("name", "Node2");
-    jsonNode2.insert("x", 2.2);
-    jsonNode2.insert("y", 22.22);
-    nodes.push_back(jsonNode2);
-
-    QJsonObject jsonNode3;
-    jsonNode3.insert("name", "Node3");
-    jsonNode3.insert("x", 3.3);
-    jsonNode3.insert("y", 33.33);
-    nodes.push_back(jsonNode3);
-
-    jsonObj.insert("nodes", nodes);
-
-    // fill edges
-    QJsonArray edges;
-
-    QJsonObject jsonEdge;
-    jsonEdge.insert("start", "Node1");
-    jsonEdge.insert("end", "Node2");
-    edges.push_back(jsonEdge);
-
-    QJsonObject jsonEdge2;
-    jsonEdge2.insert("start", "Node2");
-    jsonEdge2.insert("end", "Node3");
-    edges.push_back(jsonEdge2);
-
-    QJsonObject jsonEdge3;
-    jsonEdge3.insert("start", "Node3");
-    jsonEdge3.insert("end", "Node1");
-    edges.push_back(jsonEdge3);
-
-    jsonObj.insert("edges", edges);
-
-    QJsonDocument jsonDoc;
-    jsonDoc.setObject(jsonObj);
-
-    //resource::Header header(sizeof(body), resource::Command::Publish, resource::ResourceType::Json);
-
-    //server->publish(header, body);
-}
-
-void Server::incomingConnection(qintptr socketDescriptor)
-{
-    currentSocket_ = socketDescriptor;
-
-    QTcpSocket* socket = new QTcpSocket();
-    socket->setSocketDescriptor(socketDescriptor);
-    socket->setSocketOption(QAbstractSocket:: KeepAliveOption, 1);
-
-    connect(socket, &QTcpSocket::readyRead, this, &Server::onReadyRead);
-    connect(socket, &QTcpSocket::disconnected, this, &Server::onDisconected);
-
-    sockets_[socketDescriptor] = socket;
-
-    if (sockets_.count() == 1)
-    {
-        masterSocket_ = socketDescriptor;
-    }
-
-    QString msg = "Client:" + QString::number(socketDescriptor) + " connected";
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-    if (sockets_.count() > 1)
-    {
-        syncSockets();
-    }
-}
-
-bool Server::publish(const QByteArray& data, bool currentSocket)
-{
-    for (auto& socket : sockets_)
-    {
-        if (socket->socketDescriptor() == currentSocket_ && !currentSocket)
-        {
-            continue;
-        }
-
-        QDataStream socketStream(socket);
-        socketStream.setVersion(resource::DATASTREAM_VERSION);
-
-        socketStream << data;
-
-        QThread::msleep(100);
-        if(socket->state() == QAbstractSocket::ConnectedState)
-        {
-            if (socket->waitForBytesWritten())
-            {
-                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Succsesfully sent to server" + QString::number(data.size()) + " bytes");
-                continue;
-            }
-            else
-            {
-                utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to send to server");
-                continue;
-            }
-        }
-    }
-
-    return true;
-}
-
-void Server::handle(const resource::Header& header, const QByteArray& body)
+void Server::handle(const common::resource::Header& header, const QByteArray& body)
 {
     QString msg = "Success: data size is " + QString::number(body.size() + 128) + " bytes, Command: " + header.commandToString() + " ResourceType: " + header.typeToString();
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+    terminalWidget_->appendText(msg);
 
     header_ = header;
+
     switch (header.resourceType)
     {
-        case resource::ResourceType::Text:
+        case common::resource::ResourceType::Text:
         {
-            handleString(body);
+            handleText(body);
             break;
         }
 
-        case resource::ResourceType::Json:
+        case common::resource::ResourceType::Json:
         {
             handleJson(body);
             break;
         }
 
-        case resource::ResourceType::Attachment:
+        case common::resource::ResourceType::Attachment:
         {
             handleAttachment(body);
+            break;
+        }
+
+        case common::resource::ResourceType::Command:
+        {
+            handleCommand(header.command);
             break;
         }
 
@@ -233,7 +277,7 @@ void Server::handle(const resource::Header& header, const QByteArray& body)
 
 void Server::handleUnknown()
 {
-    // utils::log(utils::LogLevel::INFO, "Unknown message, doing nothing.");
+    terminalWidget_->appendText("Unknown message, doing nothing.\n");
 }
 
 void Server::handleAttachment(const QByteArray& data)
@@ -254,22 +298,25 @@ void Server::handleAttachment(const QByteArray& data)
     if (imgReader.canRead())
     {
         QImage img = imgReader.read();
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()));
+        QString msg = "IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()) + "\n";
+        terminalWidget_->appendText(msg);
+
         imgW_ = img.width();
         imgH_ = img.height();
     }
 
     QString msg = "File saved at " + WORKING_DIR;
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
+    terminalWidget_->appendText(msg);
 
     switch (header_.command)
     {
-        case resource::Command::Publish:
+        case common::resource::Command::ServerPublish:
         {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending Image to clients");
-            resource::Header header;
-            header.resourceType = resource::ResourceType::Attachment;
-            header.command = resource::Command::ShowImage;
+            terminalWidget_->appendText("Sending Image to clients\n");
+
+            common::resource::Header header;
+            header.resourceType = common::resource::ResourceType::Attachment;
+            header.command = common::resource::Command::ClientShowImage;
             header.fileName = header_.fileName;
 
             QByteArray headerData;
@@ -277,13 +324,13 @@ void Server::handleAttachment(const QByteArray& data)
             ds << header;
 
             // header size 128 bytes
-            headerData.resize(resource::Header::HEADER_SIZE);
+            headerData.resize(common::resource::Header::HEADER_SIZE);
 
             QByteArray resource = data;
             header.bodySize = data.size();
 
             resource.prepend(headerData);
-            publish(resource);
+            publishAll(resource, QSet<qintptr>{ currentSocket_ });
             break;
         }
         default:
@@ -291,19 +338,88 @@ void Server::handleAttachment(const QByteArray& data)
     }
 }
 
-void Server::handleString(const QByteArray& data)
+void Server::handleText(const QByteArray& data)
 {
-    QString msg(data);
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived message: " + msg);
+    QString msg = "Recived Text: " + data + "\n";
+    terminalWidget_->appendText(msg);
 
     switch (header_.command)
     {
-        case resource::Command::ClearCycles:
+        case common::resource::Command::ServerPrintText:
+        {
+            terminalWidget_->appendText(QString::fromUtf8(data));
+            break;
+        }
+        default:
+            return;
+    }
+}
+
+void Server::handleJson(const QByteArray& data)
+{
+    terminalWidget_->appendText("Recived Json\n");
+
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+    if(commGraph_)
+    {
+        delete commGraph_;
+    }
+    commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
+
+    terminalWidget_->appendText("TOP_LEFT: " + commGraph_->getLeftTop() + "\n");
+    terminalWidget_->appendText("BOTTOM_RIGHT: " + commGraph_->getRightBottom() + "\n");
+
+    switch (header_.command)
+    {
+        case common::resource::Command::ServerPublish:
+        {
+            terminalWidget_->appendText("Sending JSON to clients\n");
+
+            common::resource::Header header;
+            header.resourceType = common::resource::ResourceType::Json;
+            header.command = common::resource::Command::ClientUpdateGraph;
+
+            QByteArray headerData;
+            QDataStream ds(&headerData, QIODevice::ReadWrite);
+            ds << header;
+
+            // header size 128 bytes
+            headerData.resize(common::resource::Header::HEADER_SIZE);
+
+            QByteArray resource = data;
+            header.bodySize = data.size();
+
+            resource.prepend(headerData);
+            publishAll(resource, QSet<qintptr>{ currentSocket_ });
+            break;
+        }
+        case common::resource::Command::ClientSetUserInfo:
+        {
+            QJsonDocument json = QJsonDocument::fromJson(data);
+            common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
+            addClient(userInfo);
+
+            sendCommand(common::resource::Command::ServerUserAccepted, currentSocket_);
+            break;
+        }
+        default:
+            return;
+        }
+}
+
+void Server::handleCommand(const common::resource::Command cmd)
+{
+    switch (cmd)
+    {
+        case common::resource::Command::ClientClearCycles:
         {
             // clear cycles
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "ClearCycles");
+            terminalWidget_->appendText("ClearCycles\n");
+
             if(graphProc_)
+            {
                 delete graphProc_;
+            }
             graphProc_ = new dcis::GraphProcessor::GraphProcessor();
             graphProc_->setCommGraph(commGraph_);
             graphProc_->initGraph();
@@ -311,28 +427,32 @@ void Server::handleString(const QByteArray& data)
             graphProc_->clearCycles();
             break;
         }
-        case resource::Command::GenerateGraph:
+        case common::resource::Command::ClientGenerateGraph:
         {
             if(graphProc_)
             {
-                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "GenerateGraph");
+                terminalWidget_->appendText("GenereateGraph\n");
+
                 graphProc_->setImgSize(imgW_, imgH_);
                 graphProc_->generateGraph();
             }
             break;
         }
-        case resource::Command::StartExploration:
+        case common::resource::Command::ClientStartExploration:
         {
             if(graphProc_)
             {
-                utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartExploration");
+                terminalWidget_->appendText("StartExploration\n");
+
                 graphProc_->startExploration();
             }
             break;
         }
-        case resource::Command::StartAttack:
+        case common::resource::Command::ClientStartAttack:
         {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "StartAttack");
+            terminalWidget_->appendText("StartAttack\n");
+
+            // TO DO: start attack
             break;
         }
         default:
@@ -341,50 +461,10 @@ void Server::handleString(const QByteArray& data)
 
 }
 
-void Server::handleJson(const QByteArray& data)
-{
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Recived Json");
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-    if(commGraph_)
-        delete commGraph_;
-    commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
-
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "TOP_LEFT: " + commGraph_->getLeftTop());
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "BOTTOM_RIGHT: " + commGraph_->getRightBottom());
-
-    switch (header_.command)
-    {
-        case resource::Command::Publish:
-        {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending JSON to clients");
-            resource::Header header;
-            header.resourceType = resource::ResourceType::Json;
-            header.command = resource::Command::UpdateGraph;
-
-            QByteArray headerData;
-            QDataStream ds(&headerData, QIODevice::ReadWrite);
-            ds << header;
-
-            // header size 128 bytes
-            headerData.resize(resource::Header::HEADER_SIZE);
-
-            QByteArray resource = data;
-            header.bodySize = data.size();
-
-            resource.prepend(headerData);
-            publish(resource);
-            break;
-        }
-        default:
-            return;
-        }
-}
-
 void Server::syncSockets()
 {
     // Send image
-    {
+/*    {
         QFile file(CURRENT_IMAGE_PATH);
         if (file.open(QIODevice::ReadOnly))
         {
@@ -405,12 +485,35 @@ void Server::syncSockets()
             header.bodySize = resource.size();
 
             resource.prepend(headerData);
-            publish(resource);
+
+            for (auto& socket : sockets_)
+            {
+                QDataStream socketStream(socket);
+                socketStream.setVersion(resource::DATASTREAM_VERSION);
+
+                socketStream << resource;
+
+                QThread::msleep(200);
+                if(socket->state() == QAbstractSocket::ConnectedState)
+                {
+                    if (socket->waitForBytesWritten())
+                    {
+                        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Succsesfully sent to server" + QString::number(resource.size()) + " bytes");
+                        continue;
+                    }
+                    else
+                    {
+                        utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to send to server");
+                        continue;
+                    }
+                }
+            }
         }
 
     }
+*/
     // Sent Graph
-    {
+/*    {
         QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
         QByteArray data = json.toJson();
         utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Sending JSON to clients");
@@ -429,38 +532,48 @@ void Server::syncSockets()
         header.bodySize = data.size();
 
         resource.prepend(headerData);
-        publish(resource);
-    }
+
+        for (auto& socket : sockets_)
+        {
+            QDataStream socketStream(socket);
+            socketStream.setVersion(resource::DATASTREAM_VERSION);
+
+            socketStream << resource;
+
+            QThread::msleep(500);
+            if(socket->state() == QAbstractSocket::ConnectedState)
+            {
+                if (socket->waitForBytesWritten())
+                {
+                    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Succsesfully sent to server" + QString::number(resource.size()) + " bytes");
+                    continue;
+                }
+                else
+                {
+                    utils::DebugStream::getInstance().log(utils::LogLevel::Error, "Error to send to server");
+                    continue;
+                }
+            }
+        }
+    }*/
 }
 
 void Server::updateSockets()
 {
-    bool changeMasterSocket = false;
-    for (auto socket = sockets_.begin(); socket != sockets_.end();)
+    // Iterate through the map in reverse order and remove key-value pairs that meet the criteria
+    for (auto it = clientMap_.end(); it != clientMap_.begin();)
     {
-        if (!(socket.value()->state() == QTcpSocket::ConnectedState))
+        --it; // Move iterator to the previous element
+
+        // Check the condition and remove the key-value pair if needed
+        if (!(it.value()->state() == QTcpSocket::ConnectedState))
         {
-            QString msg = "Client:" + QString::number(socket.key()) + " disconnected.";
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg);
-
-            if (socket.key() == masterSocket_)
-            {
-                changeMasterSocket = true;
-            }
-
-            socket.value()->close();
-            socket.value()->deleteLater();
-            sockets_.erase(socket++);
+            QString msg = "Client:" + it.key().name + " disconnected\n";
+            it.value()->close();
+            it.value()->deleteLater();
+            it = clientMap_.erase(it); // Erase the current element and get the next iterator
+            terminalWidget_->appendText(msg);
         }
-        else
-        {
-            ++socket;
-        }
-    }
-
-    if (changeMasterSocket && !sockets_.empty())
-    {
-        masterSocket_ = sockets_.begin().key();
     }
 }
 

@@ -365,7 +365,7 @@ void GraphView::mousePressEvent(QMouseEvent* event)
             if (scene()->sceneRect().contains(scenePos))
             {
                 QString mymsg = "Clicked at x:" + QString::number(x) + "y:" + QString::number(y);
-                utils::DebugStream::getInstance().log(utils::LogLevel::Info, mymsg);
+                //utils::DebugStream::getInstance().log(utils::LogLevel::Info, mymsg);
             }
             else
             {
@@ -374,7 +374,7 @@ void GraphView::mousePressEvent(QMouseEvent* event)
     if (!scene()->selectedItems().isEmpty())
     {
         QString msg3 = "Node selected X: " + QString::number(scene()->selectedItems()[0]->pos().x()) + " Y: " + QString::number(scene()->selectedItems()[0]->pos().y());
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
+        //utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
     }
 
     if (!isSelectTargetNode_)

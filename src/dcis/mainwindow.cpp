@@ -50,6 +50,9 @@ void MainWindow::setupUi()
                             | QDockWidget::DockWidgetClosable);
                             */
 
+    // Console
+    terminalWidget_ = new utils::TerminalWidget(this);
+
     createEntryWidget();
     createWorkingWiget();
     createGraphInfoWidget();
@@ -73,11 +76,6 @@ void MainWindow::setWorkspaceEnabled(bool enable)
         //dockWidget_->hide();
         centralWidget_->setCurrentWidget(entryWidget_);
     }
-}
-
-Console* MainWindow::getConsole() const
-{
-    return console_;
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)
@@ -104,95 +102,64 @@ void MainWindow::onUpload()
 
     if (filePath.isEmpty())
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "You haven't selected any attachment!");
+        terminalWidget_->appendText("You haven't selected any attachment! \n");
         return;
     }
 
-    QFile file(filePath);
-    if (file.open(QIODevice::ReadOnly))
+    QImageReader imgReader(filePath);
+    if (imgReader.canRead())
     {
-        QFileInfo fileInfo(file.fileName());
-        QString fileName(fileInfo.fileName());
+        graph::Graph* graph = new graph::Graph(true);
+        graphView_->updateGraph(graph);
 
-        resource::Header header;
-        header.resourceType = resource::ResourceType::Attachment;
-        header.command = resource::Command::Publish;
-        header.fileName = fileName;
-
-
-        QImageReader imgReader(filePath);
-        if (imgReader.canRead())
+        QImage img = imgReader.read();
+        //imageEditor_->showImage(img);
+        graphView_->setImage(img);
+        CCoordInputDialog oDialog;
+        if (oDialog.exec() == QDialog::Accepted)
         {
-            graph::Graph* graph = new graph::Graph(true);
-            graphView_->updateGraph(graph);
-
-            QImage img = imgReader.read();
-            //imageEditor_->showImage(img);
-            graphView_->setImage(img);
-            CCoordInputDialog oDialog;
-            if (oDialog.exec() == QDialog::Accepted)
-            {
-                leftTop_ = oDialog.leftTopCoordinate();
-                rightBottom_ = oDialog.rightBottomCoordinate();
-            }
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, leftTop_);
-            utils::DebugStream::getInstance().log(utils::LogLevel::Info, rightBottom_);
+            leftTop_ = oDialog.leftTopCoordinate();
+            rightBottom_ = oDialog.rightBottomCoordinate();
         }
 
-        if (client_->checkServerConnected())
-        {
-            QByteArray headerData;
-            QDataStream ds(&headerData, QIODevice::ReadWrite);
-            ds << header;
+        terminalWidget_->appendText("LeftTop: " + leftTop_ + " \n");
+        terminalWidget_->appendText("RightBottom: " + rightBottom_ + " \n");
+    }
 
-            // header size 128 bytes
-            headerData.resize(resource::Header::HEADER_SIZE);
-
-            QByteArray resource = file.readAll();
-
-            header.bodySize = resource.size();
-
-            resource.prepend(headerData);
-
-            client_->sendToServer(resource);
-        }
-        else
-        {
-            utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "Server does not respond. Please reconnect!");
-        }
-
+    if (client_->checkServerConnected())
+    {
+        client_->sendAttachment(filePath, common::resource::Command::ServerPublish);
     }
     else
     {
-        utils::DebugStream::getInstance().log(utils::LogLevel::Warning, "Can't open file!");
-        return;
+        terminalWidget_->appendText("Server does not respond. Please reconnect! \n");
     }
 }
 
 void MainWindow::onCreateGrid()
 {
-   QDialog *popup = new QDialog(this);
-   QVBoxLayout *layout = new QVBoxLayout;
+   QDialog* popup = new QDialog(this);
+   QVBoxLayout* layout = new QVBoxLayout;
 
-   QCheckBox *checkBox1 = new QCheckBox("10x10");
-   QCheckBox *checkBox2 = new QCheckBox("20x20");
-   QCheckBox *checkBox3 = new QCheckBox("30x30");
+   QCheckBox* checkBox1 = new QCheckBox("10x10");
+   QCheckBox* checkBox2 = new QCheckBox("20x20");
+   QCheckBox* checkBox3 = new QCheckBox("30x30");
    layout->addWidget(checkBox1);
    layout->addWidget(checkBox2);
    layout->addWidget(checkBox3);
 
-   QLabel *rowsLabel = new QLabel("Rows:");
-   QLineEdit *rowsLineEdit = new QLineEdit;
-   QLabel *colsLabel = new QLabel("Cols:");
-   QLineEdit *colsLineEdit = new QLineEdit;
+   QLabel* rowsLabel = new QLabel("Rows:");
+   QLineEdit* rowsLineEdit = new QLineEdit;
+   QLabel* colsLabel = new QLabel("Cols:");
+   QLineEdit* colsLineEdit = new QLineEdit;
 
    layout->addWidget(rowsLabel);
    layout->addWidget(rowsLineEdit);
    layout->addWidget(colsLabel);
    layout->addWidget(colsLineEdit);
 
-   QPushButton *okButton = new QPushButton("OK");
-   QPushButton *cancelButton = new QPushButton("Cancel");
+   QPushButton* okButton = new QPushButton("OK");
+   QPushButton* cancelButton = new QPushButton("Cancel");
 
    connect(okButton, &QPushButton::clicked, popup, &QDialog::accept);
    connect(cancelButton, &QPushButton::clicked, popup, &QDialog::reject);
@@ -230,83 +197,44 @@ void MainWindow::onCreateGrid()
 
 void MainWindow::onClearCycles()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Map generated");
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Clearing cycles");
+    terminalWidget_->appendText("Map generated, Clearing Cycles\n");
+
     if (client_->checkServerConnected())
     {
-        resource::Header header;
-        header.resourceType = resource::ResourceType::Text;
-        header.command = resource::Command::ClearCycles;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(resource::Header::HEADER_SIZE);
-
-        client_->sendToServer(headerData);
+        client_->sendCommand(common::resource::Command::ClientClearCycles);
     }
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Cycles Cleared");
+
+    terminalWidget_->appendText("Cycles Cleared\n");
 }
 
 void MainWindow::onGenerateGraph()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Generating Graph");
+    terminalWidget_->appendText("Generating Graph\n");
+
     if (client_->checkServerConnected())
     {
-        resource::Header header;
-        header.resourceType = resource::ResourceType::Text;
-        header.command = resource::Command::GenerateGraph;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(resource::Header::HEADER_SIZE);
-
-        client_->sendToServer(headerData);
+        client_->sendCommand(common::resource::Command::ClientGenerateGraph);
     }
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Graph Generated");
+
+    terminalWidget_->appendText("Graph Generated\n");
 }
 
 void MainWindow::onStartExploration()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Exploration Started");
+    terminalWidget_->appendText("Exploration Started\n");
+
     if (client_->checkServerConnected())
     {
-        resource::Header header;
-        header.resourceType = resource::ResourceType::Text;
-        header.command = resource::Command::StartExploration;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(resource::Header::HEADER_SIZE);
-
-        client_->sendToServer(headerData);
+        client_->sendCommand(common::resource::Command::ClientStartExploration);
     }
 }
 void MainWindow::onStartAttack()
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "Attack Started");
+    terminalWidget_->appendText("Attack Started\n");
+
     if (client_->checkServerConnected())
     {
-        resource::Header header;
-        header.resourceType = resource::ResourceType::Text;
-        header.command = resource::Command::StartAttack;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(resource::Header::HEADER_SIZE);
-
-        client_->sendToServer(headerData);
+        client_->sendCommand(common::resource::Command::ClientStartAttack);
     }
 }
 
@@ -335,29 +263,12 @@ void MainWindow::onGraphChanged()
     graph->setRightBottom(rightBottom_);
 
     QJsonDocument jsonData = graph::Graph::toJSON(graph);
-
-    resource::Header header;
-    header.resourceType = resource::ResourceType::Json;
-    header.command = resource::Command::Publish;
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(resource::Header::HEADER_SIZE);
-
-    QByteArray resource = jsonData.toJson();
-    header.bodySize = resource.size();
-
-    resource.prepend(headerData);
-
-    client_->sendToServer(resource);
+    client_->sendJson(jsonData, resource::Command::ServerPublish);
 }
 
 void MainWindow::onUpdateGraph(const QJsonDocument& json)
 {
-    utils::DebugStream::getInstance().log(utils::LogLevel::Info, "*************** Updating graph ***************\n");
+    terminalWidget_->appendText("*************** Updating graph ***************\n");
     graph::Graph* graph = graph::Graph::fromJSON(json);
     graphView_->updateGraph(graph);
 }
@@ -496,7 +407,7 @@ void MainWindow::createToolBar()
 
 void MainWindow::createEntryWidget()
 {
-    client_ = new client::Client(this);
+    client_ = new client::Client(terminalWidget_, this);
 
     entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
@@ -567,18 +478,15 @@ void MainWindow::createWorkingWiget()
     workingWidget_ = new QWidget(this);
     workingWidget_->setObjectName("workingWidget");
 
+    // Graph view
     graphView_ = new GraphView();
-
-    console_ = new Console();
-    utils::DebugStream::getInstance().setEditor(console_);
 
     // Connections
     connect(graphView_, &GraphView::sigGraphChanged, this, &MainWindow::onGraphChanged);
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
-    connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img){
-        utils::DebugStream::getInstance().log(utils::LogLevel::Info, "*************** Showing image ***************\n");
-
+    connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img) {
+        terminalWidget_->appendText("*************** Showing image ***************\n");
         graphView_->setImage(img);
     });
 
@@ -597,7 +505,8 @@ void MainWindow::createWorkingWiget()
     //vSplitter->setChildrenCollapsible(false);
 
     vSplitter->addWidget(graphView_);
-    vSplitter->addWidget(console_);
+    hLayoutWorking->addWidget(terminalWidget_);
+    vSplitter->addWidget(terminalWidget_);
     vSplitter->setSizes(QList<int>() << 700 << 200);
 }
 

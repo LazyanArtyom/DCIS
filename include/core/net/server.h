@@ -3,7 +3,8 @@
 
 // App includes
 #include <net/resource.h>
-#include <utils/debugstream.h>
+#include <user/userinfo.h>
+#include <utils/terminalwidget.h>
 #include <graphprocessor/graphprocessor.h>
 
 // QT includes
@@ -14,27 +15,37 @@
 
 
 namespace dcis::server {
-using namespace common;
+
 class Server : public QTcpServer
 {
     Q_OBJECT
 public:
     using DataType = QByteArray;
-    using SocketListType = QMap<qintptr, QTcpSocket*>;
+    using ClientMapType = QMap<common::user::UserInfo, QTcpSocket*>;
 
-    Server(QObject* parent = nullptr);
+    Server(common::utils::TerminalWidget* terminalWidget, QObject* parent = nullptr);
     ~Server();
+
+    void addClient(common::user::UserInfo userInfo);
 
     bool run(const int port);
     void incomingConnection(qintptr socketDescriptor) override;
 
-    bool publish(const QByteArray& data, bool currentSocket = false);
-    void handle(const resource::Header& header, const QByteArray& body);
+    // Senders
+    bool publish(const QByteArray& data, qintptr socketDesc);
+    bool publishAll(const QByteArray& data, QSet<qintptr> excludeSockets);
+    void sendText(const QString& text, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendJson(const QJsonDocument& json, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendAttachment(const QString& filePath, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendCommand(const common::resource::Command cmd, qintptr socketDescriptor = -1);
 
+    // Handlers
     void handleUnknown();
-    void handleAttachment(const QByteArray& data);
-    void handleString(const QByteArray& data);
+    void handleText(const QByteArray& data);
     void handleJson(const QByteArray& data);
+    void handleAttachment(const QByteArray& data);
+    void handleCommand(const common::resource::Command cmd);
+    void handle(const common::resource::Header& header, const QByteArray& body);
 
     void syncSockets();
     void updateSockets();
@@ -44,11 +55,12 @@ public slots:
     void onDisconected();
 
 private:
-    DataType       data_;
-    resource::Header header_;
-    SocketListType sockets_;
+    DataType data_;
+    ClientMapType clientMap_;
+    common::resource::Header header_;
+    common::utils::TerminalWidget* terminalWidget_ = nullptr;
+
     qintptr currentSocket_;
-    quint16 nextBlockSize_;
     dcis::GraphProcessor::commonGraph* commGraph_ = nullptr;
     dcis::GraphProcessor::GraphProcessor* graphProc_ = nullptr;
     size_t imgW_ = 0;

@@ -1,36 +1,32 @@
 #ifndef DCIS_SERVER_MAINWINDOW_H_
 #define DCIS_SERVER_MAINWINDOW_H_
 
-#include <QMainWindow>
-
 // App includes
 #include <net/server.h>
+#include <utils/terminalwidget.h>
 
 // STL includes
 #include <memory>
 
 // Qt includes
-#include <QTextEdit>
+#include <QMainWindow>
 #include <QTabWidget>
 
 
 namespace dcis::server {
-using namespace common;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
-
-public slots:
 
 private:
     Server*     server_;
-    QTextEdit*  txtConsole_;
     QTabWidget* centralTabWidget_;
+    common::utils::TerminalWidget* terminalWidget_;
 
     //std::unique_ptr<utils::DebugStream> debugStream_;
 };

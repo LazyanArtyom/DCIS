@@ -10,7 +10,7 @@
 
 namespace dcis::common::utils {
 
-enum class LogLevel : uint32_t { Error = 1, Warning, Info, Debug, Verbose };
+/*enum class LogLevel : uint32_t { Error = 1, Warning, Info, Debug, Verbose };
 
 class DebugStream
 {
@@ -48,6 +48,6 @@ private:
     QTextEdit* logWindowWidget_;
     LogLevel logLevel_ = LogLevel::Verbose;
 };
-
+*/
 } // end namespace dcis::common::utils
 #endif // DCIS_COMMON_UTILS_DEBUGSTREAM_H_

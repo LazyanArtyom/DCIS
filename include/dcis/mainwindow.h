@@ -3,10 +3,9 @@
 
 // App headers
 #include <net/client.h>
-#include <gui/console.h>
 #include <gui/graphview.h>
 #include <gui/graphinfo.h>
-#include <utils/debugstream.h>
+#include <utils/terminalwidget.h>
 #include <gui/elementpropertiestable.h>
 
 // QT headers
@@ -31,10 +30,8 @@
 #include <QStackedWidget>
 #include <QGeoCoordinate>
 
-#include <QVBoxLayout>
 
 namespace dcis::gui {
-using namespace common;
 
 class MainWindow : public QMainWindow
 {
@@ -45,8 +42,6 @@ public:
 
     void setupUi();
     void setWorkspaceEnabled(bool enable);
-
-    Console* getConsole() const;
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -97,17 +92,18 @@ private:
     QMenuBar* menuBar_;
     QToolBar* toolBar_;
 
+    // Workspace
+    QWidget* workingWidget_;
     QDockWidget* dockWidget_;
     QStackedWidget* centralWidget_;
+    QWidget* entryWidget_ = nullptr;
+    common::utils::TerminalWidget* terminalWidget_;
 
+    // Entry Widget
     QLabel* backgroundLabel_;
     QLineEdit*   ipLineEdit_;
     QLineEdit*   portLineEdit_;
     QPushButton* connectButton_;
-    QWidget*     entryWidget_ = nullptr;
-
-    Console* console_;
-    QWidget* workingWidget_;
 
     client::Client* client_;
     GraphInfo* graphInfo_;

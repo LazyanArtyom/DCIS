@@ -153,11 +153,11 @@ void GraphProcessor::clearCycles()
             break;
         qDebug()<<"klir";
     }
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Start Node : " + QString::number(startNode_->getID()));
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Curr Neidh id : " + QString::number(startDirId));
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Neigh count : " + QString::number(neighboursCount_));
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "uniqueSteps count : " + QString::number(uniqueSteps.size()));
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Cycles Cleared");
+   // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Start Node : " + QString::number(startNode_->getID()));
+   // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Curr Neidh id : " + QString::number(startDirId));
+   // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Neigh count : " + QString::number(neighboursCount_));
+   // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "uniqueSteps count : " + QString::number(uniqueSteps.size()));
+   // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Cycles Cleared");
 }
 
 void GraphProcessor::generateGraph()
@@ -183,8 +183,8 @@ void GraphProcessor::generateGraph()
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
             qDebug() << "####3333";
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
+            //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
+            //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
             QTextStream stream(&file);
             //drone type // 0 for exploration
             stream << 0 << "\n";
@@ -221,8 +221,8 @@ void GraphProcessor::generateGraph()
             stream.flush();
             file.close();
         }
-        else
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
+        //else
+            //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
     }
 
     //////Attack
@@ -235,8 +235,8 @@ void GraphProcessor::generateGraph()
         QFile file(vecAttackFileNames_[i]);
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
+            //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file for drone " + QString::number(i));
+            //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, QString::fromStdString(file.filesystemFileName().string()));
             QTextStream stream(&file);
             //drone type // 1 for attack
             stream << 1 << "\n";
@@ -248,10 +248,10 @@ void GraphProcessor::generateGraph()
             stream.flush();
             file.close();
         }
-        else
-            dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
+        //else
+        //    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "ERROR: File creation failed");
     }
-    dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Graph Generated");
+    //dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Graph Generated");
 }
 
 void GraphProcessor::startExploration()

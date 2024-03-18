@@ -2,7 +2,6 @@
 
 // App includes
 #include <graph/graph.h>
-#include <utils/debugstream.h>
 //#include <graphprocessor/graphprocessor.h>
 
 // Qt includes
@@ -32,41 +31,28 @@ MainWindow::MainWindow(QWidget *parent)
     setMaximumSize(QSize(16777215, 16777215));
     showMaximized();
 
-    // central Widget
+    // Central Widget
     centralTabWidget_ = new QTabWidget(this);
     setCentralWidget(centralTabWidget_);
     centralTabWidget_->setObjectName("centralTabWidget");
 
-    // console
-    txtConsole_ = new QTextEdit(this);
-    txtConsole_->setMinimumSize(QSize(0, 240));
-    txtConsole_->setMaximumSize(QSize(16777215, 720));
-    txtConsole_->setReadOnly(true);
-    txtConsole_->setObjectName("consoleText");
-    utils::DebugStream::getInstance().setEditor(txtConsole_);
+    // Console
+    terminalWidget_ = new common::utils::TerminalWidget(this);
 
-    // connections
-
-    // layouts
+    // Layouts
     QWidget* consoleWidget_ = new QWidget(centralTabWidget_);
-    consoleWidget_->setObjectName("entryWidget");
-    centralTabWidget_->addTab(consoleWidget_, tr("entryWidget"));
+    consoleWidget_->setObjectName("Console");
+    centralTabWidget_->addTab(consoleWidget_, tr("Console"));
 
     QHBoxLayout* horizontalLayoutEntry = new QHBoxLayout(consoleWidget_);
     consoleWidget_->setLayout(horizontalLayoutEntry);
     horizontalLayoutEntry->setSpacing(6);
     horizontalLayoutEntry->setContentsMargins(11, 11, 11, 11);
 
-    QSizePolicy sizePolicyConsole(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    sizePolicyConsole.setHorizontalStretch(240);
-    sizePolicyConsole.setVerticalStretch(0);
-    sizePolicyConsole.setHeightForWidth(txtConsole_->sizePolicy().hasHeightForWidth());
-    txtConsole_->setSizePolicy(sizePolicyConsole);
-
-    horizontalLayoutEntry->addWidget(txtConsole_);
+    horizontalLayoutEntry->addWidget(terminalWidget_);
 
     // server
-    server_ = new Server(this);
+    server_ = new Server(terminalWidget_, this);
     server_->run(2323);
 
 //    GraphProcessor::GraphProcessor*  process = new GraphProcessor::GraphProcessor();

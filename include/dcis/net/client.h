@@ -4,31 +4,37 @@
 
 // App includes
 #include <net/resource.h>
+#include <utils/terminalwidget.h>
 
 // Qt includes
 #include <QTcpSocket>
 
 
 namespace dcis::client {
-using namespace common;
 
 class Client : public QObject
 {
     Q_OBJECT
 
 public:
-    Client(QObject* parent = nullptr);
+    Client(common::utils::TerminalWidget* terminalWidget, QObject* parent = nullptr);
     ~Client();
 
-    void handle(const resource::Header& header, const QByteArray& body);
+    /* Senders */
+    void sendText(const QString& text, common::resource::Command cmd);
+    void sendJson(const QJsonDocument& json, common::resource::Command cmd);
+    void sendAttachment(const QString& filePath, common::resource::Command cmd);
+    void sendCommand(const common::resource::Command cmd);
 
+    /* Handlers */
+    void handle(const common::resource::Header& header, const QByteArray& body);
     void handleUnknown();
     void handleAttachment(const QByteArray& data);
-    void handleString(const QString& str);
-    void handleJson(const QJsonDocument& json);
+    void handleText(const QByteArray& data);
+    void handleJson(const QByteArray& data);
+    void handleCommand(const common::resource::Command cmd);
 
     bool connectToServer(const QString& ip, const QString& port);
-    bool sendToServer(const QByteArray& data);
     bool checkServerConnected() const;
 
 public slots:
@@ -41,8 +47,11 @@ signals:
     void sigUpdateGraph(const QJsonDocument& json);
 
 private:
-    resource::Header header_;
+    bool sendToServer(const QByteArray& data);
+
+    common::resource::Header header_;
     QTcpSocket* socket_ = nullptr;
+    common::utils::TerminalWidget* terminalWidget_ = nullptr;
 };
 
 } // end namespace dcis::client

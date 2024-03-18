@@ -18,23 +18,28 @@ const QDataStream::Version DATASTREAM_VERSION = QDataStream::Qt_6_4;
 enum class ResourceType : uint32_t
 {
     Text = 0,
+    Json,
+    Command,
     Attachment,
-    Json
 };
 
 enum class Command : uint32_t
 {
     // server commands
-    Publish = 0,
+    ServerPublish = 0,
+    ServerPrintText,
+    ServerGetUserInfo,
+    ServerUserAccepted,
 
     // client commands
-    ShowText,
-    ShowImage,
-    ClearCycles,
-    StartExploration,
-    StartAttack,
-    GenerateGraph,
-    UpdateGraph,
+    ClientShowText,
+    ClientShowImage,
+    ClientClearCycles,
+    ClientStartExploration,
+    ClientStartAttack,
+    ClientGenerateGraph,
+    ClientUpdateGraph,
+    ClientSetUserInfo,
 };
 
 // Message Header is sent at start of all messages. The template allows us
@@ -70,61 +75,71 @@ struct Header
         switch (resourceType)
         {
             case resource::ResourceType::Text:
-            {
                 return "STRING";
-            }
-
             case resource::ResourceType::Json:
-            {
                 return "JSON";
-            }
-
-        case resource::ResourceType::Attachment:
-            {
+            case ResourceType::Command:
+                return "Command";
+            case resource::ResourceType::Attachment:
                 return "ATTACHMENT";
-            }
-
             default:
-            {
                 return "UNKNOWN";
-            }
         }
     }
 
     const QString commandToString() const
     {
         switch(command) {
-            case Command::Publish:
-                return "Publish";
-            case Command::UpdateGraph:
-                return "UpdateGraph";
-            case Command::ShowImage:
-                return "ShowImage";
-            case Command::ClearCycles:
-                return "ClearCycles";
-            case Command::GenerateGraph:
-                return "GenerateGraph";
-            case Command::StartExploration:
-                return "StartExploration";
-            case Command::StartAttack:
-                return "StartAttack";
-            case Command::ShowText:
-                return "ShowText";
+
+            // Server commands
+            case Command::ServerPublish:
+                return "ServerPublish";
+
+            case Command::ServerPrintText:
+                return "ServerPrintText";
+
+            case Command::ServerGetUserInfo:
+                return "ServerGetUserInfo";
+
+            case Command::ServerUserAccepted:
+                return "ServerUserAccepted";
+
+            // Client commands
+            case Command::ClientUpdateGraph:
+                return "ClientUpdateGraph";
+
+            case Command::ClientShowImage:
+                return "ClientShowImage";
+
+            case Command::ClientClearCycles:
+                return "ClientClearCycles";
+
+            case Command::ClientGenerateGraph:
+                return "ClientGenerateGraph";
+
+            case Command::ClientStartExploration:
+                return "ClientStartExploration";
+
+            case Command::ClientStartAttack:
+                return "ClientStartAttack";
+
+            case Command::ClientShowText:
+                return "ClientShowText";
+
+            case Command::ClientSetUserInfo:
+                return "ClientSetUserInfo";
+
             default:
                 return "Unknown command";
         }
     }
 
     int bodySize;
-    QString fileName;
     Command command;
+    QString fileName = "";
     ResourceType resourceType;
-
     static const int HEADER_SIZE = 128;
 };
 
 } // end namespace dcis::common::resource
-
-//Q_DECLARE_METATYPE(dcis::common::resource::Header)
-
 #endif // DCIS_COMMON_RESOURCE_RESOURCE_H_
