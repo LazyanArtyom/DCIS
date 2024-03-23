@@ -101,6 +101,8 @@ private:
 
     // Entry Widget
     QLabel* backgroundLabel_;
+    QLineEdit*   username_;
+    QLineEdit*   password_;
     QLineEdit*   ipLineEdit_;
     QLineEdit*   portLineEdit_;
     QPushButton* connectButton_;

@@ -397,9 +397,16 @@ void Server::handleJson(const QByteArray& data)
         {
             QJsonDocument json = QJsonDocument::fromJson(data);
             common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
-            addClient(userInfo);
 
-            sendCommand(common::resource::Command::ServerUserAccepted, currentSocket_);
+            if (userInfo.name == "root" && userInfo.password == "root")
+            {
+                addClient(userInfo);
+                sendCommand(common::resource::Command::ServerUserAccepted, currentSocket_);
+            }
+            else
+            {
+                sendCommand(common::resource::Command::ServerUserDeclined, currentSocket_);
+            }
             break;
         }
         default:

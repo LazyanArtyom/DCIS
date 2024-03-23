@@ -209,18 +209,23 @@ void Client::handleCommand(const common::resource::Command cmd)
     {
     case common::resource::Command::ServerGetUserInfo:
     {
-            // TODO:
             common::user::UserInfo userInfo;
-            userInfo.name = "artyom";
-            userInfo.password = "al1234";
+            userInfo.name = username_;
+            userInfo.password = password_;
 
             sendJson(common::user::UserInfo::toJson(userInfo), common::resource::Command::ClientSetUserInfo);
             break;
     }
     case common::resource::Command::ServerUserAccepted:
     {
-            QString msg = "Succsesfully connected to server\n";
-            terminalWidget_->appendText(msg);
+        QString msg = "Succsesfully connected to server\n";
+        terminalWidget_->appendText(msg);
+
+        emit sigUserAccepted(true);
+    }
+    case common::resource::Command::ServerUserDeclined:
+    {
+        emit sigUserAccepted(false);
     }
     default:
             return;
@@ -302,6 +307,16 @@ bool Client::checkServerConnected() const
     }
 
     return socket_->state() == QAbstractSocket::ConnectedState ? true : false;
+}
+
+void Client::setUserName(const QString userName)
+{
+    username_ = userName;
+}
+
+void Client::setPassword(const QString password)
+{
+    password_ = password;
 }
 
 void Client::onReadyRead()

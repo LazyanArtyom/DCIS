@@ -240,20 +240,25 @@ void MainWindow::onStartAttack()
 
 void MainWindow::onConnectBtnClicked()
 {
-    if (ipLineEdit_->text().isEmpty() || portLineEdit_->text().isEmpty())
+    if (ipLineEdit_->text().isEmpty() || portLineEdit_->text().isEmpty()
+       || username_->text().isEmpty() || password_->text().isEmpty())
     {
-        QMessageBox::warning(this, tr("Connection issue"), tr("Please fill the IP and Port fields."));
+        QMessageBox::warning(this, tr("Connection issue"), tr("Please fill all the fields."));
         return;
     }
 
     if (client_->connectToServer(ipLineEdit_->text(), portLineEdit_->text()))
     {
-        setWorkspaceEnabled(true);
+        client_->setUserName(username_->text());
+        client_->setPassword(password_->text());
     }
     else
     {
         QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
     }
+
+
+    //setWorkspaceEnabled(true);
 }
 
 void MainWindow::onGraphChanged()
@@ -424,6 +429,20 @@ void MainWindow::createEntryWidget()
     QFont montserratFont("Montserrat", 59, QFont::DemiBold);
     textLabel->setFont(montserratFont);
 
+    username_ = new QLineEdit(entryWidget_);
+    username_->setMaximumWidth(500);
+    username_->setMinimumHeight(50);
+    username_->setStyleSheet("font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
+    username_->setPlaceholderText("username");
+    username_->setText("root");
+
+    password_ = new QLineEdit(entryWidget_);
+    password_->setMaximumWidth(500);
+    password_->setMinimumHeight(50);
+    password_->setStyleSheet("font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
+    password_->setPlaceholderText("password");
+    password_->setText("root");
+
     ipLineEdit_ = new QLineEdit(entryWidget_);
     ipLineEdit_->setMaximumWidth(500);
     ipLineEdit_->setMinimumHeight(50);
@@ -464,6 +483,8 @@ void MainWindow::createEntryWidget()
     inputLayout->setSpacing(10);
     inputLayout->setAlignment(Qt::AlignCenter);
 
+    inputLayout->addWidget(username_);
+    inputLayout->addWidget(password_);
     inputLayout->addWidget(ipLineEdit_);
     inputLayout->addWidget(portLineEdit_);
     inputLayout->addWidget(connectButton_);
@@ -485,9 +506,23 @@ void MainWindow::createWorkingWiget()
     connect(graphView_, &GraphView::sigGraphChanged, this, &MainWindow::onGraphChanged);
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
+
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage& img) {
+
         terminalWidget_->appendText("*************** Showing image ***************\n");
         graphView_->setImage(img);
+    });
+
+    connect(client_, &client::Client::sigUserAccepted, this, [this](bool isAccepted) {
+
+        if (isAccepted)
+        {
+            setWorkspaceEnabled(true);
+        }
+        else
+        {
+            QMessageBox::warning(this, tr("Connection issue"), tr("Incorrect username or password."));
+        }
     });
 
     // Layouts

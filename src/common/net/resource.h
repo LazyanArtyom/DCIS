@@ -30,6 +30,7 @@ enum class Command : uint32_t
     ServerPrintText,
     ServerGetUserInfo,
     ServerUserAccepted,
+    ServerUserDeclined,
 
     // client commands
     ClientShowText,
@@ -103,6 +104,9 @@ struct Header
 
             case Command::ServerUserAccepted:
                 return "ServerUserAccepted";
+
+            case Command::ServerUserDeclined:
+                return "ServerUserDeclined";
 
             // Client commands
             case Command::ClientUpdateGraph:

@@ -37,11 +37,15 @@ public:
     bool connectToServer(const QString& ip, const QString& port);
     bool checkServerConnected() const;
 
+    void setUserName(const QString userName);
+    void setPassword(const QString password);
+
 public slots:
     void onReadyRead();
     void onDisconected();
 
 signals:
+    void sigUserAccepted(bool isAccepted);
     void sigShowText(const QString& str);
     void sigShowImage(const QImage& img);
     void sigUpdateGraph(const QJsonDocument& json);
@@ -49,6 +53,8 @@ signals:
 private:
     bool sendToServer(const QByteArray& data);
 
+    QString username_;
+    QString password_;
     common::resource::Header header_;
     QTcpSocket* socket_ = nullptr;
     common::utils::TerminalWidget* terminalWidget_ = nullptr;
