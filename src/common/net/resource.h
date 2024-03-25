@@ -31,6 +31,7 @@ enum class Command : uint32_t
     ServerGetUserInfo,
     ServerUserAccepted,
     ServerUserDeclined,
+    ServerUserAlreadyConnected,
 
     // client commands
     ClientShowText,
@@ -107,6 +108,9 @@ struct Header
 
             case Command::ServerUserDeclined:
                 return "ServerUserDeclined";
+
+            case Command::ServerUserAlreadyConnected:
+                return "ServerUserAlreadyConnected";
 
             // Client commands
             case Command::ClientUpdateGraph:

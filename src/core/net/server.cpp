@@ -26,6 +26,15 @@ Server::~Server()
 
 void Server::addClient(common::user::UserInfo userInfo)
 {
+    for (const auto& [client, socket] : clientMap_.asKeyValueRange())
+    {
+        if (client.name == userInfo.name)
+        {
+            sendCommand(common::resource::Command::ServerUserAlreadyConnected, currentSocket_);
+            return;
+        }
+    }
+
     QTcpSocket* socket = clientMap_.value(common::user::UserInfo { currentSocket_ });
     clientMap_.remove(common::user::UserInfo { currentSocket_ });
 
@@ -398,7 +407,10 @@ void Server::handleJson(const QByteArray& data)
             QJsonDocument json = QJsonDocument::fromJson(data);
             common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
 
-            if (userInfo.name == "root" && userInfo.password == "root")
+            if (userInfo.name == "artyom" && userInfo.password == "al1234"
+                   || userInfo.name == "agit" && userInfo.password == "aa1234"
+                   || userInfo.name == "davit" && userInfo.password == "dh1234"
+                   || userInfo.name == "root" && userInfo.password == "root")
             {
                 addClient(userInfo);
                 sendCommand(common::resource::Command::ServerUserAccepted, currentSocket_);

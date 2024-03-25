@@ -73,7 +73,7 @@ private:
     NodeSetType  nodes_;
     NodeListType cachedNodes_;
 
-    const bool isDirected_;
+    const bool isDirected_ = false;
 };
 
 } // end namespace dcis::common::graph

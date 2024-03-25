@@ -109,7 +109,7 @@ void MainWindow::onUpload()
     QImageReader imgReader(filePath);
     if (imgReader.canRead())
     {
-        graph::Graph* graph = new graph::Graph(true);
+        graph::Graph* graph = new graph::Graph(false);
         graphView_->updateGraph(graph);
 
         QImage img = imgReader.read();
@@ -247,16 +247,13 @@ void MainWindow::onConnectBtnClicked()
         return;
     }
 
-    if (client_->connectToServer(ipLineEdit_->text(), portLineEdit_->text()))
-    {
-        client_->setUserName(username_->text());
-        client_->setPassword(password_->text());
-    }
-    else
+    client_->setUserName(username_->text());
+    client_->setPassword(password_->text());
+
+    if (!client_->connectToServer(ipLineEdit_->text(), portLineEdit_->text()))
     {
         QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
     }
-
 
     //setWorkspaceEnabled(true);
 }
@@ -475,6 +472,18 @@ void MainWindow::createEntryWidget()
     // Connections
     connect(connectButton_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
 
+    connect(client_, &client::Client::sigUserAccepted, this, [this](bool isAccepted) {
+
+        if (isAccepted)
+        {
+            setWorkspaceEnabled(true);
+        }
+        else
+        {
+            QMessageBox::warning(this, tr("Connection issue"), tr("Incorrect username or password or User already connected."));
+        }
+    });
+
     // Layouts
     QVBoxLayout* mainLayout = new QVBoxLayout(entryWidget_);
     mainLayout->addWidget(textLabel);
@@ -511,19 +520,7 @@ void MainWindow::createWorkingWiget()
 
         terminalWidget_->appendText("*************** Showing image ***************\n");
         graphView_->setImage(img);
-    });
-
-    connect(client_, &client::Client::sigUserAccepted, this, [this](bool isAccepted) {
-
-        if (isAccepted)
-        {
-            setWorkspaceEnabled(true);
-        }
-        else
-        {
-            QMessageBox::warning(this, tr("Connection issue"), tr("Incorrect username or password."));
-        }
-    });
+    }); 
 
     // Layouts
     centralWidget_->addWidget(workingWidget_);

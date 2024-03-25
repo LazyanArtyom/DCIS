@@ -180,8 +180,8 @@ void Client::handleText(const QByteArray& data)
     {
     case common::resource::Command::ServerPrintText:
     {
-            terminalWidget_->appendText(QString::fromUtf8(data));
-            break;
+        terminalWidget_->appendText(QString::fromUtf8(data));
+        break;
     }
     default:
             return;
@@ -209,12 +209,12 @@ void Client::handleCommand(const common::resource::Command cmd)
     {
     case common::resource::Command::ServerGetUserInfo:
     {
-            common::user::UserInfo userInfo;
-            userInfo.name = username_;
-            userInfo.password = password_;
+        common::user::UserInfo userInfo;
+        userInfo.name = username_;
+        userInfo.password = password_;
 
-            sendJson(common::user::UserInfo::toJson(userInfo), common::resource::Command::ClientSetUserInfo);
-            break;
+        sendJson(common::user::UserInfo::toJson(userInfo), common::resource::Command::ClientSetUserInfo);
+        break;
     }
     case common::resource::Command::ServerUserAccepted:
     {
@@ -222,10 +222,17 @@ void Client::handleCommand(const common::resource::Command cmd)
         terminalWidget_->appendText(msg);
 
         emit sigUserAccepted(true);
+        break;
     }
     case common::resource::Command::ServerUserDeclined:
     {
         emit sigUserAccepted(false);
+        break;
+    }
+    case common::resource::Command::ServerUserAlreadyConnected:
+    {
+        emit sigUserAccepted(false);
+        break;
     }
     default:
             return;
