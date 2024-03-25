@@ -163,7 +163,7 @@ void Client::handleAttachment(const QByteArray& data)
 {
     switch (header_.command)
     {
-        case common::resource::Command::ClientShowImage:
+        case common::resource::Command::ServerShowImage:
         {
             QImage img = QImage::fromData(data);
             emit sigShowImage(img);

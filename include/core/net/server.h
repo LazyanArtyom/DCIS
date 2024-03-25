@@ -66,7 +66,6 @@ private:
     size_t imgW_ = 0;
     size_t imgH_ = 0;
 
-    int masterSocket_ = -1;
     QString CURRENT_IMAGE_PATH;
     const QString WORKING_DIRECTORY_PATH = "";
     const QString UPLOADED_IMAGES_PATH = "/uploadedImages";

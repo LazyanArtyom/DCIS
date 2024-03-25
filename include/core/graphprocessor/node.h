@@ -25,7 +25,7 @@ public:
     void addNeighbour(Node* node);
     Node* getNeighbourById(size_t id);
     Node* getCurrNeighbour();
-    int getCurrNeighbourId();
+    int   getCurrNeighbourId();
     void  incrCurrNeighbourId();
     void  setCurrNeighbourId(size_t id);
     NodeVectorType& getNeighbours();

@@ -27,6 +27,8 @@ enum class Command : uint32_t
 {
     // server commands
     ServerPublish = 0,
+    ServerShowText,
+    ServerShowImage,
     ServerPrintText,
     ServerGetUserInfo,
     ServerUserAccepted,
@@ -34,8 +36,6 @@ enum class Command : uint32_t
     ServerUserAlreadyConnected,
 
     // client commands
-    ClientShowText,
-    ClientShowImage,
     ClientClearCycles,
     ClientStartExploration,
     ClientStartAttack,
@@ -97,6 +97,12 @@ struct Header
             case Command::ServerPublish:
                 return "ServerPublish";
 
+            case Command::ServerShowImage:
+                return "ServerShowImage";
+
+            case Command::ServerShowText:
+                return "ServerShowText";
+
             case Command::ServerPrintText:
                 return "ServerPrintText";
 
@@ -116,9 +122,6 @@ struct Header
             case Command::ClientUpdateGraph:
                 return "ClientUpdateGraph";
 
-            case Command::ClientShowImage:
-                return "ClientShowImage";
-
             case Command::ClientClearCycles:
                 return "ClientClearCycles";
 
@@ -130,9 +133,6 @@ struct Header
 
             case Command::ClientStartAttack:
                 return "ClientStartAttack";
-
-            case Command::ClientShowText:
-                return "ClientShowText";
 
             case Command::ClientSetUserInfo:
                 return "ClientSetUserInfo";
