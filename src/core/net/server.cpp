@@ -365,41 +365,44 @@ void Server::handleText(const QByteArray& data)
 }
 
 void Server::handleJson(const QByteArray& data)
-{
-    terminalWidget_->appendText("Recived Json\n");
-
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-    if(commGraph_)
-    {
-        delete commGraph_;
-    }
-    commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
-
-    terminalWidget_->appendText("TOP_LEFT: " + commGraph_->getLeftTop() + "\n");
-    terminalWidget_->appendText("BOTTOM_RIGHT: " + commGraph_->getRightBottom() + "\n");
-
+{ 
     switch (header_.command)
     {
         case common::resource::Command::ServerPublish:
         {
-            terminalWidget_->appendText("Sending JSON to clients\n");
+            terminalWidget_->appendText("Recived Json\n");
 
-            common::resource::Header header;
-            header.resourceType = common::resource::ResourceType::Json;
-            header.command = common::resource::Command::ClientUpdateGraph;
+            QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
+            if(commGraph_)
+            {
+                delete commGraph_;
+            }
+            commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
 
-            QByteArray headerData;
-            QDataStream ds(&headerData, QIODevice::ReadWrite);
-            ds << header;
+            terminalWidget_->appendText("TOP_LEFT: " + commGraph_->getLeftTop() + "\n");
+            terminalWidget_->appendText("BOTTOM_RIGHT: " + commGraph_->getRightBottom() + "\n");
 
-            // header size 128 bytes
-            headerData.resize(common::resource::Header::HEADER_SIZE);
+            if (clientMap_.count() > 1)
+            {
+                terminalWidget_->appendText("Sending JSON to clients\n");
 
-            QByteArray resource = data;
-            header.bodySize = data.size();
+                common::resource::Header header;
+                header.resourceType = common::resource::ResourceType::Json;
+                header.command = common::resource::Command::ClientUpdateGraph;
 
-            resource.prepend(headerData);
-            publishAll(resource, QSet<qintptr>{ currentSocket_ });
+                QByteArray headerData;
+                QDataStream ds(&headerData, QIODevice::ReadWrite);
+                ds << header;
+
+                // header size 128 bytes
+                headerData.resize(common::resource::Header::HEADER_SIZE);
+
+                QByteArray resource = data;
+                header.bodySize = data.size();
+
+                resource.prepend(headerData);
+                publishAll(resource, QSet<qintptr>{ currentSocket_ });
+            }
             break;
         }
         case common::resource::Command::ClientSetUserInfo:
@@ -418,7 +421,15 @@ void Server::handleJson(const QByteArray& data)
                 // sync new user
                 if (clientMap_.count() > 1)
                 {
-                    syncSockets();
+                    sendAttachment(CURRENT_IMAGE_PATH, common::resource::Command::ServerShowImage, currentSocket_);
+
+                    if (commGraph_ == nullptr)
+                    {
+                        return;
+                    }
+
+                    QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
+                    sendJson(json, common::resource::Command::ClientUpdateGraph, currentSocket_);
                 }
             }
             else
@@ -488,100 +499,7 @@ void Server::handleCommand(const common::resource::Command cmd)
 
 void Server::syncSockets()
 {
-    // TODO need optimization and bug prone
-    QTcpSocket* socket = clientMap_.value(common::user::UserInfo { currentSocket_ });
 
-    // Send image
-    {
-        QFile file(CURRENT_IMAGE_PATH);
-        if (file.open(QIODevice::ReadOnly))
-        {
-            terminalWidget_->appendText("Sending Image to clients\n");
-            common::resource::Header header;
-            header.resourceType = common::resource::ResourceType::Attachment;
-            header.command = common::resource::Command::ServerShowImage;
-            header.fileName = header_.fileName;
-
-            QByteArray headerData;
-            QDataStream ds(&headerData, QIODevice::ReadWrite);
-            ds << header;
-
-            // header size 128 bytes
-            headerData.resize(common::resource::Header::HEADER_SIZE);
-
-            QByteArray resource = file.readAll();
-            header.bodySize = resource.size();
-
-            resource.prepend(headerData);
-
-            QDataStream socketStream(socket);
-            socketStream.setVersion(common::resource::DATASTREAM_VERSION);
-
-            socketStream << resource;
-
-            QThread::msleep(200);
-            if(socket->state() == QAbstractSocket::ConnectedState)
-            {
-                if (socket->waitForBytesWritten())
-                {
-                    terminalWidget_->appendText("Succsesfully sent to server" + QString::number(resource.size()) + " bytes\n");
-                }
-                else
-                {
-                    terminalWidget_->appendText("Error to send to server\n");
-                    return;
-                }
-            }
-        }
-
-    }
-    // Sent Graph
-    {
-        if (commGraph_ == nullptr)
-        {
-            return;
-        }
-
-        QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
-        QByteArray data = json.toJson();
-
-        terminalWidget_->appendText("Sending JSON to clients\n");
-
-        common::resource::Header header;
-        header.resourceType = common::resource::ResourceType::Json;
-        header.command = common::resource::Command::ClientUpdateGraph;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(common::resource::Header::HEADER_SIZE);
-
-        QByteArray resource = data;
-        header.bodySize = data.size();
-
-        resource.prepend(headerData);
-
-        QDataStream socketStream(socket);
-        socketStream.setVersion(common::resource::DATASTREAM_VERSION);
-
-        socketStream << resource;
-
-        QThread::msleep(500);
-        if(socket->state() == QAbstractSocket::ConnectedState)
-        {
-            if (socket->waitForBytesWritten())
-            {
-                terminalWidget_->appendText("Succsesfully sent to server" + QString::number(resource.size()) + " bytes\n");
-            }
-            else
-            {
-                terminalWidget_->appendText("Error to send to server\n");
-                return;
-            }
-        }
-    }
 }
 
 void Server::updateSockets()
