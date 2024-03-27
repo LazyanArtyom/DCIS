@@ -66,7 +66,10 @@ void MainWindow::setWorkspaceEnabled(bool enable)
 {
     if (enable)
     {
-        toolBar_->show();
+        if (username_->text() == "root" && password_->text() == "root")
+        {
+            toolBar_->show();
+        }
         //dockWidget_->show();
         centralWidget_->setCurrentWidget(workingWidget_);
     }
@@ -254,8 +257,6 @@ void MainWindow::onConnectBtnClicked()
     {
         QMessageBox::warning(this, tr("Connection issue"), tr("Can't connect to the server."));
     }
-
-    //setWorkspaceEnabled(true);
 }
 
 void MainWindow::onGraphChanged()
@@ -439,6 +440,7 @@ void MainWindow::createEntryWidget()
     password_->setStyleSheet("font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
     password_->setPlaceholderText("password");
     password_->setText("root");
+    password_->setEchoMode(QLineEdit::Password);
 
     ipLineEdit_ = new QLineEdit(entryWidget_);
     ipLineEdit_->setMaximumWidth(500);
@@ -470,6 +472,10 @@ void MainWindow::createEntryWidget()
     backgroundLabel_->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     // Connections
+    connect(username_, &QLineEdit::returnPressed, connectButton_, &QPushButton::click);
+    connect(password_, &QLineEdit::returnPressed, connectButton_, &QPushButton::click);
+    connect(ipLineEdit_, &QLineEdit::returnPressed, connectButton_, &QPushButton::click);
+    connect(portLineEdit_, &QLineEdit::returnPressed, connectButton_, &QPushButton::click);
     connect(connectButton_, &QPushButton::clicked, this, &MainWindow::onConnectBtnClicked);
 
     connect(client_, &client::Client::sigUserAccepted, this, [this](bool isAccepted) {

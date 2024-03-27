@@ -37,8 +37,11 @@ public:
     bool connectToServer(const QString& ip, const QString& port);
     bool checkServerConnected() const;
 
+    QString getUserName() const;
+    QString getPassword() const;
     void setUserName(const QString userName);
     void setPassword(const QString password);
+
 
 public slots:
     void onReadyRead();

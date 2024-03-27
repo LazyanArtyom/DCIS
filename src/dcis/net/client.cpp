@@ -316,6 +316,16 @@ bool Client::checkServerConnected() const
     return socket_->state() == QAbstractSocket::ConnectedState ? true : false;
 }
 
+QString Client::getUserName() const
+{
+    return username_;
+}
+
+QString Client::getPassword() const
+{
+    return password_;
+}
+
 void Client::setUserName(const QString userName)
 {
     username_ = userName;
