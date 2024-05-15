@@ -61,6 +61,8 @@ bool Server::run(const int port)
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
+    terminalWidget_->appendText("Connectionnnnn \n");
+
     currentSocket_ = socketDescriptor;
 
     QTcpSocket* socket = new QTcpSocket();
@@ -93,7 +95,7 @@ bool Server::publish(const QByteArray& data, qintptr socketDesc)
     {
         if (socket->waitForBytesWritten())
         {
-            terminalWidget_->appendText("Succsesfully sent to server" + QString::number(data.size()) + " bytes\n");
+            terminalWidget_->appendText("Succsesfully sent to client" + QString::number(data.size()) + " bytes\n");
         }
         else
         {
@@ -110,7 +112,7 @@ bool Server::publishAll(const QByteArray& data, QSet<qintptr> excludeSockets)
 {
     for (const auto& [client, socket] : clientMap_.asKeyValueRange())
     {
-        if (!excludeSockets.contains(client.socketDescriptor))
+        if (!excludeSockets.contains(client.socketDescriptor) && !client.isStream)
         {
             publish(data, client.socketDescriptor);
         }
@@ -211,6 +213,7 @@ void Server::sendCommand(const common::resource::Command cmd, qintptr socketDesc
 // slots
 void Server::onReadyRead()
 {
+    terminalWidget_->appendText("ON READY READ\n");
     QByteArray buffer;
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
 
@@ -236,6 +239,28 @@ void Server::onReadyRead()
         /*terminalWidget_->appendText("Reading from client: " +
                                               QString::number(socket->socketDescriptor()) +
                                               "  Bytes recived: " + QString::number(socket->bytesAvailable()) + " bytes\n");*/
+    }
+
+    if (socket->bytesAvailable() == 65 && socket->readAll().contains("Stream"))
+    {
+        terminalWidget_->appendText("New stream connection\n");
+
+        for (const auto& [client, socket] : clientMap_.asKeyValueRange())
+        {
+            if (socket->socketDescriptor() == currentSocket_)
+            {
+                terminalWidget_->appendText("Adding to user Map\n");
+                QTcpSocket* socket = clientMap_.value(common::user::UserInfo { currentSocket_ });
+                clientMap_.remove(common::user::UserInfo { currentSocket_ });
+
+                common::user::UserInfo userInfo;
+                userInfo.socketDescriptor = currentSocket_;
+                userInfo.isStream = true;
+                clientMap_[userInfo] = socket;
+                break;
+            }
+        }
+        return;
     }
 }
 
@@ -340,6 +365,22 @@ void Server::handleAttachment(const QByteArray& data)
 
             resource.prepend(headerData);
             publishAll(resource, QSet<qintptr>{ currentSocket_ });
+
+            for (const auto& [client, socket] : clientMap_.asKeyValueRange())
+            {
+                if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
+                {
+                    QThread::msleep(100);
+                    QJsonObject jsonObj;
+                    jsonObj["imagePath"] = CURRENT_IMAGE_PATH;
+                    jsonObj["width"] = QString::number(imgW_);
+                    jsonObj["height"] = QString::number(imgH_);
+                    QJsonDocument jsonDoc(jsonObj);
+
+                    socket->write(jsonDoc.toJson());
+                    socket->flush();
+                }
+            }
             break;
         }
         default:
@@ -402,6 +443,16 @@ void Server::handleJson(const QByteArray& data)
 
                 resource.prepend(headerData);
                 publishAll(resource, QSet<qintptr>{ currentSocket_ });
+
+                for (const auto& [client, socket] : clientMap_.asKeyValueRange())
+                {
+                    if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
+                    {
+                        QThread::msleep(100);
+                        socket->write(data);
+                        socket->flush();
+                    }
+                }
             }
             break;
         }

@@ -8,6 +8,7 @@
 // QT includes
 #include <QFile>
 #include <QDebug>
+#include <QThread>
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -286,6 +287,7 @@ bool Client::sendToServer(const QByteArray& data)
 
     if(socket_->state() == QAbstractSocket::ConnectedState)
     {
+        QThread::msleep(100);
         if(socket_->waitForBytesWritten())
         {
             terminalWidget_->appendText("Data sent successfully.\n");

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Document</title> 
+    <style> 
+        body { 
+            background: rgb(199, 199, 199); 
+            position: absolute; 
+            padding: 0; 
+            margin: 0; 
+        } 
+ 
+        #backgroundMap { 
+            position: absolute; 
+        } 
+ 
+        .node-circle { 
+            position: absolute; 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            background-color: rgb(27, 240, 66); 
+        } 
+        svg{
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style> 
+
+  
+</head>
+<body>
+    <div id="backgroundMap"> 
+    </div> 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script>
+        
+        var socket = io();
+        var width = null;
+        var height = null;
+        const bgElement = document.getElementById('backgroundMap');
+
+        socket.on('image_update', function(data) {
+            console.log(JSON.stringify(data));
+            console.log("********* UPDATING IMAGE ***********");
+
+            width = data.width; 
+            height = data.height; 
+
+            const body = document.body; 
+            let img = new Image();
+            img.src = '/image?time='+new Date().getTime();
+            img.onload = function() {
+                console.log(width, height, 'wwww ghhhehe');
+
+                if (width > window.screen.width) { 
+                    const scale = (window.screen.width / width) - 0.006; 
+                    body.style.transform = `scale(${scale})`; 
+                    bgElement.style.left = 0; 
+                } 
+ 
+                if (width < window.screen.width) { 
+                    const leftPosition = (window.screen.width - width) / 2; 
+                    bgElement.style.left = leftPosition + 'px'; 
+                } 
+
+                bgElement.style.backgroundImage = `url(${img.src})`;
+                bgElement.style.backgroundSize = width + 'px ' + height + 'px'; 
+                bgElement.style.width = width + 'px'; 
+                bgElement.style.height = height + 'px'; 
+            };
+        });
+
+        socket.on('graph_update', function(json) {
+            const circleSize = 10; 
+            const originalImageWidth = width;    
+            const originalImageHeight = height; 
+ 
+            const scaleFactorX = width / originalImageWidth; 
+            const scaleFactorY = height / originalImageHeight; 
+            bgElement.innerHTML = '';
+            json.nodes.forEach(function (node) { 
+                const scaledX = node.x * scaleFactorX - circleSize / 2; 
+                const scaledY = node.y * scaleFactorY - circleSize / 2; 
+ 
+                const circle = document.createElement('div'); 
+                circle.className = 'node-circle'; 
+                circle.style.left = scaledX + 'px'; 
+                circle.style.top = scaledY + 'px'; 
+ 
+                bgElement.appendChild(circle); 
+            }); 
+
+            const svgContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); 
+            svgContainer.setAttribute('width', width); 
+            svgContainer.setAttribute('height', height); 
+            bgElement.appendChild(svgContainer); 
+            console.log(svgContainer, 'svgContainer');
+            json.edges.forEach(function (edge) { 
+                const startNode = json.nodes.find(node => node.name === edge.start); 
+                const endNode = json.nodes.find(node => node.name === edge.end); 
+ 
+                    if (startNode && endNode) { 
+                        const startX = startNode.x * scaleFactorX; 
+                        const startY = startNode.y * scaleFactorY; 
+                        const endX = endNode.x * scaleFactorX; 
+                        const endY = endNode.y * scaleFactorY; 
+ 
+                        const angle = Math.atan2(endY - startY, endX - startX); 
+ 
+                        const radius = circleSize / 2; 
+                        const circleCenterX = endX - Math.cos(angle) * radius; 
+                        const circleCenterY = endY - Math.sin(angle) * radius; 
+ 
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); 
+                        line.setAttribute('x1', startX); 
+                        line.setAttribute('y1', startY); 
+                        line.setAttribute('x2', circleCenterX); 
+                        line.setAttribute('y2', circleCenterY); 
+                        line.setAttribute('stroke', 'red'); 
+                        line.setAttribute('stroke-width', '2'); 
+ 
+                        if (json.directed) { 
+                            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker'); 
+                            marker.setAttribute('id', 'arrow'); 
+                            marker.setAttribute('markerWidth', '5'); 
+                            marker.setAttribute('markerHeight', '5'); 
+                            marker.setAttribute('refX', '5'); 
+                            marker.setAttribute('refY', '2.5'); 
+                            marker.setAttribute('orient', 'auto'); 
+                            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); 
+                            path.setAttribute('d', 'M0,0 L0,5 L5,2.5 z'); 
+                            path.setAttribute('fill', 'red'); 
+                            marker.appendChild(path); 
+                            svgContainer.appendChild(marker); 
+                            line.setAttribute('marker-end', 'url(#arrow)'); 
+                        } 
+                        svgContainer.appendChild(line); 
+                    } 
+                }); 
+        });
+    </script>
+</body>
+</html>

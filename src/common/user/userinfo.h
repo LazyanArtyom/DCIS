@@ -17,6 +17,7 @@ struct UserInfo
 {
     QString name;
     QString password;
+    bool isStream = false;
     qintptr socketDescriptor;
 
     explicit UserInfo(const qintptr desc = -1, const QString nm = "", const QString passwd = "")

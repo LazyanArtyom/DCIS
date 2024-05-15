@@ -6,6 +6,7 @@
 
 // Qt includes
 #include <QVariant>
+#include <QIODevice>
 #include <QDataStream>
 
 
@@ -148,6 +149,26 @@ struct Header
     ResourceType resourceType;
     static const int HEADER_SIZE = 128;
 };
+
+static QByteArray create(Command cmd, ResourceType type, QByteArray body = QByteArray(), const QString fileName = "")
+{
+    Header header;
+    header.resourceType = type;
+    header.command = cmd;
+    header.fileName = fileName;
+
+    QByteArray headerData;
+    QDataStream ds(&headerData, QIODevice::ReadWrite);
+    ds << header;
+
+    // header size 128 bytes
+    headerData.resize(common::resource::Header::HEADER_SIZE);
+    QByteArray resource = body;
+    header.bodySize = resource.size();
+    resource.prepend(headerData);
+
+    return resource;
+}
 
 } // end namespace dcis::common::resource
 #endif // DCIS_COMMON_RESOURCE_RESOURCE_H_
