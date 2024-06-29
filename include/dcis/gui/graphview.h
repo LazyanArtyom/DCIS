@@ -5,27 +5,27 @@
 #include <gui/graphscene.h>
 
 // Qt includes
-#include <QMenu>
-#include <QGraphicsView>
 #include <QContextMenuEvent>
+#include <QGraphicsView>
+#include <QMenu>
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 
 class GraphView : public QGraphicsView
 {
     Q_OBJECT
-public:
+  public:
     struct ImageInfo
     {
-        QSizeF  imageSize;
-        QSizeF  viewportSize;
-        QSizeF  sceneRectSize;
+        QSizeF imageSize;
+        QSizeF viewportSize;
+        QSizeF sceneRectSize;
     };
 
-    GraphView(QWidget* parent = nullptr);
+    GraphView(QWidget *parent = nullptr);
 
-    void setScene(GraphScene* scene);
+    void setScene(GraphScene *scene);
     void setSceneSize(int width, int height);
 
     void generateGraph(int row, int col);
@@ -35,24 +35,24 @@ public:
     void viewFit();
     void scaleView(qreal scaleFactor);
 
-    graph::Graph* getGraph() const;
-    void updateGraph(graph::Graph* graph);
+    graph::Graph *getGraph() const;
+    void updateGraph(graph::Graph *graph);
 
     ImageInfo getImageInfo();
-    void setImage(const QImage& img);
+    void setImage(const QImage &img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
-public slots:
+  public slots:
     void onRedraw();
 
-protected:
-    void wheelEvent(QWheelEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
-    void contextMenuEvent(QContextMenuEvent* event) override;
+  protected:
+    void wheelEvent(QWheelEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
-signals:
+  signals:
     void sigGraphChanged();
 
     void sigNodeEdited(std::string name);
@@ -74,13 +74,13 @@ signals:
 
     void sigUnSelected();
 
-private:
+  private:
     bool isMoving_ = false;
     bool isSelectTargetNode_ = false;
 
-    QMenu* contextMenu_;
-    GraphScene* gscene_;
-    NodeItem* startItem_;
+    QMenu *contextMenu_;
+    GraphScene *gscene_;
+    NodeItem *startItem_;
 
     qreal currentScale_ = 1.;
     const qreal scaleMax_ = 1.5;
@@ -89,8 +89,8 @@ private:
     bool isLandscape_ = false;
     QPixmap backgroundImage_;
 
-    graph::Graph* graph_;
-    gui::GraphScene* graphScene_;
+    graph::Graph *graph_;
+    gui::GraphScene *graphScene_;
     ImageInfo imageInfo_;
 };
 

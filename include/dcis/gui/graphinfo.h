@@ -5,13 +5,13 @@
 #include <QLabel>
 #include <QLineEdit>
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 
 class GraphInfo : public QWidget
 {
-public:
-    GraphInfo(QWidget* parent = nullptr);
+  public:
+    GraphInfo(QWidget *parent = nullptr);
 
     void setNodeCount(int count);
     void setEdgeCount(int count);
@@ -20,13 +20,13 @@ public:
     void setNodePos(const QPointF pos);
     void setNodeName(const QString nodeName);
 
-private:
-    QLineEdit* txtDirected_;
-    QLineEdit* txtEdgeCount_;
+  private:
+    QLineEdit *txtDirected_;
+    QLineEdit *txtEdgeCount_;
 
-    QLineEdit* txtNodePos_;
-    QLineEdit* txtNodeName_;
-    QLineEdit* txtNodeCount_;
+    QLineEdit *txtNodePos_;
+    QLineEdit *txtNodeName_;
+    QLineEdit *txtNodeCount_;
 };
 
 } // end namespace dcis::gui

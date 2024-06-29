@@ -4,14 +4,15 @@
 #include <gui/graphscene.h>
 
 // QT includes
-#include <QPen>
-#include <QList>
 #include <QCursor>
+#include <QList>
 #include <QPainter>
+#include <QPen>
 
-namespace dcis::gui {
+namespace dcis::gui
+{
 
-EdgeItem::EdgeItem(GraphScene* scene, NodeItem* startItem, NodeItem* endItem, QGraphicsItem* parent)
+EdgeItem::EdgeItem(GraphScene *scene, NodeItem *startItem, NodeItem *endItem, QGraphicsItem *parent)
     : QGraphicsLineItem(parent), endItem_(endItem), gscene_(scene), startItem_(startItem)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -45,12 +46,11 @@ QPainterPath EdgeItem::shape() const
 
 QRectF EdgeItem::boundingRect() const
 {
-    qreal extra = ( pen().width() + 30 ) / 2.0;
+    qreal extra = (pen().width() + 30) / 2.0;
 
-    return QRectF( line().p1(), QSizeF(line().p2().x() - line().p1().x(),
-                                       line().p2().y() - line().p1().y()) )
-            .normalized()
-            .adjusted(-extra, -extra, extra, extra);
+    return QRectF(line().p1(), QSizeF(line().p2().x() - line().p1().x(), line().p2().y() - line().p1().y()))
+        .normalized()
+        .adjusted(-extra, -extra, extra, extra);
 }
 
 graph::Edge EdgeItem::getEdge() const
@@ -63,13 +63,13 @@ bool EdgeItem::isInversionAvailable() const
     return gscene_->getGraph()->hasEdge(getEdge().v(), getEdge().u());
 }
 
-void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
     QGraphicsItem::hoverEnterEvent(event);
     setCursor(Qt::PointingHandCursor);
 }
 
-void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+void EdgeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
@@ -80,7 +80,7 @@ void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 
     QColor color;
     painter->setTransform(transform(), true);
-    //updatePosition();
+    // updatePosition();
     if (isSelected())
     {
         color = getDefaultSelectedColor();
@@ -110,9 +110,7 @@ void EdgeItem::onUpdatePosition()
     qreal tx1 = 1 - (endItem_->getRadius() / 2.) / length_x;
     qreal ty1 = 1 - (endItem_->getRadius() / 2.) / length_y;
 
-    QPointF centerPos = QPoint(
-            static_cast<int>((p + r) / 2),
-            static_cast<int>((q + s) / 2));
+    QPointF centerPos = QPoint(static_cast<int>((p + r) / 2), static_cast<int>((q + s) / 2));
 
     QLineF centerLine(mapFromItem(startItem_, 0, 0), mapFromItem(endItem_, 0, 0));
     setLine(centerLine);
@@ -124,9 +122,7 @@ void EdgeItem::onUpdatePosition()
 
     if (std::abs(angle * 180 / M_PI) >= 45 && std::abs(angle * 180 / M_PI) <= 135)
     {
-        arrowHeadPoint = QPointF(
-                (1 - ty1) * p + ty1 * r,
-                (1 - ty1) * q + ty1 * s);
+        arrowHeadPoint = QPointF((1 - ty1) * p + ty1 * r, (1 - ty1) * q + ty1 * s);
     }
 
     if (gscene_->getGraph()->isDirected() && isInversionAvailable())
@@ -155,8 +151,8 @@ void EdgeItem::onUpdatePosition()
 
     if (gscene_->getGraph()->isDirected())
     {
-        QPointF arrowP1 = arrowHeadPoint + QPointF(sin(angle + M_PI / 3) * arrowHeadSize,
-                                                   cos(angle + M_PI / 3) * arrowHeadSize);
+        QPointF arrowP1 =
+            arrowHeadPoint + QPointF(sin(angle + M_PI / 3) * arrowHeadSize, cos(angle + M_PI / 3) * arrowHeadSize);
         QPointF arrowP2 = arrowHeadPoint + QPointF(sin(angle + M_PI - M_PI / 3) * arrowHeadSize,
                                                    cos(angle + M_PI - M_PI / 3) * arrowHeadSize);
 

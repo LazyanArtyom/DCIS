@@ -12,23 +12,23 @@
 #include <QMainWindow>
 #include <QTabWidget>
 
-
-namespace dcis::server {
+namespace dcis::server
+{
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-public:
-    MainWindow(QWidget* parent = nullptr);
+  public:
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private:
-    Server*     server_;
-    QTabWidget* centralTabWidget_;
-    common::utils::TerminalWidget* terminalWidget_;
+  private:
+    Server *server_;
+    QTabWidget *centralTabWidget_;
+    common::utils::TerminalWidget *terminalWidget_;
 
-    //std::unique_ptr<utils::DebugStream> debugStream_;
+    // std::unique_ptr<utils::DebugStream> debugStream_;
 };
 
 } // end namespace dcis::server

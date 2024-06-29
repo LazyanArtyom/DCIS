@@ -2,23 +2,20 @@
 
 // App includes
 #include <graph/graph.h>
-//#include <graphprocessor/graphprocessor.h>
+// #include <graphprocessor/graphprocessor.h>
 
 // Qt includes
 #include <QVBoxLayout>
 
 // STL includes
-#include <string>
-#include <vector>
-#include <iostream>
 
-namespace dcis::server {
+namespace dcis::server
+{
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     setObjectName("CoreUI");
-    //setWindowIcon(QIcon(":/Resources/icons/histogram.png"));
+    // setWindowIcon(QIcon(":/Resources/icons/histogram.png"));
     setWindowTitle(tr("DCIS Core"));
 
     QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -40,11 +37,11 @@ MainWindow::MainWindow(QWidget *parent)
     terminalWidget_ = new common::utils::TerminalWidget(this);
 
     // Layouts
-    QWidget* consoleWidget_ = new QWidget(centralTabWidget_);
+    QWidget *consoleWidget_ = new QWidget(centralTabWidget_);
     consoleWidget_->setObjectName("Console");
     centralTabWidget_->addTab(consoleWidget_, tr("Console"));
 
-    QHBoxLayout* horizontalLayoutEntry = new QHBoxLayout(consoleWidget_);
+    QHBoxLayout *horizontalLayoutEntry = new QHBoxLayout(consoleWidget_);
     consoleWidget_->setLayout(horizontalLayoutEntry);
     horizontalLayoutEntry->setSpacing(6);
     horizontalLayoutEntry->setContentsMargins(11, 11, 11, 11);
@@ -55,8 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
     server_ = new Server(terminalWidget_, this);
     server_->run(2323);
 
-//    GraphProcessor::GraphProcessor*  process = new GraphProcessor::GraphProcessor();
-//    process->sendFileToDrone("proxy55.rt3.io", 30375, QFile(""));
+    //    GraphProcessor::GraphProcessor*  process = new GraphProcessor::GraphProcessor();
+    //    process->sendFileToDrone("proxy55.rt3.io", 30375, QFile(""));
 }
 
 MainWindow::~MainWindow()

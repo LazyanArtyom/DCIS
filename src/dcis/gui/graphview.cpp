@@ -7,17 +7,16 @@
 #include <sstream>
 #include <string>
 
+namespace dcis::gui
+{
 
-namespace dcis::gui {
-
-GraphView::GraphView(QWidget* parent)
-    : QGraphicsView(parent)
+GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
 {
     setDragMode(ScrollHandDrag);
     setCacheMode(CacheBackground);
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform | QPainter::TextAntialiasing);
     setViewportUpdateMode(BoundingRectViewportUpdate);
-    //setViewportUpdateMode(FullViewportUpdate);
+    // setViewportUpdateMode(FullViewportUpdate);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // When zooming, the view stay centered over the mouse
@@ -26,9 +25,7 @@ GraphView::GraphView(QWidget* parent)
 
     setStyleSheet("background-color: rgba(0, 0, 0, 0);");
 
-
     setBackgroundBrush(Qt::transparent); // Set transparent background
-
 
     // graph view widget
     graph_ = new graph::Graph(false);
@@ -36,11 +33,10 @@ GraphView::GraphView(QWidget* parent)
     setScene(graphScene_);
 
     // connections
-    connect(this, &gui::GraphView::sigNodeSelected, this , [this](const std::string& nodeName, QPointF pos) {
-
-        //txtConsole_->setText(txt);
+    connect(this, &gui::GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
+        // txtConsole_->setText(txt);
     });
-    connect(this, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
+    connect(this, &gui::GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
             showNewNodeDialog(pos);
@@ -50,19 +46,19 @@ GraphView::GraphView(QWidget* parent)
         graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
         emit sigGraphChanged();
     });
-    connect(this, &gui::GraphView::sigNodeRemoved, this, [this](const std::string& nodeName) {
+    connect(this, &gui::GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
         if (graph_->removeNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigNodeIsolated, this, [this](const std::string& nodeName) {
+    connect(this, &gui::GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
         if (graph_->isolateNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string& uname, const std::string& vname) {
+    connect(this, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->removeEdge(uname, vname))
         {
             emit sigGraphChanged();
@@ -74,20 +70,20 @@ GraphView::GraphView(QWidget* parent)
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
+    connect(this, &gui::GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
 
         auto newName = QInputDialog::getText(this, tr("Rename node"), "Name: ", QLineEdit::Normal,
-                                              QString::fromStdString(graph_->getNextNodeName()), &ok);
+                                             QString::fromStdString(graph_->getNextNodeName()), &ok);
         if (ok)
         {
             static QRegularExpressionMatch match = re.match(newName);
             if (!match.hasMatch())
             {
                 QMessageBox::critical(this, tr("Error"),
-                                      tr("Node's name contains only alphabetical or numeric characters\n")
-                                      + tr("Length of the name mustn't be greater than 30 or smaller than 1"));
+                                      tr("Node's name contains only alphabetical or numeric characters\n") +
+                                          tr("Length of the name mustn't be greater than 30 or smaller than 1"));
                 return;
             }
             if (graph_->hasNode(newName.toStdString()))
@@ -101,41 +97,42 @@ GraphView::GraphView(QWidget* parent)
             }
         }
     });
-    connect(this, &gui::GraphView::sigSetNodeType, this, [this](const std::string &nodeName, const graph::Node::NodeType &type) {
-        if (graph_->getNode(nodeName))
-        {
-            graph_->getNode(nodeName)->setNodeType(type);
-            emit sigGraphChanged();
-        }
-    });
-    connect(this, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
-        if (graph_->getNode(nodeName))
-        {
-            graph_->getNode(nodeName)->setDrone(isDrone);
-            graph_->getNode(nodeName)->setIp(ip);
-            graph_->getNode(nodeName)->setPort(port);
-            emit sigGraphChanged();
-        }
-    });
+    connect(this, &gui::GraphView::sigSetNodeType, this,
+            [this](const std::string &nodeName, const graph::Node::NodeType &type) {
+                if (graph_->getNode(nodeName))
+                {
+                    graph_->getNode(nodeName)->setNodeType(type);
+                    emit sigGraphChanged();
+                }
+            });
+    connect(this, &gui::GraphView::sigSetDrone, this,
+            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+                if (graph_->getNode(nodeName))
+                {
+                    graph_->getNode(nodeName)->setDrone(isDrone);
+                    graph_->getNode(nodeName)->setIp(ip);
+                    graph_->getNode(nodeName)->setPort(port);
+                    emit sigGraphChanged();
+                }
+            });
 
-    connect(this, &gui::GraphView::sigSetAttacker, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
-        if (graph_->getNode(nodeName))
-        {
-            graph_->getNode(nodeName)->setAttacker(isDrone);
-            graph_->getNode(nodeName)->setIp(ip);
-            graph_->getNode(nodeName)->setPort(port);
-            emit sigGraphChanged();
-        }
-    });
+    connect(this, &gui::GraphView::sigSetAttacker, this,
+            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+                if (graph_->getNode(nodeName))
+                {
+                    graph_->getNode(nodeName)->setAttacker(isDrone);
+                    graph_->getNode(nodeName)->setIp(ip);
+                    graph_->getNode(nodeName)->setPort(port);
+                    emit sigGraphChanged();
+                }
+            });
 }
 
-void GraphView::setScene(GraphScene* scene)
+void GraphView::setScene(GraphScene *scene)
 {
     connect(scene, &GraphScene::sigGraphChanged, this, &GraphView::onRedraw);
     connect(scene, &GraphScene::sigNeedRedraw, this, &GraphView::onRedraw);
-    connect(scene, &GraphScene::sigItemMoved, this, [this] {
-        emit sigNodeMoved();
-    });
+    connect(scene, &GraphScene::sigItemMoved, this, [this] { emit sigNodeMoved(); });
 
     connect(this, &GraphView::sigGraphChanged, scene, &gui::GraphScene::onReload);
     QGraphicsView::setScene(scene);
@@ -188,7 +185,7 @@ void GraphView::generateGraph(int row, int col)
                 graph_->setEdge(edgeName1.str(), edgeName2.str());
             }
         }
-     }
+    }
 
     emit sigGraphChanged();
 }
@@ -216,7 +213,7 @@ void GraphView::viewFit()
 
 void GraphView::scaleView(qreal scaleFactor)
 {
-    if(sceneRect().isEmpty())
+    if (sceneRect().isEmpty())
         return;
 
     int imgLength;
@@ -255,12 +252,12 @@ void GraphView::scaleView(qreal scaleFactor)
     scale(scaleFactor, scaleFactor);
 }
 
-graph::Graph* GraphView::getGraph() const
+graph::Graph *GraphView::getGraph() const
 {
     return graph_;
 }
 
-void GraphView::updateGraph(graph::Graph* graph)
+void GraphView::updateGraph(graph::Graph *graph)
 {
     graph_ = graph;
     graphScene_->setGraph(graph);
@@ -274,18 +271,19 @@ GraphView::ImageInfo GraphView::getImageInfo()
     return imageInfo_;
 }
 
-void GraphView::setImage(const QImage& img)
+void GraphView::setImage(const QImage &img)
 {
     if (!scene()->sceneRect().isEmpty())
         scene()->clear();
 
     imageInfo_.imageSize = QSizeF(img.width(), img.height());
-    QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(img));
+    QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(img));
 
     scene()->addItem(pixmapItem);
 
     fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
-    pixmapItem->setPos(scene()->width() / 2 - pixmapItem->boundingRect().width() / 2, scene()->height() / 2 - pixmapItem->boundingRect().height() / 2);
+    pixmapItem->setPos(scene()->width() / 2 - pixmapItem->boundingRect().width() / 2,
+                       scene()->height() / 2 - pixmapItem->boundingRect().height() / 2);
 }
 
 void GraphView::showNewNodeDialog(QPointF pos)
@@ -300,9 +298,9 @@ void GraphView::showNewNodeDialog(QPointF pos)
         static QRegularExpressionMatch match = re.match(newNodeName);
         if (!match.hasMatch())
         {
-            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
-                                                 +
-                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
+            QMessageBox::critical(this, "Error",
+                                  tr("Node's name contains only alphabetical or numeric characters\n") +
+                                      tr("Length of the name mustn't be greater than 3 or smaller than 1"));
             return;
         }
 
@@ -324,7 +322,7 @@ void GraphView::onRedraw()
     viewport()->update();
 }
 
-void GraphView::wheelEvent(QWheelEvent* event)
+void GraphView::wheelEvent(QWheelEvent *event)
 {
     if (event->modifiers() == Qt::ControlModifier)
     {
@@ -349,32 +347,32 @@ void GraphView::resizeEvent(QResizeEvent *event)
     QGraphicsView::resizeEvent(event);
 }
 
-void GraphView::mousePressEvent(QMouseEvent* event)
+void GraphView::mousePressEvent(QMouseEvent *event)
 {
     // Get the mouse click position in view coordinates
-            QPoint viewPos = event->pos();
+    QPoint viewPos = event->pos();
 
-            // Get the corresponding scene coordinates
-            QPointF scenePos = mapToScene(viewPos);
+    // Get the corresponding scene coordinates
+    QPointF scenePos = mapToScene(viewPos);
 
-            // Get the x and y coordinates
-            qreal x = scenePos.x();
-            qreal y = scenePos.y();
+    // Get the x and y coordinates
+    qreal x = scenePos.x();
+    qreal y = scenePos.y();
 
-
-            if (scene()->sceneRect().contains(scenePos))
-            {
-                QString mymsg = "Clicked at x:" + QString::number(x) + "y:" + QString::number(y);
-                //utils::DebugStream::getInstance().log(utils::LogLevel::Info, mymsg);
-            }
-            else
-            {
-            }
+    if (scene()->sceneRect().contains(scenePos))
+    {
+        QString mymsg = "Clicked at x:" + QString::number(x) + "y:" + QString::number(y);
+        // utils::DebugStream::getInstance().log(utils::LogLevel::Info, mymsg);
+    }
+    else
+    {
+    }
 
     if (!scene()->selectedItems().isEmpty())
     {
-        QString msg3 = "Node selected X: " + QString::number(scene()->selectedItems()[0]->pos().x()) + " Y: " + QString::number(scene()->selectedItems()[0]->pos().y());
-        //utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
+        QString msg3 = "Node selected X: " + QString::number(scene()->selectedItems()[0]->pos().x()) +
+                       " Y: " + QString::number(scene()->selectedItems()[0]->pos().y());
+        // utils::DebugStream::getInstance().log(utils::LogLevel::Info, msg3);
     }
 
     if (!isSelectTargetNode_)
@@ -384,10 +382,10 @@ void GraphView::mousePressEvent(QMouseEvent* event)
 
     if (isSelectTargetNode_)
     {
-        QList<QGraphicsItem*> itemsTo = items(event->pos());
+        QList<QGraphicsItem *> itemsTo = items(event->pos());
         if (!itemsTo.empty())
         {
-            auto* castedItemTo = dynamic_cast<NodeItem*>(itemsTo[0]);
+            auto *castedItemTo = dynamic_cast<NodeItem *>(itemsTo[0]);
             if (startItem_ && castedItemTo && startItem_ != castedItemTo)
             {
                 castedItemTo->setSelected(false);
@@ -403,12 +401,12 @@ void GraphView::mousePressEvent(QMouseEvent* event)
     viewport()->update();
 }
 
-void GraphView::mouseReleaseEvent(QMouseEvent* event)
+void GraphView::mouseReleaseEvent(QMouseEvent *event)
 {
     if (!scene()->selectedItems().empty())
     {
-        auto nodeItem = dynamic_cast<NodeItem*>(scene()->selectedItems()[0]);
-        auto edgeItem = dynamic_cast<EdgeItem*>(scene()->selectedItems()[0]);
+        auto nodeItem = dynamic_cast<NodeItem *>(scene()->selectedItems()[0]);
+        auto edgeItem = dynamic_cast<EdgeItem *>(scene()->selectedItems()[0]);
 
         if (edgeItem)
         {
@@ -429,16 +427,16 @@ void GraphView::mouseReleaseEvent(QMouseEvent* event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void GraphView::contextMenuEvent(QContextMenuEvent* event)
+void GraphView::contextMenuEvent(QContextMenuEvent *event)
 {
     for (auto item : scene()->selectedItems())
     {
         item->setSelected(false);
     }
 
-    QList<QGraphicsItem*> clickedItems = items(event->pos());
+    QList<QGraphicsItem *> clickedItems = items(event->pos());
 
-    if (clickedItems.empty() || (!clickedItems.empty() && dynamic_cast<QGraphicsPixmapItem*>(clickedItems[0])))
+    if (clickedItems.empty() || (!clickedItems.empty() && dynamic_cast<QGraphicsPixmapItem *>(clickedItems[0])))
     {
         if (!scene()->selectedItems().empty())
         {
@@ -453,17 +451,18 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
         {
             if (scene()->items().empty())
             {
-                QMessageBox::warning(this, tr("Image is not loaded"), tr("Can't create node without loading an image."));
+                QMessageBox::warning(this, tr("Image is not loaded"),
+                                     tr("Can't create node without loading an image."));
                 return;
             }
 
             if (act->text() == "Create node...")
             {
-               emit sigNodeAdded(mapToScene(event->pos()), false);
+                emit sigNodeAdded(mapToScene(event->pos()), false);
             }
             else if (act->text() == "Create node now")
             {
-               emit sigNodeAdded(mapToScene(event->pos()), true);
+                emit sigNodeAdded(mapToScene(event->pos()), true);
             }
         }
 
@@ -475,8 +474,8 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
         auto item = clickedItems[0];
         item->setSelected(true);
 
-        auto* edgeItem = dynamic_cast<EdgeItem*>(item);
-        auto* nodeItem = dynamic_cast<NodeItem*>(item);
+        auto *edgeItem = dynamic_cast<EdgeItem *>(item);
+        auto *nodeItem = dynamic_cast<NodeItem *>(item);
 
         if (nodeItem)
         {
@@ -494,7 +493,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
             menu.addAction("&Isolate");
             menu.addAction("Re&name");
             menu.addSeparator();
-            if(nodeItem->getNode()->isDrone())
+            if (nodeItem->getNode()->isDrone())
             {
                 menu.addAction("&Unset drone");
             }
@@ -503,7 +502,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 menu.addAction("&Set drone");
             }
 
-            if(nodeItem->getNode()->isAttacker())
+            if (nodeItem->getNode()->isAttacker())
             {
                 menu.addAction("&Unset attacker");
             }
@@ -512,7 +511,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 menu.addAction("&Set attacker");
             }
 
-            QAction* act = menu.exec(event->globalPos());
+            QAction *act = menu.exec(event->globalPos());
             if (act != nullptr)
             {
                 if (act->text() == "Re&name")
@@ -534,67 +533,68 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
                 }
                 if (act->text() == "&Set node corner")
                 {
-                   emit sigSetNodeType(nodeName, graph::Node::NodeType::Corner);
+                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Corner);
                 }
                 if (act->text() == "&Set node border")
                 {
-                   emit sigSetNodeType(nodeName, graph::Node::NodeType::Border);
+                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Border);
                 }
                 if (act->text() == "&Set node inner")
                 {
-                   emit sigSetNodeType(nodeName, graph::Node::NodeType::Inner);
+                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Inner);
                 }
                 if (act->text() == "&Set drone")
                 {
-                   std::string ip, port;
-                   DroneIpInputDialog oDialog;
-                   if (oDialog.exec() == QDialog::Accepted)
-                   {
-                       ip = oDialog.getIp().toStdString();
-                       port = oDialog.getPort().toStdString();
-                   }
+                    std::string ip, port;
+                    DroneIpInputDialog oDialog;
+                    if (oDialog.exec() == QDialog::Accepted)
+                    {
+                        ip = oDialog.getIp().toStdString();
+                        port = oDialog.getPort().toStdString();
+                    }
 
-                   if (ip.empty() || port.empty())
-                   {
-                       QMessageBox::warning(this, tr("Drone Ip or Port is not set"), tr("Can't set drone without ip and port."));
-                       return;
-                   }
+                    if (ip.empty() || port.empty())
+                    {
+                        QMessageBox::warning(this, tr("Drone Ip or Port is not set"),
+                                             tr("Can't set drone without ip and port."));
+                        return;
+                    }
 
-                   emit sigSetDrone(nodeName, ip, port, true);
+                    emit sigSetDrone(nodeName, ip, port, true);
                 }
                 if (act->text() == "&Unset drone")
                 {
-                   emit sigSetDrone(nodeName, "", "", false);
+                    emit sigSetDrone(nodeName, "", "", false);
                 }
 
                 if (act->text() == "&Set attacker")
                 {
-                   std::string ip, port;
-                   DroneIpInputDialog oDialog;
-                   if (oDialog.exec() == QDialog::Accepted)
-                   {
-                       ip = oDialog.getIp().toStdString();
-                       port = oDialog.getPort().toStdString();
-                   }
+                    std::string ip, port;
+                    DroneIpInputDialog oDialog;
+                    if (oDialog.exec() == QDialog::Accepted)
+                    {
+                        ip = oDialog.getIp().toStdString();
+                        port = oDialog.getPort().toStdString();
+                    }
 
-                   if (ip.empty() || port.empty())
-                   {
-                       QMessageBox::warning(this, tr("Drone Ip or Port is not set"), tr("Can't set drone without ip and port."));
-                       return;
-                   }
+                    if (ip.empty() || port.empty())
+                    {
+                        QMessageBox::warning(this, tr("Drone Ip or Port is not set"),
+                                             tr("Can't set drone without ip and port."));
+                        return;
+                    }
 
-                   emit sigSetAttacker(nodeName, ip, port, true);
+                    emit sigSetAttacker(nodeName, ip, port, true);
                 }
                 if (act->text() == "&Unset attacker")
                 {
-                   emit sigSetAttacker(nodeName, "", "", false);
+                    emit sigSetAttacker(nodeName, "", "", false);
                 }
             }
             else
             {
                 item->setSelected(false);
             }
-
         }
         else if (edgeItem)
         {
@@ -608,7 +608,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent* event)
             {
                 if (act->text() == "&Delete")
                 {
-                   emit sigEdgeRemoved(edgeItem->getEdge().u()->getName(), edgeItem->getEdge().v()->getName());
+                    emit sigEdgeRemoved(edgeItem->getEdge().u()->getName(), edgeItem->getEdge().v()->getName());
                 }
             }
         }

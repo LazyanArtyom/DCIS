@@ -7,9 +7,7 @@
 // STL includes
 #include <unordered_map>
 
-
-template<class T1, class T2>
-struct std::hash<std::pair<T1, T2>>
+template <class T1, class T2> struct std::hash<std::pair<T1, T2>>
 {
     size_t operator()(const pair<T1, T2> &p) const
     {
@@ -24,15 +22,25 @@ namespace dcis::common::graph
 
 class Edge
 {
-public:
-    explicit Edge(EdgeSetType::iterator& it) : parNode_(*it) {}
-    Edge(NodePairType& parNode) : parNode_(parNode) {}
-    
-    Node* u() const { return parNode_.first; }
-    Node* v() const { return parNode_.second; }
+  public:
+    explicit Edge(EdgeSetType::iterator &it) : parNode_(*it)
+    {
+    }
+    Edge(NodePairType &parNode) : parNode_(parNode)
+    {
+    }
 
-private:
-    const NodePairType& parNode_;
+    Node *u() const
+    {
+        return parNode_.first;
+    }
+    Node *v() const
+    {
+        return parNode_.second;
+    }
+
+  private:
+    const NodePairType &parNode_;
 };
 
 } // end namespace dcis::common::graph

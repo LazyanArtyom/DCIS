@@ -1,9 +1,9 @@
 #include <gui/graphscene.h>
 
+namespace dcis::gui
+{
 
-namespace dcis::gui {
-
-GraphScene::GraphScene(graph::Graph* graph)
+GraphScene::GraphScene(graph::Graph *graph)
 {
     setGraph(graph);
 }
@@ -13,12 +13,12 @@ GraphScene::~GraphScene()
     clearAll();
 }
 
-graph::Graph* GraphScene::getGraph() const
+graph::Graph *GraphScene::getGraph() const
 {
     return graph_;
 }
 
-void GraphScene::setGraph(graph::Graph* graph)
+void GraphScene::setGraph(graph::Graph *graph)
 {
     if (graph_ != nullptr)
     {
@@ -29,7 +29,7 @@ void GraphScene::setGraph(graph::Graph* graph)
     onReload();
 }
 
-NodeItem* GraphScene::getNodeItem(const std::string& name)
+NodeItem *GraphScene::getNodeItem(const std::string &name)
 {
     if (nodeItems_.find(name) != nodeItems_.end())
     {
@@ -39,7 +39,7 @@ NodeItem* GraphScene::getNodeItem(const std::string& name)
     return nullptr;
 }
 
-EdgeItem* GraphScene::getEdgeItem(const std::string& uname, const std::string& vname)
+EdgeItem *GraphScene::getEdgeItem(const std::string &uname, const std::string &vname)
 {
     if (edgeItems_.find(std::make_pair(uname, vname)) != edgeItems_.end())
     {
@@ -57,7 +57,7 @@ void GraphScene::clearAll(bool keepBackground)
 {
     if (!nodeItems_.empty())
     {
-        for (auto& nodeItem : nodeItems_)
+        for (auto &nodeItem : nodeItems_)
         {
             nodeItem.second->deleteLater();
         }
@@ -66,7 +66,7 @@ void GraphScene::clearAll(bool keepBackground)
 
     if (!edgeItems_.empty())
     {
-        for (auto& edgeItem : edgeItems_)
+        for (auto &edgeItem : edgeItems_)
         {
             edgeItem.second->deleteLater();
         }
@@ -75,9 +75,9 @@ void GraphScene::clearAll(bool keepBackground)
 
     if (keepBackground)
     {
-        foreach (QGraphicsItem* item, items())
+        foreach (QGraphicsItem *item, items())
         {
-            if (dynamic_cast<QGraphicsPixmapItem*>(item) == nullptr)
+            if (dynamic_cast<QGraphicsPixmapItem *>(item) == nullptr)
             {
                 removeItem(item);
                 delete item;
@@ -94,9 +94,9 @@ void GraphScene::onReload()
 {
     clearAll(true);
 
-    for (const auto& node : getGraph()->getNodes())
+    for (const auto &node : getGraph()->getNodes())
     {
-        NodeItem* item = new NodeItem(this, node);
+        NodeItem *item = new NodeItem(this, node);
         nodeItems_[node->getName()] = item;
     }
 
@@ -107,12 +107,12 @@ void GraphScene::onReload()
         edgeItems_.insert({std::make_pair(edge.u()->getName(), edge.v()->getName()), edgeItem});
     }
 
-    for (const auto& item: edgeItems_)
+    for (const auto &item : edgeItems_)
     {
         addItem(item.second);
     }
 
-    for (const auto& item : nodeItems_)
+    for (const auto &item : nodeItems_)
     {
         addItem(item.second);
     }

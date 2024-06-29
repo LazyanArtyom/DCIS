@@ -5,12 +5,12 @@
 #include <iostream>
 
 // Qt includes
-#include <QVariant>
-#include <QIODevice>
 #include <QDataStream>
+#include <QIODevice>
+#include <QVariant>
 
-
-namespace dcis::common::resource {
+namespace dcis::common::resource
+{
 
 // data version to sent packages
 const QDataStream::Version DATASTREAM_VERSION = QDataStream::Qt_6_4;
@@ -49,11 +49,15 @@ enum class Command : uint32_t
 // to use "enum class" to ensure that the messages are valid at compile time
 struct Header
 {
-    Header() {}
+    Header()
+    {
+    }
     Header(int size, QString name, Command cmd, ResourceType type)
-        : bodySize{size}, fileName{name}, command{cmd}, resourceType{type} {}
+        : bodySize{size}, fileName{name}, command{cmd}, resourceType{type}
+    {
+    }
 
-    friend QDataStream& operator << (QDataStream& stream, const Header &header)
+    friend QDataStream &operator<<(QDataStream &stream, const Header &header)
     {
         stream << header.bodySize;
         stream << header.fileName;
@@ -63,7 +67,7 @@ struct Header
         return stream;
     }
 
-    friend QDataStream& operator >> (QDataStream& stream, Header& header)
+    friend QDataStream &operator>>(QDataStream &stream, Header &header)
     {
         stream >> header.bodySize;
         stream >> header.fileName;
@@ -77,69 +81,70 @@ struct Header
     {
         switch (resourceType)
         {
-            case resource::ResourceType::Text:
-                return "STRING";
-            case resource::ResourceType::Json:
-                return "JSON";
-            case ResourceType::Command:
-                return "Command";
-            case resource::ResourceType::Attachment:
-                return "ATTACHMENT";
-            default:
-                return "UNKNOWN";
+        case resource::ResourceType::Text:
+            return "STRING";
+        case resource::ResourceType::Json:
+            return "JSON";
+        case ResourceType::Command:
+            return "Command";
+        case resource::ResourceType::Attachment:
+            return "ATTACHMENT";
+        default:
+            return "UNKNOWN";
         }
     }
 
     const QString commandToString() const
     {
-        switch(command) {
+        switch (command)
+        {
 
-            // Server commands
-            case Command::ServerPublish:
-                return "ServerPublish";
+        // Server commands
+        case Command::ServerPublish:
+            return "ServerPublish";
 
-            case Command::ServerShowImage:
-                return "ServerShowImage";
+        case Command::ServerShowImage:
+            return "ServerShowImage";
 
-            case Command::ServerShowText:
-                return "ServerShowText";
+        case Command::ServerShowText:
+            return "ServerShowText";
 
-            case Command::ServerPrintText:
-                return "ServerPrintText";
+        case Command::ServerPrintText:
+            return "ServerPrintText";
 
-            case Command::ServerGetUserInfo:
-                return "ServerGetUserInfo";
+        case Command::ServerGetUserInfo:
+            return "ServerGetUserInfo";
 
-            case Command::ServerUserAccepted:
-                return "ServerUserAccepted";
+        case Command::ServerUserAccepted:
+            return "ServerUserAccepted";
 
-            case Command::ServerUserDeclined:
-                return "ServerUserDeclined";
+        case Command::ServerUserDeclined:
+            return "ServerUserDeclined";
 
-            case Command::ServerUserAlreadyConnected:
-                return "ServerUserAlreadyConnected";
+        case Command::ServerUserAlreadyConnected:
+            return "ServerUserAlreadyConnected";
 
-            // Client commands
-            case Command::ClientUpdateGraph:
-                return "ClientUpdateGraph";
+        // Client commands
+        case Command::ClientUpdateGraph:
+            return "ClientUpdateGraph";
 
-            case Command::ClientClearCycles:
-                return "ClientClearCycles";
+        case Command::ClientClearCycles:
+            return "ClientClearCycles";
 
-            case Command::ClientGenerateGraph:
-                return "ClientGenerateGraph";
+        case Command::ClientGenerateGraph:
+            return "ClientGenerateGraph";
 
-            case Command::ClientStartExploration:
-                return "ClientStartExploration";
+        case Command::ClientStartExploration:
+            return "ClientStartExploration";
 
-            case Command::ClientStartAttack:
-                return "ClientStartAttack";
+        case Command::ClientStartAttack:
+            return "ClientStartAttack";
 
-            case Command::ClientSetUserInfo:
-                return "ClientSetUserInfo";
+        case Command::ClientSetUserInfo:
+            return "ClientSetUserInfo";
 
-            default:
-                return "Unknown command";
+        default:
+            return "Unknown command";
         }
     }
 

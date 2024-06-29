@@ -1,36 +1,36 @@
 #include <gui/imageeditor.h>
 
 // Qt includes
+#include <QBoxLayout>
 #include <QIcon>
 #include <QLabel>
-#include <QToolBar>
-#include <QBoxLayout>
 #include <QMessageBox>
+#include <QToolBar>
 
 #include <QFileDialog>
 #include <QImageReader>
 #include <QImageWriter>
 #include <QStandardPaths>
 
-namespace dcis::gui {
+namespace dcis::gui
+{
 
-ImageEditor::ImageEditor(QWidget* parent)
-    : QGraphicsView(parent)
+ImageEditor::ImageEditor(QWidget *parent) : QGraphicsView(parent)
 {
     setCacheMode(CacheBackground);
     setTransformationAnchor(AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);
-    //setViewportUpdateMode(BoundingRectViewportUpdate);
-    // setRenderHint(QPainter::HighQualityAntialiasing);
-    //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-/*
-    QGraphScene* graphicsScene = new QGraphScene();
-    graphicsScene->setItemIndexMethod(QGraphicsScene::NoIndex);
-    graphicsScene->setBackgroundBrush(QColor(Qt::gray));
-    setScene(graphicsScene);
+    // setViewportUpdateMode(BoundingRectViewportUpdate);
+    //  setRenderHint(QPainter::HighQualityAntialiasing);
+    // setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    /*
+        QGraphScene* graphicsScene = new QGraphScene();
+        graphicsScene->setItemIndexMethod(QGraphicsScene::NoIndex);
+        graphicsScene->setBackgroundBrush(QColor(Qt::gray));
+        setScene(graphicsScene);
 
-    // connections
-    connect(this, &ImageEditor::sigGraphChanged, graphicsScene, &gui::GraphScene::onReload); */
+        // connections
+        connect(this, &ImageEditor::sigGraphChanged, graphicsScene, &gui::GraphScene::onReload); */
 }
 
 void ImageEditor::zoomIn()
@@ -59,31 +59,31 @@ ImageEditor::SizeInfo ImageEditor::getSizeInfo() const
     SizeInfo info;
 
     // Get the current transformation matrix
-    //QTransform transform = transform();
+    // QTransform transform = transform();
 
     // Get the size of the image in scene coordinates
-    //QRectF imageRect = imageEditor_->sceneRect();
-    //info.imageSize = imageRect.size();
+    // QRectF imageRect = imageEditor_->sceneRect();
+    // info.imageSize = imageRect.size();
 
     // Apply the transformation matrix to the image rectangle
-    //QRectF transformedRect = transform.mapRect(imageRect);
+    // QRectF transformedRect = transform.mapRect(imageRect);
 
     // Get the size of the transformed rectangle
-    //info.imageSizeZoomed = transformedRect.size();
+    // info.imageSizeZoomed = transformedRect.size();
 
-    //info.imageViewportSize = size();
-    //info.graphViewportSize = graphView_->size();
+    // info.imageViewportSize = size();
+    // info.graphViewportSize = graphView_->size();
 
     return info;
 }
 
-void ImageEditor::setImage(const QImage& img)
+void ImageEditor::setImage(const QImage &img)
 {
     if (!scene()->sceneRect().isEmpty())
         scene()->clear();
 
-    //scene()->setSceneRect(img.rect());
-    //scene()->addPixmap(QPixmap::fromImage(img));
+    // scene()->setSceneRect(img.rect());
+    // scene()->addPixmap(QPixmap::fromImage(img));
 
     backgroundImage_ = QPixmap::fromImage(img);
 
@@ -103,9 +103,9 @@ void ImageEditor::showNewNodeDialog(QPointF pos)
         static QRegularExpressionMatch match = re.match(newNodeName);
         if (!match.hasMatch())
         {
-            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
-                                                 +
-                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
+            QMessageBox::critical(this, "Error",
+                                  tr("Node's name contains only alphabetical or numeric characters\n") +
+                                      tr("Length of the name mustn't be greater than 3 or smaller than 1"));
             return;
         }
 
@@ -122,18 +122,18 @@ void ImageEditor::showNewNodeDialog(QPointF pos)
     }
 }
 
-graph::Graph* ImageEditor::getGraph() const
+graph::Graph *ImageEditor::getGraph() const
 {
     return graph_;
 }
 
-void ImageEditor::updateGraph(graph::Graph* graph)
+void ImageEditor::updateGraph(graph::Graph *graph)
 {
     graph_ = graph;
     graphScene_->setGraph(graph);
 }
 
-void ImageEditor::wheelEvent(QWheelEvent* event)
+void ImageEditor::wheelEvent(QWheelEvent *event)
 {
     if (event->modifiers() == Qt::ControlModifier)
     {
@@ -154,7 +154,7 @@ void ImageEditor::wheelEvent(QWheelEvent* event)
 
 void ImageEditor::scaleView(qreal scaleFactor)
 {
-    if(sceneRect().isEmpty())
+    if (sceneRect().isEmpty())
         return;
 
     int imgLength;
@@ -193,13 +193,13 @@ void ImageEditor::scaleView(qreal scaleFactor)
     scale(scaleFactor, scaleFactor);
 }
 
-void ImageEditor::resizeEvent(QResizeEvent* event)
+void ImageEditor::resizeEvent(QResizeEvent *event)
 {
     isResized_ = true;
     QGraphicsView::resizeEvent(event);
 }
 
-void ImageEditor::drawBackground(QPainter* painter, const QRectF& rect)
+void ImageEditor::drawBackground(QPainter *painter, const QRectF &rect)
 {
     // Call the base class implementation to draw the scene
     QGraphicsView::drawBackground(painter, rect);

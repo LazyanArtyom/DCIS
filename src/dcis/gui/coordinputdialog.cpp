@@ -2,12 +2,11 @@
 
 #include <QMessageBox>
 
-CCoordInputDialog::CCoordInputDialog(QWidget *parent)
-    : QDialog(parent)
+CCoordInputDialog::CCoordInputDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("GeoCoordinate Dialog");
 
-    QDoubleValidator* validator = new QDoubleValidator(0.0, 360.0, 8);
+    QDoubleValidator *validator = new QDoubleValidator(0.0, 360.0, 8);
     m_pLeftTopLatEdit = new QLineEdit(this);
     m_pLeftTopLatEdit->setValidator(validator);
     m_pLeftTopLonEdit = new QLineEdit(this);
@@ -27,10 +26,8 @@ CCoordInputDialog::CCoordInputDialog(QWidget *parent)
     m_pOkButton->setDisabled(true);
 
     auto slot = [&]() {
-        m_pOkButton->setEnabled(!m_pLeftTopLatEdit->text().isEmpty() &&
-                                !m_pLeftTopLonEdit->text().isEmpty() &&
-                                !m_pRightBottomLatEdit->text().isEmpty() &&
-                                !m_pRightBottomLonEdit->text().isEmpty());
+        m_pOkButton->setEnabled(!m_pLeftTopLatEdit->text().isEmpty() && !m_pLeftTopLonEdit->text().isEmpty() &&
+                                !m_pRightBottomLatEdit->text().isEmpty() && !m_pRightBottomLonEdit->text().isEmpty());
     };
 
     connect(m_pLeftTopLatEdit, &QLineEdit::textEdited, this, slot);
@@ -67,8 +64,7 @@ void CCoordInputDialog::accept()
     QDialog::accept();
 }
 
-DroneIpInputDialog::DroneIpInputDialog(QWidget *parent)
-    : QDialog(parent)
+DroneIpInputDialog::DroneIpInputDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("DroneIpInput Dialog");
 
@@ -82,10 +78,7 @@ DroneIpInputDialog::DroneIpInputDialog(QWidget *parent)
     okButton_ = new QPushButton("OK", this);
     okButton_->setDisabled(true);
 
-    auto slot = [&]() {
-        okButton_->setEnabled(!ipLineEdit_->text().isEmpty() &&
-                                !portLineEdit_->text().isEmpty());
-    };
+    auto slot = [&]() { okButton_->setEnabled(!ipLineEdit_->text().isEmpty() && !portLineEdit_->text().isEmpty()); };
 
     connect(ipLineEdit_, &QLineEdit::textEdited, this, slot);
     connect(portLineEdit_, &QLineEdit::textEdited, this, slot);

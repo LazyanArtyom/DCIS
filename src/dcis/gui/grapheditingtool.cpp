@@ -1,10 +1,9 @@
 #include <gui/grapheditingtool.h>
 
+namespace dcis::gui
+{
 
-namespace dcis::gui {
-
-GraphEditingTool::GraphEditingTool(QWidget* parent)
-    : QWidget(parent)
+GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
 {
     // image editor widget
     imageEditor_ = new gui::ImageEditor();
@@ -18,15 +17,11 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
     graphView_->setScene(graphScene_);
 
     // connections
-    connect(graphView_, &gui::GraphView::sigNodeSelected, this , [this](const std::string& nodeName, QPointF pos) {
-
-        //txtConsole_->setText(txt);
+    connect(graphView_, &gui::GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
+        // txtConsole_->setText(txt);
     });
-    connect(graphView_, &gui::GraphView::sigNodeMoved, this , [this]() {
-
-        emit sigNodeMoved();
-    });
-    connect(graphView_, &gui::GraphView::sigNodeAdded, this , [this](QPointF pos, bool autoNaming) {
+    connect(graphView_, &gui::GraphView::sigNodeMoved, this, [this]() { emit sigNodeMoved(); });
+    connect(graphView_, &gui::GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
             showNewNodeDialog(pos);
@@ -36,44 +31,45 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
         graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
         emit sigGraphChanged();
     });
-    connect(graphView_, &gui::GraphView::sigNodeRemoved, this, [this](const std::string& nodeName) {
+    connect(graphView_, &gui::GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
         if (graph_->removeNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigNodeIsolated, this, [this](const std::string& nodeName) {
+    connect(graphView_, &gui::GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
         if (graph_->isolateNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string& uname, const std::string& vname) {
-        if (graph_->removeEdge(uname, vname))
-        {
-            emit sigGraphChanged();
-        }
-    });
+    connect(graphView_, &gui::GraphView::sigEdgeRemoved, this,
+            [this](const std::string &uname, const std::string &vname) {
+                if (graph_->removeEdge(uname, vname))
+                {
+                    emit sigGraphChanged();
+                }
+            });
     connect(graphView_, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->setEdge(uname, vname))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string& nodeName) {
+    connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
 
         auto newName = QInputDialog::getText(this, tr("Rename node"), "Name: ", QLineEdit::Normal,
-                                              QString::fromStdString(graph_->getNextNodeName()), &ok);
+                                             QString::fromStdString(graph_->getNextNodeName()), &ok);
         if (ok)
         {
             static QRegularExpressionMatch match = re.match(newName);
             if (!match.hasMatch())
             {
                 QMessageBox::critical(this, tr("Error"),
-                                      tr("Node's name contains only alphabetical or numeric characters\n")
-                                      + tr("Length of the name mustn't be greater than 30 or smaller than 1"));
+                                      tr("Node's name contains only alphabetical or numeric characters\n") +
+                                          tr("Length of the name mustn't be greater than 30 or smaller than 1"));
                 return;
             }
             if (graph_->hasNode(newName.toStdString()))
@@ -87,41 +83,45 @@ GraphEditingTool::GraphEditingTool(QWidget* parent)
             }
         }
     });
-    connect(graphView_, &gui::GraphView::sigSetDrone, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
-        auto node = graph_->getNode(nodeName);
-        if (node)
-        {
-            node->setDrone(isDrone);
-            node->setIp(ip);
-            node->setIp(port);
-            emit sigGraphChanged();
-        }
-    });
-    connect(graphView_, &gui::GraphView::sigSetAttacker, this, [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isAttacker) {
-        auto node = graph_->getNode(nodeName);
-        if (node)
-        {
-            node->setAttacker(isAttacker);
-            node->setIp(ip);
-            node->setIp(port);
-            emit sigGraphChanged();
-        }
-    });
+    connect(graphView_, &gui::GraphView::sigSetDrone, this,
+            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+                auto node = graph_->getNode(nodeName);
+                if (node)
+                {
+                    node->setDrone(isDrone);
+                    node->setIp(ip);
+                    node->setIp(port);
+                    emit sigGraphChanged();
+                }
+            });
+    connect(
+        graphView_, &gui::GraphView::sigSetAttacker, this,
+        [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isAttacker) {
+            auto node = graph_->getNode(nodeName);
+            if (node)
+            {
+                node->setAttacker(isAttacker);
+                node->setIp(ip);
+                node->setIp(port);
+                emit sigGraphChanged();
+            }
+        });
 
-    connect(graphView_, &gui::GraphView::sigSetNodeType, this, [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
-        auto node = graph_->getNode(nodeName);
-        if (node)
-        {
-            node->setNodeType(nodeType);
-            emit sigGraphChanged();
-        }
-    });
+    connect(graphView_, &gui::GraphView::sigSetNodeType, this,
+            [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
+                auto node = graph_->getNode(nodeName);
+                if (node)
+                {
+                    node->setNodeType(nodeType);
+                    emit sigGraphChanged();
+                }
+            });
     // layouts
-    QVBoxLayout* vMainLayout = new QVBoxLayout();
+    QVBoxLayout *vMainLayout = new QVBoxLayout();
     vMainLayout->setContentsMargins(0, 0, 0, 0);
     vMainLayout->setSpacing(0);
 
-    setLayout(vMainLayout); 
+    setLayout(vMainLayout);
 
     vMainLayout->addWidget(imageEditor_);
 }
@@ -138,9 +138,9 @@ void GraphEditingTool::showNewNodeDialog(QPointF pos)
         static QRegularExpressionMatch match = re.match(newNodeName);
         if (!match.hasMatch())
         {
-            QMessageBox::critical(this, "Error", tr("Node's name contains only alphabetical or numeric characters\n")
-                                                 +
-                                                 tr("Length of the name mustn't be greater than 3 or smaller than 1"));
+            QMessageBox::critical(this, "Error",
+                                  tr("Node's name contains only alphabetical or numeric characters\n") +
+                                      tr("Length of the name mustn't be greater than 3 or smaller than 1"));
             return;
         }
 
@@ -157,12 +157,12 @@ void GraphEditingTool::showNewNodeDialog(QPointF pos)
     }
 }
 
-graph::Graph* GraphEditingTool::getGraph() const
+graph::Graph *GraphEditingTool::getGraph() const
 {
     return graph_;
 }
 
-void GraphEditingTool::updateGraph(graph::Graph* graph)
+void GraphEditingTool::updateGraph(graph::Graph *graph)
 {
     graph_ = graph;
     graphScene_->setGraph(graph);
@@ -209,16 +209,16 @@ GraphEditingTool::SizeInfo GraphEditingTool::getSizeInfo() const
     return info;
 }
 
-void GraphEditingTool::showImage(const QImage& img)
+void GraphEditingTool::showImage(const QImage &img)
 {
     imageEditor_->setImage(img);
 }
 
-void GraphEditingTool::resizeEvent(QResizeEvent*)
+void GraphEditingTool::resizeEvent(QResizeEvent *)
 {
     imageEditor_->resize(width(), height());
     graphView_->resize(width(), height());
-    //graphView_->setSceneRect(graphView_->rect());
+    // graphView_->setSceneRect(graphView_->rect());
 }
 
 } // end namespace dcis::gui

@@ -1,11 +1,13 @@
 #include <gui/elementpropertiestable.h>
 
+namespace dcis::gui
+{
 
-namespace dcis::gui {
+ElementPropertiesTable::ElementPropertiesTable(graph::Graph *graph) : ElementPropertiesTable(graph, 48)
+{
+}
 
-ElementPropertiesTable::ElementPropertiesTable(graph::Graph* graph) : ElementPropertiesTable(graph, 48) {}
-
-ElementPropertiesTable::ElementPropertiesTable(graph::Graph* graph, int sectionSize) : graph_(graph)
+ElementPropertiesTable::ElementPropertiesTable(graph::Graph *graph, int sectionSize) : graph_(graph)
 {
     setSizeAdjustPolicy(QTableWidget::AdjustToContents);
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
@@ -25,21 +27,21 @@ void ElementPropertiesTable::onGraphChanged()
     clearTable();
 }
 
-void ElementPropertiesTable::onSetGraph(graph::Graph* graph)
+void ElementPropertiesTable::onSetGraph(graph::Graph *graph)
 {
     graph_ = graph;
 }
 
-void ElementPropertiesTable::onNodeSelected(const std::string& nodeName)
+void ElementPropertiesTable::onNodeSelected(const std::string &nodeName)
 {
     clearTable();
     QStringList tableHeader;
-    if (graph_->isDirected()) 
+    if (graph_->isDirected())
     {
         setRowCount(3);
         tableHeader << tr("Name") << tr("Positive degree") << tr("Negative degree");
-    } 
-    else 
+    }
+    else
     {
         setRowCount(2);
         tableHeader << tr("Name") << tr("Degree");
@@ -53,7 +55,7 @@ void ElementPropertiesTable::onNodeSelected(const std::string& nodeName)
     item(0, 0)->setText(QString::fromStdString(nodeName));
     item(0, 0)->setFlags(Qt::ItemIsEnabled);
 
-    if (graph_->isDirected()) 
+    if (graph_->isDirected())
     {
         setItem(1, 0, new QTableWidgetItem());
         item(1, 0)->setTextAlignment(Qt::AlignCenter);
@@ -64,8 +66,8 @@ void ElementPropertiesTable::onNodeSelected(const std::string& nodeName)
         item(2, 0)->setTextAlignment(Qt::AlignCenter);
         item(2, 0)->setText(QString::number(graph_->getNode(nodeName)->getNegDegree()));
         item(2, 0)->setFlags(Qt::ItemIsEnabled);
-    } 
-    else 
+    }
+    else
     {
         setItem(1, 0, new QTableWidgetItem());
         item(1, 0)->setTextAlignment(Qt::AlignCenter);
@@ -74,7 +76,7 @@ void ElementPropertiesTable::onNodeSelected(const std::string& nodeName)
     }
 }
 
-void ElementPropertiesTable::onEdgeSelected(const std::string& uName, const std::string& vName)
+void ElementPropertiesTable::onEdgeSelected(const std::string &uName, const std::string &vName)
 {
     clearTable();
     QStringList tableHeader;
@@ -103,5 +105,5 @@ void ElementPropertiesTable::clearTable()
     setRowCount(0);
     setColumnCount(0);
 }
-    
+
 } // end namespace dcis::gui

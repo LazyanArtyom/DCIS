@@ -1,17 +1,15 @@
 #include <graph/node.h>
 
-
 namespace dcis::common::graph
 {
 
-Node::Node(const std::string &name)
-    : name_(name)
+Node::Node(const std::string &name) : name_(name)
 {
-
 }
 
-Node::Node(const std::string& name, QPointF euclidePos)
-    : name_(name), euclidePos_(euclidePos) {}
+Node::Node(const std::string &name, QPointF euclidePos) : name_(name), euclidePos_(euclidePos)
+{
+}
 
 QPointF Node::getEuclidePos() const
 {

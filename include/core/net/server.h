@@ -2,28 +2,28 @@
 #define DCIS_SERVER_SERVER_H_
 
 // App includes
+#include <graphprocessor/graphprocessor.h>
 #include <net/resource.h>
 #include <user/userinfo.h>
 #include <utils/terminalwidget.h>
-#include <graphprocessor/graphprocessor.h>
 
 // QT includes
-#include <QMap>
 #include <QImage>
+#include <QMap>
 #include <QTcpServer>
 #include <QTcpSocket>
 
-
-namespace dcis::server {
+namespace dcis::server
+{
 
 class Server : public QTcpServer
 {
     Q_OBJECT
-public:
+  public:
     using DataType = QByteArray;
-    using ClientMapType = QMap<common::user::UserInfo, QTcpSocket*>;
+    using ClientMapType = QMap<common::user::UserInfo, QTcpSocket *>;
 
-    Server(common::utils::TerminalWidget* terminalWidget, QObject* parent = nullptr);
+    Server(common::utils::TerminalWidget *terminalWidget, QObject *parent = nullptr);
     ~Server();
 
     void addClient(common::user::UserInfo userInfo);
@@ -32,37 +32,37 @@ public:
     void incomingConnection(qintptr socketDescriptor) override;
 
     // Senders
-    bool publish(const QByteArray& data, qintptr socketDesc);
-    bool publishAll(const QByteArray& data, QSet<qintptr> excludeSockets);
-    void sendText(const QString& text, common::resource::Command cmd, qintptr socketDescriptor = -1);
-    void sendJson(const QJsonDocument& json, common::resource::Command cmd, qintptr socketDescriptor = -1);
-    void sendAttachment(const QString& filePath, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    bool publish(const QByteArray &data, qintptr socketDesc);
+    bool publishAll(const QByteArray &data, QSet<qintptr> excludeSockets);
+    void sendText(const QString &text, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendJson(const QJsonDocument &json, common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendAttachment(const QString &filePath, common::resource::Command cmd, qintptr socketDescriptor = -1);
     void sendCommand(const common::resource::Command cmd, qintptr socketDescriptor = -1);
 
     // Handlers
     void handleUnknown();
-    void handleText(const QByteArray& data);
-    void handleJson(const QByteArray& data);
-    void handleAttachment(const QByteArray& data);
+    void handleText(const QByteArray &data);
+    void handleJson(const QByteArray &data);
+    void handleAttachment(const QByteArray &data);
     void handleCommand(const common::resource::Command cmd);
-    void handle(const common::resource::Header& header, const QByteArray& body);
+    void handle(const common::resource::Header &header, const QByteArray &body);
 
     void syncSockets();
     void updateSockets();
 
-public slots:
+  public slots:
     void onReadyRead();
     void onDisconected();
 
-private:
+  private:
     DataType data_;
     ClientMapType clientMap_;
     common::resource::Header header_;
-    common::utils::TerminalWidget* terminalWidget_ = nullptr;
+    common::utils::TerminalWidget *terminalWidget_ = nullptr;
 
     qintptr currentSocket_;
-    dcis::GraphProcessor::commonGraph* commGraph_ = nullptr;
-    dcis::GraphProcessor::GraphProcessor* graphProc_ = nullptr;
+    dcis::GraphProcessor::commonGraph *commGraph_ = nullptr;
+    dcis::GraphProcessor::GraphProcessor *graphProc_ = nullptr;
     size_t imgW_ = 0;
     size_t imgH_ = 0;
 

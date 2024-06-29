@@ -8,7 +8,8 @@
 #include <QString>
 #include <QTextEdit>
 
-namespace dcis::common::utils {
+namespace dcis::common::utils
+{
 
 /*enum class LogLevel : uint32_t { Error = 1, Warning, Info, Debug, Verbose };
 

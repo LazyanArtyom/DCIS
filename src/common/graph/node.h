@@ -3,32 +3,32 @@
 
 // App includes
 
-//Qt includes
- #include <QPointF>
+// Qt includes
+#include <QPointF>
 
 // STL includes
 #include <list>
 #include <string>
-#include <unordered_set>
 #include <unordered_map>
-
+#include <unordered_set>
 
 namespace dcis::common::graph
 {
 
 class Node;
-using NodeListType = std::list<Node*>;
-using NodePairType = std::pair<Node*, Node*>;
-using NodeSetType  = std::unordered_set<Node>;
-using EdgeSetType  = std::unordered_set<NodePairType>;
+using NodeListType = std::list<Node *>;
+using NodePairType = std::pair<Node *, Node *>;
+using NodeSetType = std::unordered_set<Node>;
+using EdgeSetType = std::unordered_set<NodePairType>;
 
 class Node
 {
-public:
-    explicit Node(const std::string& name);
-    explicit Node(const std::string& name, QPointF euclidePos);
+  public:
+    explicit Node(const std::string &name);
+    explicit Node(const std::string &name, QPointF euclidePos);
 
-    enum class NodeType {
+    enum class NodeType
+    {
         Inner,
         Border,
         Corner,
@@ -58,8 +58,8 @@ public:
     void setDrone(bool isDrone);
     void setAttacker(bool isAttacker);
 
-    void setIp(const std::string& ip);
-    void setPort(const std::string& port);
+    void setIp(const std::string &ip);
+    void setPort(const std::string &port);
 
     std::string getIp() const;
     std::string getPort() const;
@@ -68,12 +68,21 @@ public:
     double getY() const;
     std::string getName() const;
 
-    bool operator==(const Node& other) const { return (name_ == other.name_); }
-    bool operator<(const Node&  other) const { return (name_ < other.name_);  }
-    bool operator>(const Node&  other) const { return (name_ > other.name_);  }
+    bool operator==(const Node &other) const
+    {
+        return (name_ == other.name_);
+    }
+    bool operator<(const Node &other) const
+    {
+        return (name_ < other.name_);
+    }
+    bool operator>(const Node &other) const
+    {
+        return (name_ > other.name_);
+    }
 
-private:
-    int deg_    = 0;
+  private:
+    int deg_ = 0;
     int degPos_ = 0;
     int degNeg_ = 0;
     bool drone_ = false;
@@ -87,10 +96,9 @@ private:
 
 } // end namespace dcis::common::graph
 
-template<>
-struct std::hash<dcis::common::graph::Node>
+template <> struct std::hash<dcis::common::graph::Node>
 {
-    size_t operator()(const dcis::common::graph::Node& node) const
+    size_t operator()(const dcis::common::graph::Node &node) const
     {
         return hash<std::string>()(node.getName());
     }

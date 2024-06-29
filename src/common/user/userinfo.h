@@ -2,13 +2,13 @@
 #define DCIS_COMMON_USERINFO_H_
 
 #include <QHash>
-#include <QString>
 #include <QJsonArray>
-#include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QString>
 
-
-namespace dcis::common::user {
+namespace dcis::common::user
+{
 
 /*
  * Keeps info about user
@@ -25,7 +25,7 @@ struct UserInfo
     {
     }
 
-    static UserInfo fromJson(const QJsonDocument& jsonDoc)
+    static UserInfo fromJson(const QJsonDocument &jsonDoc)
     {
         QJsonObject jsonObj = jsonDoc.object();
 
@@ -37,7 +37,7 @@ struct UserInfo
         return userInfo;
     }
 
-    static QJsonDocument toJson(const UserInfo& userInfo)
+    static QJsonDocument toJson(const UserInfo &userInfo)
     {
         QJsonObject jsonObj;
 
@@ -50,13 +50,13 @@ struct UserInfo
     }
 
     // To keep in map as key
-    bool operator<(const UserInfo& other) const
+    bool operator<(const UserInfo &other) const
     {
         return socketDescriptor < other.socketDescriptor;
     }
 
     // To keep in set
-    bool operator==(const UserInfo& other) const
+    bool operator==(const UserInfo &other) const
     {
         return socketDescriptor == other.socketDescriptor;
     }

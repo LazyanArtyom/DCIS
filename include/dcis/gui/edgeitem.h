@@ -13,24 +13,21 @@ class QGraphicsLineItem;
 class GraphGraphicsScene;
 class QGraphicsSceneMouseEvent;
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 using namespace common;
 
 class GraphScene;
 class EdgeItem : public QObject, public QGraphicsLineItem
 {
     Q_OBJECT
-public:
+  public:
     enum
     {
         Type = UserType + 4
     };
 
-    EdgeItem(GraphScene* scene,
-                     NodeItem* startItem,
-                     NodeItem* endItem,
-                     QGraphicsItem* parent = nullptr);
+    EdgeItem(GraphScene *scene, NodeItem *startItem, NodeItem *endItem, QGraphicsItem *parent = nullptr);
 
     static QColor getDefaultColor();
     static QColor getDefaultSelectedColor();
@@ -42,18 +39,18 @@ public:
     graph::Edge getEdge() const;
     bool isInversionAvailable() const;
 
-public slots:
+  public slots:
     void onUpdatePosition();
 
-protected:
-    void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
+  protected:
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
-private:
+  private:
     QPainterPath path_;
-    NodeItem* endItem_;
-    GraphScene* gscene_;
-    NodeItem* startItem_;
+    NodeItem *endItem_;
+    GraphScene *gscene_;
+    NodeItem *startItem_;
 };
 
 } // end namespace dcis::gui

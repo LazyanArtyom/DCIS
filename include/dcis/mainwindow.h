@@ -2,51 +2,51 @@
 #define DCIS_UI_MAINWINDOW_H_
 
 // App headers
-#include <net/client.h>
-#include <gui/graphview.h>
-#include <gui/graphinfo.h>
-#include <utils/terminalwidget.h>
 #include <gui/elementpropertiestable.h>
+#include <gui/graphinfo.h>
+#include <gui/graphview.h>
+#include <net/client.h>
+#include <utils/terminalwidget.h>
 
 // QT headers
-#include <QMenu>
-#include <QLabel>
-#include <QFrame>
-#include <QWidget>
-#include <QSlider>
 #include <QAction>
-#include <QVariant>
-#include <QMenuBar>
-#include <QLineEdit>
-#include <QSplitter>
-#include <QTextEdit>
-#include <QStatusBar>
-#include <QPushButton>
-#include <QSpacerItem>
-#include <QMainWindow>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QApplication>
-#include <QStackedWidget>
+#include <QFrame>
 #include <QGeoCoordinate>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
+#include <QPushButton>
+#include <QSlider>
+#include <QSpacerItem>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QStatusBar>
+#include <QTextEdit>
+#include <QVBoxLayout>
+#include <QVariant>
+#include <QWidget>
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-public:
-    MainWindow(QWidget* parent = nullptr);
+  public:
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
     void setupUi();
     void setWorkspaceEnabled(bool enable);
 
-protected:
-    void resizeEvent(QResizeEvent* event) override;
+  protected:
+    void resizeEvent(QResizeEvent *event) override;
 
-public slots:
+  public slots:
     void onUpload();
     void onCreateGrid();
     void onClearCycles();
@@ -55,68 +55,68 @@ public slots:
     void onStartAttack();
     void onConnectBtnClicked();
     void onGraphChanged();
-    void onUpdateGraph(const QJsonDocument& json);
+    void onUpdateGraph(const QJsonDocument &json);
 
     void onSaveGraph();
     void onLoadGraph();
 
-private:
+  private:
     void createMenu();
     void createToolBar();
     void createEntryWidget();
     void createWorkingWiget();
     void createGraphInfoWidget();
 
-private:
-    QAction* actSave_;
-    QAction* actExit_;
-    QAction* actSaveAs_;
-    QAction* actCredits_;
-    QAction* actNewGraph_;
-    QAction* actOpenGraph_;
-    QAction* actionBFS_;
-    QAction* actionDFS_;
-    QAction* actAddNode_;
-    QAction* actAddEdge_;
-    QAction* actDelNode_;
-    QAction* actDelEdge_;
-    QAction* actEditEdge_;
+  private:
+    QAction *actSave_;
+    QAction *actExit_;
+    QAction *actSaveAs_;
+    QAction *actCredits_;
+    QAction *actNewGraph_;
+    QAction *actOpenGraph_;
+    QAction *actionBFS_;
+    QAction *actionDFS_;
+    QAction *actAddNode_;
+    QAction *actAddEdge_;
+    QAction *actDelNode_;
+    QAction *actDelEdge_;
+    QAction *actEditEdge_;
 
-    QMenu* menuFile_;
-    QMenu* menuGraph_;
-    QMenu* menuAdd_;
-    QMenu* menuEdit_;
-    QMenu* menuDelete_;
-    QMenu* menuAlgorithms_;
+    QMenu *menuFile_;
+    QMenu *menuGraph_;
+    QMenu *menuAdd_;
+    QMenu *menuEdit_;
+    QMenu *menuDelete_;
+    QMenu *menuAlgorithms_;
 
-    QMenuBar* menuBar_;
-    QToolBar* toolBar_;
+    QMenuBar *menuBar_;
+    QToolBar *toolBar_;
 
     // Workspace
-    QWidget* workingWidget_;
-    QDockWidget* dockWidget_;
-    QStackedWidget* centralWidget_;
-    QWidget* entryWidget_ = nullptr;
-    common::utils::TerminalWidget* terminalWidget_;
+    QWidget *workingWidget_;
+    QDockWidget *dockWidget_;
+    QStackedWidget *centralWidget_;
+    QWidget *entryWidget_ = nullptr;
+    common::utils::TerminalWidget *terminalWidget_;
 
     // Entry Widget
-    QLabel* backgroundLabel_;
-    QLineEdit*   username_;
-    QLineEdit*   password_;
-    QLineEdit*   ipLineEdit_;
-    QLineEdit*   portLineEdit_;
-    QPushButton* connectButton_;
+    QLabel *backgroundLabel_;
+    QLineEdit *username_;
+    QLineEdit *password_;
+    QLineEdit *ipLineEdit_;
+    QLineEdit *portLineEdit_;
+    QPushButton *connectButton_;
 
-    client::Client* client_;
-    GraphInfo* graphInfo_;
-    GraphView* graphView_;
+    client::Client *client_;
+    GraphInfo *graphInfo_;
+    GraphView *graphView_;
 
     QString currentFilePath_ = "";
 
     QString leftTop_;
     QString rightBottom_;
-    ElementPropertiesTable* elementPropertiesTable_;
+    ElementPropertiesTable *elementPropertiesTable_;
 };
 
-} // end namespace dcis::ui
+} // namespace dcis::gui
 #endif // DCIS_UI_MAINWINDOW_H_

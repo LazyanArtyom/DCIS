@@ -5,17 +5,17 @@
 #include <gui/graphscene.h>
 
 // Qt includes
+#include <QGraphicsView>
 #include <QKeyEvent>
 #include <QWheelEvent>
-#include <QGraphicsView>
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 
 class ImageEditor : public QGraphicsView
 {
     Q_OBJECT
-public:
+  public:
     struct SizeInfo
     {
         QSizeF imageSize;
@@ -24,7 +24,7 @@ public:
         QSizeF graphViewportSize;
     };
 
-    ImageEditor(QWidget* parent = nullptr);
+    ImageEditor(QWidget *parent = nullptr);
     ~ImageEditor() = default;
 
     void zoomIn();
@@ -32,31 +32,31 @@ public:
     void viewFit();
 
     SizeInfo getSizeInfo() const;
-    void setImage(const QImage& img);
+    void setImage(const QImage &img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
-    graph::Graph* getGraph() const;
-    void updateGraph(graph::Graph* graph);
+    graph::Graph *getGraph() const;
+    void updateGraph(graph::Graph *graph);
 
-signals:
+  signals:
     void sigNodeMoved();
     void sigGraphChanged();
 
-public slots:
+  public slots:
 
-protected:
-    void wheelEvent(QWheelEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
-    void drawBackground(QPainter* painter, const QRectF& rect) override;
+  protected:
+    void wheelEvent(QWheelEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void drawBackground(QPainter *painter, const QRectF &rect) override;
 
-private:
+  private:
     void scaleView(qreal scaleFactor);
     bool isResized_ = false;
     bool isLandscape_ = false;
     QPixmap backgroundImage_;
 
-    graph::Graph* graph_;
-    gui::GraphScene* graphScene_;
+    graph::Graph *graph_;
+    gui::GraphScene *graphScene_;
 };
 
 } // end namespace dcis::gui

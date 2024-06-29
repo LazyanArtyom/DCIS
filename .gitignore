@@ -30,7 +30,12 @@
 
 *.DS_Store
 
+compile_commands.json
+core
+dcis
+
 /.vscode
+/.cache
 /build
 /.idea
 /cmake-build-*

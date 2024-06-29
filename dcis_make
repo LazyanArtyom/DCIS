@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Define paths
+CMAKE_PATH="/Users/artyom/Qt/Tools/CMake/CMake.app/Contents/bin/cmake"
+BUILD_DIR="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug"
+CORE_EXEC="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/src/core/core.app/Contents/MacOS/core"
+DCIS_EXEC="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/src/dcis/dcis.app/Contents/MacOS/dcis"
+COMPILE_COMMANDS="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/compile_commands.json"
+
+# Function to clean the build
+clean() {
+	$CMAKE_PATH --build $BUILD_DIR --target clean
+}
+
+# Function to build the project
+build() {
+	$CMAKE_PATH --build $BUILD_DIR --target all
+	cp $CORE_EXEC .
+	cp $DCIS_EXEC .
+	cp $COMPILE_COMMANDS .
+}
+
+# Check for the correct number of arguments
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $0 {clean|build}"
+	exit 1
+fi
+
+# Execute the corresponding function based on the argument
+case "$1" in
+clean)
+	clean
+	;;
+build)
+	build
+	;;
+*)
+	echo "Invalid argument: $1"
+	echo "Usage: $0 {clean|build}"
+	exit 1
+	;;
+esac

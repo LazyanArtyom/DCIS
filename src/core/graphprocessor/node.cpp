@@ -1,10 +1,10 @@
 #include <graphprocessor/node.h>
 
-namespace dcis::GraphProcessor {
-
-Node::Node(commonNode* commNode, size_t id) : commNode_(commNode), id_(id)
+namespace dcis::GraphProcessor
 {
 
+Node::Node(commonNode *commNode, size_t id) : commNode_(commNode), id_(id)
+{
 }
 
 void Node::addNeighbour(Node *node)
@@ -14,7 +14,7 @@ void Node::addNeighbour(Node *node)
 
 Node *Node::getNeighbourById(size_t id)
 {
-    if(id < vecNodeNeighbours_.size())
+    if (id < vecNodeNeighbours_.size())
         return vecNodeNeighbours_[id];
     else
         return nullptr;
@@ -33,7 +33,7 @@ int Node::getCurrNeighbourId()
 void Node::incrCurrNeighbourId()
 {
     currNeighbourId_++;
-    if(currNeighbourId_ >= vecNodeNeighbours_.size())
+    if (currNeighbourId_ >= vecNodeNeighbours_.size())
         currNeighbourId_ %= vecNodeNeighbours_.size();
 }
 

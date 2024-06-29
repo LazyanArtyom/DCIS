@@ -2,31 +2,32 @@
 #define DCIS_COMMON_UTILS_TERMINALWIDGET_H_
 
 // Qt includes
-#include <QMenu>
-#include <QEvent>
-#include <QWidget>
-#include <QTextEdit>
 #include <QContextMenuEvent>
+#include <QEvent>
+#include <QMenu>
+#include <QTextEdit>
+#include <QWidget>
 
-
-namespace dcis::common::utils {
+namespace dcis::common::utils
+{
 
 class TerminalWidget : public QTextEdit
 {
     Q_OBJECT
-public:
-    TerminalWidget(QWidget* parent = nullptr);
+  public:
+    TerminalWidget(QWidget *parent = nullptr);
     void setText(QString text, int fontSize = 0);
     void appendText(QString text, int fontSize = 0);
     void clearText();
 
-protected:
-    void contextMenuEvent(QContextMenuEvent* event);
-private slots:
+  protected:
+    void contextMenuEvent(QContextMenuEvent *event);
+  private slots:
     void adjustScrollBar();
-private:
-    void processColorAndLineEnding(QString& text);
+
+  private:
+    void processColorAndLineEnding(QString &text);
 };
 
-} // end namespace vta::common::utils
+} // namespace dcis::common::utils
 #endif // DCIS_COMMON_UTILS_TERMINALWIDGET_H_

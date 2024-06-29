@@ -8,13 +8,13 @@
 // QT includes
 #include <QWidget>
 
-
-namespace dcis::gui {
+namespace dcis::gui
+{
 
 class GraphEditingTool : public QWidget
 {
     Q_OBJECT
-public:
+  public:
     struct SizeInfo
     {
         QSizeF imageSize;
@@ -23,31 +23,30 @@ public:
         QSizeF graphViewportSize;
     };
 
-    GraphEditingTool(QWidget* parent = nullptr);
+    GraphEditingTool(QWidget *parent = nullptr);
 
-    void showImage(const QImage& img);
+    void showImage(const QImage &img);
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
-    graph::Graph* getGraph() const;
-    void updateGraph(graph::Graph* graph);
+    graph::Graph *getGraph() const;
+    void updateGraph(graph::Graph *graph);
 
     void setFocus(bool toImageEditor);
     SizeInfo getSizeInfo() const;
 
-signals:
+  signals:
     void sigNodeMoved();
     void sigGraphChanged();
 
-protected:
-    void resizeEvent(QResizeEvent*) override;
+  protected:
+    void resizeEvent(QResizeEvent *) override;
 
-private:
-    graph::Graph* graph_;
-    gui::GraphView* graphView_;
-    gui::GraphScene* graphScene_;
-    gui::ImageEditor* imageEditor_;
+  private:
+    graph::Graph *graph_;
+    gui::GraphView *graphView_;
+    gui::GraphScene *graphScene_;
+    gui::ImageEditor *imageEditor_;
 };
 
 } // end namespace dcis::gui
 #endif // DCIS_GUI_GRAPHEDITINGTOOL_H_
-
