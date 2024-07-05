@@ -1,0 +1,26 @@
+{
+    "client_commands": [
+        "ClientClearCycles",
+        "ClientStartExploration",
+        "ClientStartAttack",
+        "ClientGenerateGraph",
+        "ClientUpdateGraph",
+        "ClientSetUserInfo"
+    ],
+    "resource_types": [
+        "Text",
+        "Json",
+        "Command",
+        "Attachment"
+    ],
+    "server_commands": [
+        "ServerPublish",
+        "ServerShowText",
+        "ServerShowImage",
+        "ServerPrintText",
+        "ServerGetUserInfo",
+        "ServerUserAccepted",
+        "ServerUserDeclined",
+        "ServerUserAlreadyConnected"
+    ]
+}
