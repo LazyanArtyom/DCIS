@@ -6,23 +6,18 @@
 
 // Qt includes
 #include <QDir>
-#include <QImageReader>
 #include <QThread>
+#include <QImageReader>
 
 // STL includes
-#include <iostream>
 
 namespace dcis::server
 {
 
 Server::Server(common::utils::TerminalWidget *terminalWidget, QObject *parent)
-    : terminalWidget_(terminalWidget), QTcpServer(parent)
-{
-}
+    : terminalWidget_(terminalWidget), QTcpServer(parent) {}
 
-Server::~Server()
-{
-}
+Server::~Server() {}
 
 void Server::addClient(common::user::UserInfo userInfo)
 {
@@ -30,7 +25,7 @@ void Server::addClient(common::user::UserInfo userInfo)
     {
         if (client.name == userInfo.name)
         {
-            sendCommand(common::resource::Command::ServerUserAlreadyConnected, currentSocket_);
+            sendStatusUpdate(common::resource::status::UserAlreadyConnected, currentSocket_);
             return;
         }
     }
@@ -61,7 +56,7 @@ bool Server::run(const int port)
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
-    terminalWidget_->appendText("Connectionnnnn \n");
+    terminalWidget_->appendText("New incoming connection ... \n");
 
     currentSocket_ = socketDescriptor;
 
@@ -78,7 +73,7 @@ void Server::incomingConnection(qintptr socketDescriptor)
     clientMap_[userInfo] = socket;
 
     // Send cmd to get info about client
-    sendCommand(common::resource::Command::ServerGetUserInfo, socketDescriptor);
+    sendCommand(common::resource::command::server::GetUserInfo, socketDescriptor);
 }
 
 bool Server::publish(const QByteArray &data, qintptr socketDesc)
@@ -86,7 +81,7 @@ bool Server::publish(const QByteArray &data, qintptr socketDesc)
     QTcpSocket *socket = clientMap_.value(common::user::UserInfo{socketDesc});
 
     QDataStream socketStream(socket);
-    socketStream.setVersion(common::resource::DATASTREAM_VERSION);
+    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
 
     socketStream << data;
 
@@ -121,47 +116,19 @@ bool Server::publishAll(const QByteArray &data, QSet<qintptr> excludeSockets)
     return true;
 }
 
-void Server::sendText(const QString &text, common::resource::Command cmd, qintptr socketDescriptor)
+void Server::sendText(const QString &text, const QString cmd, qintptr socketDescriptor)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Text;
-    header.command = cmd;
-
-    QByteArray resource = text.toUtf8();
-    header.bodySize = resource.size();
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-
-    resource.prepend(headerData);
-    publish(resource, socketDescriptor);
+    QByteArray body = text.toUtf8();
+    publish(common::resource::create(cmd, common::resource::type::Text, common::resource::status::Ok, body), socketDescriptor);
 }
 
-void Server::sendJson(const QJsonDocument &json, common::resource::Command cmd, qintptr socketDescriptor)
+void Server::sendJson(const QJsonDocument &json, const QString cmd, qintptr socketDescriptor)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Json;
-    header.command = cmd;
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-
-    QByteArray resource = json.toJson();
-    header.bodySize = resource.size();
-
-    resource.prepend(headerData);
-    publish(resource, socketDescriptor);
+    QByteArray body = json.toJson();
+    publish(common::resource::create(cmd, common::resource::type::Json, common::resource::status::Ok, body), socketDescriptor);
 }
 
-void Server::sendAttachment(const QString &filePath, common::resource::Command cmd, qintptr socketDescriptor)
+void Server::sendAttachment(const QString &filePath, const QString cmd, qintptr socketDescriptor)
 {
     QFile file(filePath);
     if (file.open(QIODevice::ReadOnly))
@@ -169,24 +136,8 @@ void Server::sendAttachment(const QString &filePath, common::resource::Command c
         QFileInfo fileInfo(file.fileName());
         QString fileName(fileInfo.fileName());
 
-        common::resource::Header header;
-        header.resourceType = common::resource::ResourceType::Attachment;
-        header.command = cmd;
-        header.fileName = fileName;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(common::resource::Header::HEADER_SIZE);
-
-        QByteArray resource = file.readAll();
-
-        header.bodySize = resource.size();
-
-        resource.prepend(headerData);
-        publish(resource, socketDescriptor);
+        QByteArray body = file.readAll();
+        publish(common::resource::create(cmd, common::resource::type::Attachment, common::resource::status::Ok, body, fileName), socketDescriptor);
     }
     else
     {
@@ -195,19 +146,17 @@ void Server::sendAttachment(const QString &filePath, common::resource::Command c
     }
 }
 
-void Server::sendCommand(const common::resource::Command cmd, qintptr socketDescriptor)
+void Server::sendCommand(const QString cmd, qintptr socketDescriptor)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Command;
-    header.command = cmd;
+    publish(common::resource::create(cmd, common::resource::type::Command), socketDescriptor);
+}
 
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
 
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-    publish(headerData, socketDescriptor);
+void Server::sendStatusUpdate(const QString status, qintptr socketDescriptor)
+{
+    publish(common::resource::create(common::resource::command::StatusUpdate, 
+                                          common::resource::type::Command, status),
+                                          socketDescriptor);
 }
 
 // slots
@@ -220,7 +169,7 @@ void Server::onReadyRead()
     currentSocket_ = socket->socketDescriptor();
 
     QDataStream socketStream(socket);
-    socketStream.setVersion(common::resource::DATASTREAM_VERSION);
+    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
     socketStream.startTransaction();
     socketStream >> buffer;
 
@@ -228,20 +177,22 @@ void Server::onReadyRead()
     {
         terminalWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
 
-        QByteArray headerData = buffer.mid(0, common::resource::Header::HEADER_SIZE);
+        QByteArray headerData = buffer.mid(0, common::resource::GLOBAL_HEADER_SIZE);
         QDataStream ds(&headerData, QIODevice::ReadWrite);
         common::resource::Header header;
         ds >> header;
-        handle(header, buffer.mid(common::resource::Header::HEADER_SIZE));
+        handle(header, buffer.mid(common::resource::GLOBAL_HEADER_SIZE));
     }
     else
     {
+        terminalWidget_->appendText("#");
         /*terminalWidget_->appendText("Reading from client: " +
                                               QString::number(socket->socketDescriptor()) +
                                               "  Bytes recived: " + QString::number(socket->bytesAvailable()) + "
            bytes\n");*/
     }
 
+    // This is for web server, the header size is fixed 65 bytes
     if (socket->bytesAvailable() == 65 && socket->readAll().contains("Stream"))
     {
         terminalWidget_->appendText("New stream connection\n");
@@ -273,36 +224,29 @@ void Server::onDisconected()
 void Server::handle(const common::resource::Header &header, const QByteArray &body)
 {
     QString msg = "Success: data size is " + QString::number(body.size() + 128) +
-                  " bytes, Command: " + header.commandToString() + " ResourceType: " + header.typeToString();
+                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n";
     terminalWidget_->appendText(msg);
 
     header_ = header;
 
-    switch (header.resourceType)
+    if (header.resourceType_ == common::resource::type::Text)
     {
-    case common::resource::ResourceType::Text: {
         handleText(body);
-        break;
     }
-
-    case common::resource::ResourceType::Json: {
+    else if (header.resourceType_ == common::resource::type::Json)
+    {
         handleJson(body);
-        break;
     }
-
-    case common::resource::ResourceType::Attachment: {
+    else if (header.resourceType_ == common::resource::type::Attachment)
+    {
         handleAttachment(body);
-        break;
     }
-
-    case common::resource::ResourceType::Command: {
-        handleCommand(header.command);
-        break;
+    else if (header.resourceType_ == common::resource::type::Command)
+    {
+        handleCommand(header.command_);
     }
-
-    default: {
+    else {
         handleUnknown();
-    }
     }
 }
 
@@ -317,7 +261,7 @@ void Server::handleAttachment(const QByteArray &data)
     QString WORKING_DIR = dir.absolutePath() + UPLOADED_IMAGES_PATH;
     dir.mkdir(WORKING_DIR);
 
-    CURRENT_IMAGE_PATH = WORKING_DIR + "/" + header_.fileName;
+    CURRENT_IMAGE_PATH = WORKING_DIR + "/" + header_.fileName_;
 
     QFile file(CURRENT_IMAGE_PATH);
     if (file.open(QIODevice::WriteOnly))
@@ -339,28 +283,15 @@ void Server::handleAttachment(const QByteArray &data)
     QString msg = "File saved at " + WORKING_DIR;
     terminalWidget_->appendText(msg);
 
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::server::Publish)
     {
-    case common::resource::Command::ServerPublish: {
         terminalWidget_->appendText("Sending Image to clients\n");
 
-        common::resource::Header header;
-        header.resourceType = common::resource::ResourceType::Attachment;
-        header.command = common::resource::Command::ServerShowImage;
-        header.fileName = header_.fileName;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(common::resource::Header::HEADER_SIZE);
-
-        QByteArray resource = data;
-        header.bodySize = data.size();
-
-        resource.prepend(headerData);
-        publishAll(resource, QSet<qintptr>{currentSocket_});
+        QByteArray body = data;
+        publishAll(common::resource::create(common::resource::command::client::ShowImage, 
+                                                 common::resource::type::Attachment, 
+                                                 common::resource::status::Ok, body),
+                                                 QSet<qintptr>{currentSocket_});
 
         for (const auto &[client, socket] : clientMap_.asKeyValueRange())
         {
@@ -377,10 +308,6 @@ void Server::handleAttachment(const QByteArray &data)
                 socket->flush();
             }
         }
-        break;
-    }
-    default:
-        return;
     }
 }
 
@@ -389,22 +316,16 @@ void Server::handleText(const QByteArray &data)
     QString msg = "Recived Text: " + data + "\n";
     terminalWidget_->appendText(msg);
 
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::PrintText)
     {
-    case common::resource::Command::ServerPrintText: {
         terminalWidget_->appendText(QString::fromUtf8(data));
-        break;
-    }
-    default:
-        return;
     }
 }
 
 void Server::handleJson(const QByteArray &data)
 {
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::server::Publish)
     {
-    case common::resource::Command::ServerPublish: {
         terminalWidget_->appendText("Recived Json\n");
 
         QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
@@ -421,22 +342,11 @@ void Server::handleJson(const QByteArray &data)
         {
             terminalWidget_->appendText("Sending JSON to clients\n");
 
-            common::resource::Header header;
-            header.resourceType = common::resource::ResourceType::Json;
-            header.command = common::resource::Command::ClientUpdateGraph;
-
-            QByteArray headerData;
-            QDataStream ds(&headerData, QIODevice::ReadWrite);
-            ds << header;
-
-            // header size 128 bytes
-            headerData.resize(common::resource::Header::HEADER_SIZE);
-
-            QByteArray resource = data;
-            header.bodySize = data.size();
-
-            resource.prepend(headerData);
-            publishAll(resource, QSet<qintptr>{currentSocket_});
+            QByteArray body = data;
+            publishAll(common::resource::create(common::resource::command::client::UpdateGraph, 
+                                                     common::resource::type::Json,
+                                                   common::resource::status::Ok, 
+                                                           body), QSet<qintptr>{currentSocket_});
 
             for (const auto &[client, socket] : clientMap_.asKeyValueRange())
             {
@@ -448,24 +358,25 @@ void Server::handleJson(const QByteArray &data)
                 }
             }
         }
-        break;
     }
-    case common::resource::Command::ClientSetUserInfo: {
+    else if (header_.command_ == common::resource::command::server::SetUserInfo)
+    {
         QJsonDocument json = QJsonDocument::fromJson(data);
         common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
 
+        // TO DO: Create normal login system
         if (userInfo.name == "artyom" && userInfo.password == "al1234" ||
-            userInfo.name == "agit" && userInfo.password == "aa1234" ||
-            userInfo.name == "davit" && userInfo.password == "dh1234" ||
-            userInfo.name == "root" && userInfo.password == "root")
+            userInfo.name == "agit"   && userInfo.password == "aa1234" ||
+            userInfo.name == "davit"  && userInfo.password == "dh1234" ||
+            userInfo.name == "root"   && userInfo.password == "root")
         {
             addClient(userInfo);
-            sendCommand(common::resource::Command::ServerUserAccepted, currentSocket_);
+            sendStatusUpdate(common::resource::status::UserAccepted, currentSocket_);
 
             // sync new user
             if (clientMap_.count() > 1)
             {
-                sendAttachment(CURRENT_IMAGE_PATH, common::resource::Command::ServerShowImage, currentSocket_);
+                sendAttachment(CURRENT_IMAGE_PATH, common::resource::command::client::ShowImage, currentSocket_);
 
                 if (commGraph_ == nullptr)
                 {
@@ -473,26 +384,20 @@ void Server::handleJson(const QByteArray &data)
                 }
 
                 QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
-                sendJson(json, common::resource::Command::ClientUpdateGraph, currentSocket_);
+                sendJson(json, common::resource::command::client::UpdateGraph, currentSocket_);
             }
         }
         else
         {
-            sendCommand(common::resource::Command::ServerUserDeclined, currentSocket_);
+            sendStatusUpdate(common::resource::status::UserDeclined, currentSocket_);
         }
-        break;
-    }
-    default:
-        return;
     }
 }
 
-void Server::handleCommand(const common::resource::Command cmd)
+void Server::handleCommand(const QString cmd)
 {
-    switch (cmd)
+    if (cmd == common::resource::command::server::ClearCycles)
     {
-    case common::resource::Command::ClientClearCycles: {
-        // clear cycles
         terminalWidget_->appendText("ClearCycles\n");
 
         if (graphProc_)
@@ -504,9 +409,10 @@ void Server::handleCommand(const common::resource::Command cmd)
         graphProc_->initGraph();
         graphProc_->initGraphDirs();
         graphProc_->clearCycles();
-        break;
+
     }
-    case common::resource::Command::ClientGenerateGraph: {
+    else if (cmd == common::resource::command::server::GenerateGraph)
+    {
         if (graphProc_)
         {
             terminalWidget_->appendText("GenereateGraph\n");
@@ -514,30 +420,21 @@ void Server::handleCommand(const common::resource::Command cmd)
             graphProc_->setImgSize(imgW_, imgH_);
             graphProc_->generateGraph();
         }
-        break;
     }
-    case common::resource::Command::ClientStartExploration: {
+    else if (cmd == common::resource::command::server::StartExploration)
+    {
         if (graphProc_)
         {
             terminalWidget_->appendText("StartExploration\n");
 
             graphProc_->startExploration();
         }
-        break;
     }
-    case common::resource::Command::ClientStartAttack: {
-        terminalWidget_->appendText("StartAttack\n");
-
+    else if (cmd == common::resource::command::server::StartAttack)
+    {
         // TO DO: start attack
-        break;
+        terminalWidget_->appendText("StartAttack | TO DO: Implement | \n");
     }
-    default:
-        return;
-    }
-}
-
-void Server::syncSockets()
-{
 }
 
 void Server::updateSockets()

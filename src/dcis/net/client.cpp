@@ -27,48 +27,19 @@ Client::~Client()
     socket_->deleteLater();
 }
 
-void Client::sendText(const QString &text, common::resource::Command cmd)
+void Client::sendText(const QString &text, const QString cmd)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Text;
-    header.command = cmd;
-
-    QByteArray resource = text.toUtf8();
-    header.bodySize = resource.size();
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-
-    resource.prepend(headerData);
-
-    sendToServer(resource);
+    QByteArray body = text.toUtf8();
+    sendToServer(common::resource::create(cmd, common::resource::type::Text, common::resource::status::Ok, body));
 }
 
-void Client::sendJson(const QJsonDocument &json, common::resource::Command cmd)
+void Client::sendJson(const QJsonDocument &json, const QString cmd)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Json;
-    header.command = cmd;
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-
-    QByteArray resource = json.toJson();
-    header.bodySize = resource.size();
-
-    resource.prepend(headerData);
-    sendToServer(resource);
+    QByteArray body = json.toJson();
+    sendToServer(common::resource::create(cmd, common::resource::type::Json, common::resource::status::Ok, body));
 }
 
-void Client::sendAttachment(const QString &filePath, common::resource::Command cmd)
+void Client::sendAttachment(const QString &filePath, const QString cmd)
 {
     QFile file(filePath);
     if (file.open(QIODevice::ReadOnly))
@@ -76,24 +47,8 @@ void Client::sendAttachment(const QString &filePath, common::resource::Command c
         QFileInfo fileInfo(file.fileName());
         QString fileName(fileInfo.fileName());
 
-        common::resource::Header header;
-        header.resourceType = common::resource::ResourceType::Attachment;
-        header.command = cmd;
-        header.fileName = fileName;
-
-        QByteArray headerData;
-        QDataStream ds(&headerData, QIODevice::ReadWrite);
-        ds << header;
-
-        // header size 128 bytes
-        headerData.resize(common::resource::Header::HEADER_SIZE);
-
-        QByteArray resource = file.readAll();
-
-        header.bodySize = resource.size();
-
-        resource.prepend(headerData);
-        sendToServer(resource);
+        QByteArray body = file.readAll();
+        sendToServer(common::resource::create(cmd, common::resource::type::Attachment, common::resource::status::Ok, body, fileName));
     }
     else
     {
@@ -102,130 +57,96 @@ void Client::sendAttachment(const QString &filePath, common::resource::Command c
     }
 }
 
-void Client::sendCommand(const common::resource::Command cmd)
+void Client::sendCommand(const QString cmd)
 {
-    common::resource::Header header;
-    header.resourceType = common::resource::ResourceType::Command;
-    header.command = cmd;
-
-    QByteArray headerData;
-    QDataStream ds(&headerData, QIODevice::ReadWrite);
-    ds << header;
-
-    // header size 128 bytes
-    headerData.resize(common::resource::Header::HEADER_SIZE);
-    sendToServer(headerData);
+    sendToServer(common::resource::create(cmd, common::resource::type::Command));
 }
 
 void Client::handle(const common::resource::Header &header, const QByteArray &body)
 {
     QString msg = "Success: data size is " + QString::number(body.size() + 128) +
-                  " bytes, Command: " + header.commandToString() + " ResourceType: " + header.typeToString() + "\n";
+                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n";
     terminalWidget_->appendText(msg);
 
     header_ = header;
-    switch (header.resourceType)
+
+    if (header.resourceType_ == common::resource::type::Text)
     {
-    case common::resource::ResourceType::Text: {
         handleText(body);
-        break;
     }
-
-    case common::resource::ResourceType::Json: {
+    else if (header.resourceType_ == common::resource::type::Json)
+    {
         handleJson(body);
-        break;
     }
-
-    case common::resource::ResourceType::Attachment: {
+    else if (header.resourceType_ == common::resource::type::Attachment)
+    {
         handleAttachment(body);
-        break;
     }
-
-    case common::resource::ResourceType::Command: {
-        handleCommand(header.command);
-        break;
+    else if (header.resourceType_ == common::resource::type::Command)
+    {
+        handleCommand(header.command_);
     }
-
-    default: {
+    else {
         handleUnknown();
-    }
     }
 }
 
 void Client::handleUnknown()
 {
+    terminalWidget_->appendText("Unknown message, doing nothing.\n");
 }
 
 void Client::handleAttachment(const QByteArray &data)
 {
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::client::ShowImage)
     {
-    case common::resource::Command::ServerShowImage: {
         QImage img = QImage::fromData(data);
         emit sigShowImage(img);
-        break;
-    }
-    default:
-        return;
     }
 }
 
 void Client::handleText(const QByteArray &data)
 {
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::PrintText)
     {
-    case common::resource::Command::ServerPrintText: {
         terminalWidget_->appendText(QString::fromUtf8(data));
-        break;
-    }
-    default:
-        return;
     }
 }
 
 void Client::handleJson(const QByteArray &data)
 {
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::client::UpdateGraph)
     {
-    case common::resource::Command::ClientUpdateGraph: {
         QJsonDocument json = QJsonDocument::fromJson(data);
         emit sigUpdateGraph(json);
-        break;
-    }
-    default:
-        return;
     }
 }
 
-void Client::handleCommand(const common::resource::Command cmd)
+void Client::handleCommand(const QString cmd)
 {
-    switch (header_.command)
+    if (header_.command_ == common::resource::command::server::GetUserInfo)
     {
-    case common::resource::Command::ServerGetUserInfo: {
         common::user::UserInfo userInfo;
         userInfo.name = username_;
         userInfo.password = password_;
 
-        sendJson(common::user::UserInfo::toJson(userInfo), common::resource::Command::ClientSetUserInfo);
-        break;
+        sendJson(common::user::UserInfo::toJson(userInfo), common::resource::command::server::SetUserInfo);
     }
-    case common::resource::Command::ServerUserAccepted: {
-        QString msg = "Succsesfully connected to server\n";
-        terminalWidget_->appendText(msg);
-
-        emit sigUserAccepted(true);
-        break;
-    }
-    case common::resource::Command::ServerUserDeclined: {
-        emit sigUserAccepted(false);
-        break;
-    }
-    case common::resource::Command::ServerUserAlreadyConnected: {
-        emit sigUserAccepted(false);
-        break;
-    }
-    default:
-        return;
+    else if (header_.command_ == common::resource::command::StatusUpdate)
+    {
+        if (header_.status_ == common::resource::status::UserAccepted)
+        {
+            terminalWidget_->appendText("Succsesfully connected to server\n");
+            emit sigUserAccepted(true);
+        }
+        else if (header_.status_ == common::resource::status::UserDeclined)
+        {
+            emit sigUserAccepted(false);
+        }
+        else if (header_.status_ == common::resource::status::UserAlreadyConnected)
+        {
+            emit sigUserAccepted(false);
+        }
     }
 }
 
@@ -237,18 +158,14 @@ bool Client::connectToServer(const QString &ip, const QString &port)
 
     socket_->connectToHost(ip, port.toInt());
 
-    QString msg;
     if (socket_->waitForConnected())
     {
-        msg = "Succsesfully connected to " + ip + ":" + port + "\n";
-        terminalWidget_->appendText(msg);
+        terminalWidget_->appendText("Succsesfully connected to " + ip + ":" + port + "\n");
         return true;
     }
     else
     {
-        msg = "Error to connected to " + ip + ":" + port + "\n";
-        terminalWidget_->appendText(msg);
-
+        terminalWidget_->appendText("Error to connected to " + ip + ":" + port + "\n");
         socket_->close();
         socket_->deleteLater();
         return false;
@@ -270,7 +187,7 @@ bool Client::sendToServer(const QByteArray &data)
     }
 
     QDataStream socketStream(socket_);
-    socketStream.setVersion(common::resource::DATASTREAM_VERSION);
+    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
 
     socketStream << data;
 
@@ -333,7 +250,7 @@ void Client::onReadyRead()
     QTcpSocket *socket = reinterpret_cast<QTcpSocket *>(sender());
 
     QDataStream socketStream(socket);
-    socketStream.setVersion(QDataStream::Qt_6_4);
+    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
     socketStream.startTransaction();
     socketStream >> buffer;
 
@@ -341,11 +258,11 @@ void Client::onReadyRead()
     {
         terminalWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
 
-        QByteArray headerData = buffer.mid(0, common::resource::Header::HEADER_SIZE);
+        QByteArray headerData = buffer.mid(0, common::resource::GLOBAL_HEADER_SIZE);
         QDataStream ds(&headerData, QIODevice::ReadWrite);
         common::resource::Header header;
         ds >> header;
-        handle(header, buffer.mid(common::resource::Header::HEADER_SIZE));
+        handle(header, buffer.mid(common::resource::GLOBAL_HEADER_SIZE));
     }
     else
     {

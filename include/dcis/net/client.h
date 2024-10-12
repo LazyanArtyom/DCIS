@@ -20,10 +20,10 @@ class Client : public QObject
     ~Client();
 
     /* Senders */
-    void sendText(const QString &text, common::resource::Command cmd);
-    void sendJson(const QJsonDocument &json, common::resource::Command cmd);
-    void sendAttachment(const QString &filePath, common::resource::Command cmd);
-    void sendCommand(const common::resource::Command cmd);
+    void sendText(const QString &text, const QString cmd);
+    void sendJson(const QJsonDocument &json, const QString cmd);
+    void sendAttachment(const QString &filePath, const QString cmd);
+    void sendCommand(const QString cmd);
 
     /* Handlers */
     void handle(const common::resource::Header &header, const QByteArray &body);
@@ -31,7 +31,7 @@ class Client : public QObject
     void handleAttachment(const QByteArray &data);
     void handleText(const QByteArray &data);
     void handleJson(const QByteArray &data);
-    void handleCommand(const common::resource::Command cmd);
+    void handleCommand(const QString cmd);
 
     bool connectToServer(const QString &ip, const QString &port);
     bool checkServerConnected() const;
@@ -56,8 +56,8 @@ class Client : public QObject
 
     QString username_;
     QString password_;
-    common::resource::Header header_;
     QTcpSocket *socket_ = nullptr;
+    common::resource::Header header_;
     common::utils::TerminalWidget *terminalWidget_ = nullptr;
 };
 

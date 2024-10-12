@@ -34,25 +34,26 @@ class Server : public QTcpServer
     // Senders
     bool publish(const QByteArray &data, qintptr socketDesc);
     bool publishAll(const QByteArray &data, QSet<qintptr> excludeSockets);
-    void sendText(const QString &text, common::resource::Command cmd, qintptr socketDescriptor = -1);
-    void sendJson(const QJsonDocument &json, common::resource::Command cmd, qintptr socketDescriptor = -1);
-    void sendAttachment(const QString &filePath, common::resource::Command cmd, qintptr socketDescriptor = -1);
-    void sendCommand(const common::resource::Command cmd, qintptr socketDescriptor = -1);
+    void sendText(const QString &text, const QString cmd, qintptr socketDescriptor = -1);
+    void sendJson(const QJsonDocument &json, const QString cmd, qintptr socketDescriptor = -1);
+    void sendAttachment(const QString &filePath, const QString cmd, qintptr socketDescriptor = -1);
+    void sendCommand(const QString cmd, qintptr socketDescriptor = -1);
+    void sendStatusUpdate(const QString status, qintptr socketDescriptor = -1);
 
     // Handlers
     void handleUnknown();
     void handleText(const QByteArray &data);
     void handleJson(const QByteArray &data);
     void handleAttachment(const QByteArray &data);
-    void handleCommand(const common::resource::Command cmd);
+    void handleCommand(const QString cmd);
     void handle(const common::resource::Header &header, const QByteArray &body);
-
-    void syncSockets();
-    void updateSockets();
 
   public slots:
     void onReadyRead();
     void onDisconected();
+
+private:
+    void updateSockets();
 
   private:
     DataType data_;
