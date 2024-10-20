@@ -6,7 +6,6 @@
 #include <utils/terminalwidget.h>
 
 // STL includes
-#include <memory>
 
 // Qt includes
 #include <QMainWindow>
@@ -26,7 +25,7 @@ class MainWindow : public QMainWindow
   private:
     Server *server_;
     QTabWidget *centralTabWidget_;
-    common::utils::TerminalWidget *terminalWidget_;
+    common::utils::ILogger *terminalWidget_;
 
     // std::unique_ptr<utils::DebugStream> debugStream_;
 };

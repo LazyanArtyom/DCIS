@@ -23,7 +23,7 @@ class Server : public QTcpServer
     using DataType = QByteArray;
     using ClientMapType = QMap<common::user::UserInfo, QTcpSocket *>;
 
-    Server(common::utils::TerminalWidget *terminalWidget, QObject *parent = nullptr);
+    Server(common::utils::ILogger *terminalWidget, QObject *parent = nullptr);
     ~Server();
 
     void addClient(common::user::UserInfo userInfo);
@@ -59,7 +59,7 @@ private:
     DataType data_;
     ClientMapType clientMap_;
     common::resource::Header header_;
-    common::utils::TerminalWidget *terminalWidget_ = nullptr;
+    common::utils::ILogger *terminalWidget_ = nullptr;
 
     qintptr currentSocket_;
     dcis::GraphProcessor::commonGraph *commGraph_ = nullptr;

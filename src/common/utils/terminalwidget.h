@@ -11,17 +11,34 @@
 namespace dcis::common::utils
 {
 
-class TerminalWidget : public QTextEdit
+class ILogger 
+{
+public:
+    virtual ~ILogger() = default;
+    virtual void clearText() = 0;
+    virtual void setText(QString text, int fontSize = 0) = 0;
+    virtual void appendText(QString text, int fontSize = 0) = 0;
+};
+
+class LoggerCore : public ILogger 
+{
+public:
+    void clearText() override;
+    void setText(QString text, int fontSize = 0) override;
+    void appendText(QString text, int fontSize = 0) override;
+};
+
+class LoggerWidget : public QTextEdit, public LoggerCore
 {
     Q_OBJECT
   public:
-    TerminalWidget(QWidget *parent = nullptr);
-    void setText(QString text, int fontSize = 0);
-    void appendText(QString text, int fontSize = 0);
-    void clearText();
+    LoggerWidget(QWidget *parent = nullptr);
+    void setText(QString text, int fontSize = 0) override final;
+    void appendText(QString text, int fontSize = 0) override final;
+    void clearText() override final;
 
   protected:
-    void contextMenuEvent(QContextMenuEvent *event);
+    void contextMenuEvent(QContextMenuEvent *event) override;
   private slots:
     void adjustScrollBar();
 

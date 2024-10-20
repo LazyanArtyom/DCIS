@@ -97,7 +97,7 @@ class MainWindow : public QMainWindow
     QDockWidget *dockWidget_;
     QStackedWidget *centralWidget_;
     QWidget *entryWidget_ = nullptr;
-    common::utils::TerminalWidget *terminalWidget_;
+    common::utils::ILogger *terminalWidget_;
 
     // Entry Widget
     QLabel *backgroundLabel_;

@@ -51,7 +51,7 @@ void MainWindow::setupUi()
                             */
 
     // Console
-    terminalWidget_ = new utils::TerminalWidget(this);
+    terminalWidget_ = new utils::LoggerWidget(this);
 
     createEntryWidget();
     createWorkingWiget();
@@ -546,8 +546,8 @@ void MainWindow::createWorkingWiget()
     // vSplitter->setChildrenCollapsible(false);
 
     vSplitter->addWidget(graphView_);
-    hLayoutWorking->addWidget(terminalWidget_);
-    vSplitter->addWidget(terminalWidget_);
+    hLayoutWorking->addWidget(static_cast<common::utils::LoggerWidget*>(terminalWidget_));
+    vSplitter->addWidget(static_cast<common::utils::LoggerWidget*>(terminalWidget_));
     vSplitter->setSizes(QList<int>() << 700 << 200);
 }
 

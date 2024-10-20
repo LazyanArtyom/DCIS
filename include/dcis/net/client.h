@@ -16,7 +16,7 @@ class Client : public QObject
     Q_OBJECT
 
   public:
-    Client(common::utils::TerminalWidget *terminalWidget, QObject *parent = nullptr);
+    Client(common::utils::ILogger *terminalWidget, QObject *parent = nullptr);
     ~Client();
 
     /* Senders */
@@ -58,7 +58,7 @@ class Client : public QObject
     QString password_;
     QTcpSocket *socket_ = nullptr;
     common::resource::Header header_;
-    common::utils::TerminalWidget *terminalWidget_ = nullptr;
+    common::utils::ILogger *terminalWidget_ = nullptr;
 };
 
 } // end namespace dcis::client

@@ -14,7 +14,7 @@
 namespace dcis::server
 {
 
-Server::Server(common::utils::TerminalWidget *terminalWidget, QObject *parent)
+Server::Server(common::utils::ILogger *terminalWidget, QObject *parent)
     : terminalWidget_(terminalWidget), QTcpServer(parent) {}
 
 Server::~Server() {}

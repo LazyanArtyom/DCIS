@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     centralTabWidget_->setObjectName("centralTabWidget");
 
     // Console
-    terminalWidget_ = new common::utils::TerminalWidget(this);
+    terminalWidget_ = new common::utils::LoggerWidget(this);
 
     // Layouts
     QWidget *consoleWidget_ = new QWidget(centralTabWidget_);
@@ -46,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     horizontalLayoutEntry->setSpacing(6);
     horizontalLayoutEntry->setContentsMargins(11, 11, 11, 11);
 
-    horizontalLayoutEntry->addWidget(terminalWidget_);
+    horizontalLayoutEntry->addWidget(static_cast<common::utils::LoggerWidget*>(terminalWidget_));
 
     // server
     server_ = new Server(terminalWidget_, this);

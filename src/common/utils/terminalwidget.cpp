@@ -2,6 +2,9 @@
 
 // Qt includes
 
+// STL includes
+#include <iostream>
+
 // Color codes
 #define T_CC_BLACK "\033[30m"
 #define T_BOLD_CC_RED "\033[1;31m"
@@ -39,7 +42,25 @@
 namespace dcis::common::utils
 {
 
-void TerminalWidget::processColorAndLineEnding(QString &text)
+// LoggerCore
+void LoggerCore::setText(QString text, int fontSize)
+{
+    clearText();
+    appendText(text, fontSize);
+}
+
+void LoggerCore::appendText(QString text, int fontSize)
+{
+    std::cout << text.toStdString() << std::endl;
+}
+
+void LoggerCore::clearText()
+{
+    std::cout << "\033[2J\033[1;1H";
+}
+
+// LoggerWidget
+void LoggerWidget::processColorAndLineEnding(QString &text)
 {
     text.replace(" ", "&nbsp;");
     text.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
@@ -66,16 +87,16 @@ void TerminalWidget::processColorAndLineEnding(QString &text)
     text.replace("\n", "<br>");
 }
 
-TerminalWidget::TerminalWidget(QWidget *parent) : QTextEdit(parent)
+LoggerWidget::LoggerWidget(QWidget *parent) : QTextEdit(parent)
 {
     setReadOnly(true);
     setStyleSheet("background-color: black; color: white");
     setFont(QFont("Courier New", 12));
 
-    connect(this, &QTextEdit::textChanged, this, &TerminalWidget::adjustScrollBar);
+    connect(this, &QTextEdit::textChanged, this, &LoggerWidget::adjustScrollBar);
 }
 
-void TerminalWidget::setText(QString text, int fontSize)
+void LoggerWidget::setText(QString text, int fontSize)
 {
     if (fontSize)
     {
@@ -86,18 +107,18 @@ void TerminalWidget::setText(QString text, int fontSize)
     setText("<pre>" + text + "</pre>");
 }
 
-void TerminalWidget::appendText(QString text, int fontSize)
+void LoggerWidget::appendText(QString text, int fontSize)
 {
     processColorAndLineEnding(text);
     insertHtml("<pre>" + text + "</pre>");
 }
 
-void TerminalWidget::clearText()
+void LoggerWidget::clearText()
 {
     clear();
 }
 
-void TerminalWidget::contextMenuEvent(QContextMenuEvent *event)
+void LoggerWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu *menu = createStandardContextMenu();
     QFont font;
@@ -108,7 +129,7 @@ void TerminalWidget::contextMenuEvent(QContextMenuEvent *event)
     delete menu;
 }
 
-void TerminalWidget::adjustScrollBar()
+void LoggerWidget::adjustScrollBar()
 {
     moveCursor(QTextCursor::End);
     ensureCursorVisible();

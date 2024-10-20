@@ -16,7 +16,7 @@
 namespace dcis::client
 {
 
-Client::Client(common::utils::TerminalWidget *terminalWidget, QObject *parent)
+Client::Client(common::utils::ILogger *terminalWidget, QObject *parent)
     : terminalWidget_{terminalWidget}, QObject(parent)
 {
 }
