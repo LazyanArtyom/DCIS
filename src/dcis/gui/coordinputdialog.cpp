@@ -1,64 +1,67 @@
+// App includes
 #include <gui/coordinputdialog.h>
 
+// QT includes
 #include <QMessageBox>
 
-CCoordInputDialog::CCoordInputDialog(QWidget *parent) : QDialog(parent)
+
+CoordInputDialog::CoordInputDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("GeoCoordinate Dialog");
 
     QDoubleValidator *validator = new QDoubleValidator(0.0, 360.0, 8);
-    m_pLeftTopLatEdit = new QLineEdit(this);
-    m_pLeftTopLatEdit->setValidator(validator);
-    m_pLeftTopLonEdit = new QLineEdit(this);
-    m_pLeftTopLonEdit->setValidator(validator);
-    m_pRightBottomLatEdit = new QLineEdit(this);
-    m_pRightBottomLatEdit->setValidator(validator);
-    m_pRightBottomLonEdit = new QLineEdit(this);
-    m_pRightBottomLonEdit->setValidator(validator);
+    leftTopLatEdit_ = new QLineEdit(this);
+    leftTopLatEdit_->setValidator(validator);
+    leftTopLonEdit_ = new QLineEdit(this);
+    leftTopLonEdit_->setValidator(validator);
+    rightBottomLatEdit_ = new QLineEdit(this);
+    rightBottomLatEdit_->setValidator(validator);
+    rightBottomLonEdit_ = new QLineEdit(this);
+    rightBottomLonEdit_->setValidator(validator);
 
-    QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow("Left Top Latitude:", m_pLeftTopLatEdit);
-    pFormLayout->addRow("Left Top Longitude:", m_pLeftTopLonEdit);
-    pFormLayout->addRow("Right Bottom Latitude:", m_pRightBottomLatEdit);
-    pFormLayout->addRow("Right Bottom Longitude:", m_pRightBottomLonEdit);
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow("Left Top Latitude:", leftTopLatEdit_);
+    formLayout->addRow("Left Top Longitude:", leftTopLonEdit_);
+    formLayout->addRow("Right Bottom Latitude:", rightBottomLatEdit_);
+    formLayout->addRow("Right Bottom Longitude:", rightBottomLonEdit_);
 
-    m_pOkButton = new QPushButton("OK", this);
-    m_pOkButton->setDisabled(true);
+    okButton_ = new QPushButton("OK", this);
+    okButton_->setDisabled(true);
 
     auto slot = [&]() {
-        m_pOkButton->setEnabled(!m_pLeftTopLatEdit->text().isEmpty() && !m_pLeftTopLonEdit->text().isEmpty() &&
-                                !m_pRightBottomLatEdit->text().isEmpty() && !m_pRightBottomLonEdit->text().isEmpty());
+        okButton_->setEnabled(!leftTopLatEdit_->text().isEmpty() && !leftTopLonEdit_->text().isEmpty() &&
+                                !rightBottomLatEdit_->text().isEmpty() && !rightBottomLonEdit_->text().isEmpty());
     };
 
-    connect(m_pLeftTopLatEdit, &QLineEdit::textEdited, this, slot);
-    connect(m_pLeftTopLonEdit, &QLineEdit::textEdited, this, slot);
-    connect(m_pRightBottomLatEdit, &QLineEdit::textEdited, this, slot);
-    connect(m_pRightBottomLonEdit, &QLineEdit::textEdited, this, slot);
+    connect(leftTopLatEdit_, &QLineEdit::textEdited, this, slot);
+    connect(leftTopLonEdit_, &QLineEdit::textEdited, this, slot);
+    connect(rightBottomLatEdit_, &QLineEdit::textEdited, this, slot);
+    connect(rightBottomLonEdit_, &QLineEdit::textEdited, this, slot);
 
-    connect(m_pOkButton, &QPushButton::clicked, this, &CCoordInputDialog::accept);
+    connect(okButton_, &QPushButton::clicked, this, &CoordInputDialog::accept);
 
-    QVBoxLayout *pMainLayout = new QVBoxLayout(this);
-    pMainLayout->addLayout(pFormLayout);
-    pMainLayout->addWidget(m_pOkButton);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(okButton_);
 }
 
-QString CCoordInputDialog::leftTopCoordinate() const
+QString CoordInputDialog::leftTopCoordinate() const
 {
-    QStringList oLeftTop;
-    oLeftTop << m_pLeftTopLatEdit->text();
-    oLeftTop << m_pLeftTopLonEdit->text();
-    return oLeftTop.join(" ");
+    QStringList leftTopList;
+    leftTopList << leftTopLatEdit_->text();
+    leftTopList << leftTopLonEdit_->text();
+    return leftTopList.join(" ");
 }
 
-QString CCoordInputDialog::rightBottomCoordinate() const
+QString CoordInputDialog::rightBottomCoordinate() const
 {
-    QStringList oRightBottom;
-    oRightBottom << m_pRightBottomLatEdit->text();
-    oRightBottom << m_pRightBottomLonEdit->text();
-    return oRightBottom.join(" ");
+    QStringList rightBottomList;
+    rightBottomList << rightBottomLatEdit_->text();
+    rightBottomList << rightBottomLonEdit_->text();
+    return rightBottomList.join(" ");
 }
 
-void CCoordInputDialog::accept()
+void CoordInputDialog::accept()
 {
     // Perform any additional validation or checks here if needed
     QDialog::accept();
@@ -71,9 +74,9 @@ DroneIpInputDialog::DroneIpInputDialog(QWidget *parent) : QDialog(parent)
     ipLineEdit_ = new QLineEdit(this);
     portLineEdit_ = new QLineEdit(this);
 
-    QFormLayout *pFormLayout = new QFormLayout();
-    pFormLayout->addRow("Drone IP:", ipLineEdit_);
-    pFormLayout->addRow("Drone Port:", portLineEdit_);
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->addRow("Drone IP:", ipLineEdit_);
+    formLayout->addRow("Drone Port:", portLineEdit_);
 
     okButton_ = new QPushButton("OK", this);
     okButton_->setDisabled(true);
@@ -84,9 +87,9 @@ DroneIpInputDialog::DroneIpInputDialog(QWidget *parent) : QDialog(parent)
     connect(portLineEdit_, &QLineEdit::textEdited, this, slot);
     connect(okButton_, &QPushButton::clicked, this, &DroneIpInputDialog::accept);
 
-    QVBoxLayout *pMainLayout = new QVBoxLayout(this);
-    pMainLayout->addLayout(pFormLayout);
-    pMainLayout->addWidget(okButton_);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(okButton_);
 }
 
 QString DroneIpInputDialog::getIp() const

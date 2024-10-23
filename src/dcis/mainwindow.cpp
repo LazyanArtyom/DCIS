@@ -116,11 +116,11 @@ void MainWindow::onUpload()
         QImage img = imgReader.read();
         // imageEditor_->showImage(img);
         graphView_->setImage(img);
-        CCoordInputDialog oDialog;
-        if (oDialog.exec() == QDialog::Accepted)
+        CoordInputDialog cordDialog;
+        if (cordDialog.exec() == QDialog::Accepted)
         {
-            leftTop_ = oDialog.leftTopCoordinate();
-            rightBottom_ = oDialog.rightBottomCoordinate();
+            leftTop_ = cordDialog.leftTopCoordinate();
+            rightBottom_ = cordDialog.rightBottomCoordinate();
         }
 
         terminalWidget_->appendText("LeftTop: " + leftTop_ + " \n");
