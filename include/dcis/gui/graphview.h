@@ -90,7 +90,7 @@ class GraphView : public QGraphicsView
     QPixmap backgroundImage_;
 
     graph::Graph *graph_;
-    gui::GraphScene *graphScene_;
+    GraphScene *graphScene_;
     ImageInfo imageInfo_;
 };
 

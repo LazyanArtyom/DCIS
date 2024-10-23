@@ -6,11 +6,11 @@
 
 // Qt includes
 #include <QFile>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
 #include <QString>
+#include <QJsonValue>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include <QtCore/qjsonobject.h>
 
 namespace dcis::common::config

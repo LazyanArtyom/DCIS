@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 
-// App include
+// APP include
 #include <gui/coordinputdialog.h>
 
-// Qt includes
+// QT includes
 #include <QDockWidget>
 #include <QRegularExpression>
 
@@ -159,8 +159,8 @@ void MainWindow::onCreateGrid()
     layout->addWidget(colsLabel);
     layout->addWidget(colsLineEdit);
 
-    QPushButton *okButton = new QPushButton("OK");
-    QPushButton *cancelButton = new QPushButton("Cancel");
+    QPushButton *okButton = new QPushButton(tr("OK"));
+    QPushButton *cancelButton = new QPushButton(tr("Cancel"));
 
     connect(okButton, &QPushButton::clicked, popup, &QDialog::accept);
     connect(cancelButton, &QPushButton::clicked, popup, &QDialog::reject);
@@ -269,7 +269,6 @@ void MainWindow::onGraphChanged()
 
 void MainWindow::onUpdateGraph(const QJsonDocument &json)
 {
-    terminalWidget_->appendText("*************** Updating graph ***************\n");
     graph::Graph *graph = graph::Graph::fromJSON(json);
     graphView_->updateGraph(graph);
 }
@@ -299,7 +298,7 @@ void MainWindow::onSaveGraph()
 
     if (graph::Graph::save(currentGraph, filePath))
     {
-        currentFilePath_ = filePath; // Update the current file path
+        currentFilePath_ = filePath;
     }
 }
 
@@ -311,7 +310,7 @@ void MainWindow::onLoadGraph()
     {
         graph::Graph *graph = graph::Graph::load(filePath);
         graphView_->updateGraph(graph);
-        currentFilePath_ = filePath; // Update the current file path
+        currentFilePath_ = filePath;
     }
     else
     {
@@ -370,7 +369,7 @@ void MainWindow::createMenu()
 void MainWindow::createToolBar()
 {
     // tool bar
-    toolBar_ = addToolBar("Main ToolBar");
+    toolBar_ = addToolBar(tr("Main ToolBar"));
     toolBar_->setIconSize(QSize(32, 32));
 
     QAction *actUpload = new QAction(QIcon(QPixmap(":/resources/upload.png")), tr("Upload"));
@@ -414,14 +413,14 @@ void MainWindow::createEntryWidget()
 
     entryWidget_ = new QWidget(centralWidget_);
     entryWidget_->setObjectName("entryWidget");
-    entryWidget_->setWindowTitle("Background Image Example");
+    entryWidget_->setWindowTitle(tr("Background Image Example"));
     entryWidget_->setGeometry(0, 0, 500, 500);
 
     backgroundLabel_ = new QLabel(entryWidget_);
     backgroundLabel_->setPixmap(QPixmap(":/resources/background.png"));
     backgroundLabel_->setScaledContents(true);
 
-    QLabel *textLabel = new QLabel("Drone Collective \n Intelligence System", entryWidget_);
+    QLabel *textLabel = new QLabel(tr("Drone Collective \n Intelligence System"), entryWidget_);
     textLabel->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
     textLabel->setMaximumHeight(300);
     QFont montserratFont("Montserrat", 59, QFont::DemiBold);
@@ -432,7 +431,7 @@ void MainWindow::createEntryWidget()
     username_->setMinimumHeight(50);
     username_->setStyleSheet(
         "font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
-    username_->setPlaceholderText("username");
+    username_->setPlaceholderText(tr("username"));
     username_->setText("root");
 
     password_ = new QLineEdit(entryWidget_);
@@ -440,7 +439,7 @@ void MainWindow::createEntryWidget()
     password_->setMinimumHeight(50);
     password_->setStyleSheet(
         "font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
-    password_->setPlaceholderText("password");
+    password_->setPlaceholderText(tr("password"));
     password_->setText("root");
     password_->setEchoMode(QLineEdit::Password);
 
@@ -449,7 +448,7 @@ void MainWindow::createEntryWidget()
     ipLineEdit_->setMinimumHeight(50);
     ipLineEdit_->setStyleSheet(
         "font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
-    ipLineEdit_->setPlaceholderText("ip");
+    ipLineEdit_->setPlaceholderText(tr("ip"));
     ipLineEdit_->setText("127.0.0.1");
 
     portLineEdit_ = new QLineEdit(entryWidget_);
@@ -457,10 +456,10 @@ void MainWindow::createEntryWidget()
     portLineEdit_->setMinimumHeight(50);
     portLineEdit_->setStyleSheet(
         "font-size: 25px; padding: 10px; border-radius: 4px; color: #dadada; border: 1px solid #eee;");
-    portLineEdit_->setPlaceholderText("port");
+    portLineEdit_->setPlaceholderText(tr("port"));
     portLineEdit_->setText("2323");
 
-    connectButton_ = new QPushButton("Connect", entryWidget_);
+    connectButton_ = new QPushButton(tr("Connect"), entryWidget_);
     connectButton_->setStyleSheet("font-size: 20px; padding: 10px; background-color: #b8865e; color: #333;"
                                   "}"
                                   "QPushButton:hover {"

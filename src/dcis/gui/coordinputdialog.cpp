@@ -1,9 +1,10 @@
-// App includes
 #include <gui/coordinputdialog.h>
 
 // QT includes
 #include <QMessageBox>
 
+namespace dcis::gui
+{
 
 CoordInputDialog::CoordInputDialog(QWidget *parent) : QDialog(parent)
 {
@@ -107,3 +108,5 @@ void DroneIpInputDialog::accept()
     // Perform any additional validation or checks here if needed
     QDialog::accept();
 }
+
+} // end namespace dcis::gui

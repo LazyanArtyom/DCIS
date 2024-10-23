@@ -1,12 +1,15 @@
-#ifndef COORDINPUTDIALOG_H
-#define COORDINPUTDIALOG_H
+#ifndef DCIS_GUI_COORDINPUTDIALOG_H_
+#define DCIS_GUI_COORDINPUTDIALOG_H_
 
+// Qt includes
 #include <QDialog>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QFormLayout>
 #include <QDoubleValidator>
 
+namespace dcis::gui
+{
 
 class CoordInputDialog : public QDialog
 {
@@ -42,4 +45,5 @@ class DroneIpInputDialog : public QDialog
     void accept();
 };
 
-#endif // COORDINPUTDIALOG_H
+} // end namespace dcis::gui
+#endif // DCIS_GUI_COORDINPUTDIALOG_H_

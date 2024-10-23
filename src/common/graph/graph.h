@@ -7,8 +7,8 @@
 
 // Qt includes
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonDocument>
 
 // STL includes
 #include <memory>
@@ -26,13 +26,14 @@ class Graph
     void clear();
     bool isDirected() const;
 
-    bool hasDirectedEdge(Node *u, Node *v) const;
     bool setEdge(Node *u, Node *v);
-    bool setEdge(const std::string &uName, const std::string &vName);
     Edge getEdge(Node *u, Node *v) const;
+    bool setEdge(const std::string &uName, const std::string &vName);
     Edge getEdge(const std::string &uname, const std::string &vname) const;
+    
     bool hasEdge(Node *u, Node *v) const;
     bool hasEdge(const std::string &uname, const std::string &vname) const;
+    bool hasDirectedEdge(Node *u, Node *v) const;
     bool removeEdge(Node *u, Node *v);
     bool removeEdge(const std::string &uname, const std::string &vname);
 

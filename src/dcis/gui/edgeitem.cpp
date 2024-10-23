@@ -4,10 +4,10 @@
 #include <gui/graphscene.h>
 
 // QT includes
-#include <QCursor>
-#include <QList>
-#include <QPainter>
 #include <QPen>
+#include <QList>
+#include <QCursor>
+#include <QPainter>
 
 namespace dcis::gui
 {

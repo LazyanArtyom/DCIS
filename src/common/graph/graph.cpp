@@ -9,9 +9,7 @@
 namespace dcis::common::graph
 {
 
-Graph::Graph(bool isDirected) : isDirected_(isDirected)
-{
-}
+Graph::Graph(bool isDirected) : isDirected_(isDirected) {}
 
 Graph::Graph(const Graph &other) : isDirected_(other.isDirected_)
 {

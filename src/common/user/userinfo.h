@@ -2,10 +2,10 @@
 #define DCIS_COMMON_USERINFO_H_
 
 #include <QHash>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QString>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 namespace dcis::common::user
 {
@@ -21,9 +21,7 @@ struct UserInfo
     qintptr socketDescriptor;
 
     explicit UserInfo(const qintptr desc = -1, const QString nm = "", const QString passwd = "")
-        : socketDescriptor{desc}, name{nm}, password{passwd}
-    {
-    }
+        : socketDescriptor{desc}, name{nm}, password{passwd} {}
 
     static UserInfo fromJson(const QJsonDocument &jsonDoc)
     {

@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 
+// QT includes
 #include <QApplication>
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
+// STL includes
 #include <iostream>
 
 

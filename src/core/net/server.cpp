@@ -119,13 +119,21 @@ bool Server::publishAll(const QByteArray &data, QSet<qintptr> excludeSockets)
 void Server::sendText(const QString &text, const QString cmd, qintptr socketDescriptor)
 {
     QByteArray body = text.toUtf8();
-    publish(common::resource::create(cmd, common::resource::type::Text, common::resource::status::Ok, body), socketDescriptor);
+    publish(common::resource::create(cmd, 
+                                     common::resource::type::Text, 
+                                     common::resource::status::Ok, 
+                                     body), 
+                                     socketDescriptor);
 }
 
 void Server::sendJson(const QJsonDocument &json, const QString cmd, qintptr socketDescriptor)
 {
     QByteArray body = json.toJson();
-    publish(common::resource::create(cmd, common::resource::type::Json, common::resource::status::Ok, body), socketDescriptor);
+    publish(common::resource::create(cmd, 
+                                     common::resource::type::Json, 
+                                     common::resource::status::Ok, 
+                                     body), 
+                                     socketDescriptor);
 }
 
 void Server::sendAttachment(const QString &filePath, const QString cmd, qintptr socketDescriptor)
@@ -137,7 +145,12 @@ void Server::sendAttachment(const QString &filePath, const QString cmd, qintptr 
         QString fileName(fileInfo.fileName());
 
         QByteArray body = file.readAll();
-        publish(common::resource::create(cmd, common::resource::type::Attachment, common::resource::status::Ok, body, fileName), socketDescriptor);
+        publish(common::resource::create(cmd, 
+                                         common::resource::type::Attachment, 
+                                         common::resource::status::Ok, 
+                                         body, 
+                                         fileName), 
+                                         socketDescriptor);
     }
     else
     {
@@ -148,15 +161,18 @@ void Server::sendAttachment(const QString &filePath, const QString cmd, qintptr 
 
 void Server::sendCommand(const QString cmd, qintptr socketDescriptor)
 {
-    publish(common::resource::create(cmd, common::resource::type::Command), socketDescriptor);
+    publish(common::resource::create(cmd, 
+                                     common::resource::type::Command), 
+                                     socketDescriptor);
 }
 
 
 void Server::sendStatusUpdate(const QString status, qintptr socketDescriptor)
 {
     publish(common::resource::create(common::resource::command::StatusUpdate, 
-                                          common::resource::type::Command, status),
-                                          socketDescriptor);
+                                     common::resource::type::Command, 
+                                     status),
+                                     socketDescriptor);
 }
 
 // slots
@@ -223,9 +239,8 @@ void Server::onDisconected()
 
 void Server::handle(const common::resource::Header &header, const QByteArray &body)
 {
-    QString msg = "Success: data size is " + QString::number(body.size() + 128) +
-                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n";
-    terminalWidget_->appendText(msg);
+    terminalWidget_->appendText("Success: data size is " + QString::number(body.size() + 128) +
+                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n");
 
     header_ = header;
 
@@ -273,8 +288,7 @@ void Server::handleAttachment(const QByteArray &data)
     if (imgReader.canRead())
     {
         QImage img = imgReader.read();
-        QString msg = "IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()) + "\n";
-        terminalWidget_->appendText(msg);
+        terminalWidget_->appendText("IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()) + "\n");
 
         imgW_ = img.width();
         imgH_ = img.height();
@@ -313,8 +327,7 @@ void Server::handleAttachment(const QByteArray &data)
 
 void Server::handleText(const QByteArray &data)
 {
-    QString msg = "Recived Text: " + data + "\n";
-    terminalWidget_->appendText(msg);
+    terminalWidget_->appendText("Recived Text: " + data + "\n");
 
     if (header_.command_ == common::resource::command::PrintText)
     {
@@ -344,9 +357,10 @@ void Server::handleJson(const QByteArray &data)
 
             QByteArray body = data;
             publishAll(common::resource::create(common::resource::command::client::UpdateGraph, 
-                                                     common::resource::type::Json,
-                                                   common::resource::status::Ok, 
-                                                           body), QSet<qintptr>{currentSocket_});
+                                                common::resource::type::Json,
+                                                common::resource::status::Ok, 
+                                                body), 
+                                                QSet<qintptr>{currentSocket_});
 
             for (const auto &[client, socket] : clientMap_.asKeyValueRange())
             {
@@ -442,15 +456,14 @@ void Server::updateSockets()
     // Iterate through the map in reverse order and remove key-value pairs that meet the criteria
     for (auto it = clientMap_.end(); it != clientMap_.begin();)
     {
-        --it; // Move iterator to the previous element
+        --it;
 
-        // Check the condition and remove the key-value pair if needed
         if (!(it.value()->state() == QTcpSocket::ConnectedState))
         {
             QString msg = "Client:" + it.key().name + " disconnected\n";
             it.value()->close();
             it.value()->deleteLater();
-            it = clientMap_.erase(it); // Erase the current element and get the next iterator
+            it = clientMap_.erase(it);
             terminalWidget_->appendText(msg);
         }
     }

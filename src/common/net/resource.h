@@ -4,9 +4,9 @@
 // App includes
 
 // Qt includes
-#include <QDataStream>
-#include <QIODevice>
 #include <QVariant>
+#include <QIODevice>
+#include <QDataStream>
 
 namespace dcis::common::resource
 {
@@ -98,7 +98,11 @@ struct Header
     QString resourceType_;
 };
 
-static QByteArray create(const QString cmd, const QString type, const QString status = status::Ok, QByteArray body = QByteArray(), const QString fileName = "")
+static QByteArray create(const QString cmd, 
+                         const QString type, 
+                         const QString status = status::Ok, 
+                         QByteArray body = QByteArray(), 
+                         const QString fileName = "")
 {
     Header header;
     header.command_      = cmd;

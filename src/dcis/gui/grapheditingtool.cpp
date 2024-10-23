@@ -6,22 +6,22 @@ namespace dcis::gui
 GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
 {
     // image editor widget
-    imageEditor_ = new gui::ImageEditor();
+    imageEditor_ = new ImageEditor();
 
     // graph view widget
     graph_ = new graph::Graph(false);
-    graphScene_ = new gui::GraphScene(graph_);
-    connect(this, &GraphEditingTool::sigGraphChanged, graphScene_, &gui::GraphScene::onReload);
+    graphScene_ = new GraphScene(graph_);
+    connect(this, &GraphEditingTool::sigGraphChanged, graphScene_, &GraphScene::onReload);
 
-    graphView_ = new gui::GraphView(imageEditor_);
+    graphView_ = new GraphView(imageEditor_);
     graphView_->setScene(graphScene_);
 
     // connections
-    connect(graphView_, &gui::GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
+    connect(graphView_, &GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
         // txtConsole_->setText(txt);
     });
-    connect(graphView_, &gui::GraphView::sigNodeMoved, this, [this]() { emit sigNodeMoved(); });
-    connect(graphView_, &gui::GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
+    connect(graphView_, &GraphView::sigNodeMoved, this, [this]() { emit sigNodeMoved(); });
+    connect(graphView_, &GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
             showNewNodeDialog(pos);
@@ -31,32 +31,32 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
         graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
         emit sigGraphChanged();
     });
-    connect(graphView_, &gui::GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
+    connect(graphView_, &GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
         if (graph_->removeNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
+    connect(graphView_, &GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
         if (graph_->isolateNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigEdgeRemoved, this,
+    connect(graphView_, &GraphView::sigEdgeRemoved, this,
             [this](const std::string &uname, const std::string &vname) {
                 if (graph_->removeEdge(uname, vname))
                 {
                     emit sigGraphChanged();
                 }
             });
-    connect(graphView_, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
+    connect(graphView_, &GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->setEdge(uname, vname))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &gui::GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
+    connect(graphView_, &GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
 
@@ -83,7 +83,7 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
             }
         }
     });
-    connect(graphView_, &gui::GraphView::sigSetDrone, this,
+    connect(graphView_, &GraphView::sigSetDrone, this,
             [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
                 auto node = graph_->getNode(nodeName);
                 if (node)
@@ -95,7 +95,7 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
                 }
             });
     connect(
-        graphView_, &gui::GraphView::sigSetAttacker, this,
+        graphView_, &GraphView::sigSetAttacker, this,
         [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isAttacker) {
             auto node = graph_->getNode(nodeName);
             if (node)
@@ -107,7 +107,7 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
             }
         });
 
-    connect(graphView_, &gui::GraphView::sigSetNodeType, this,
+    connect(graphView_, &GraphView::sigSetNodeType, this,
             [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
                 auto node = graph_->getNode(nodeName);
                 if (node)

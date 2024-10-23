@@ -11,7 +11,7 @@
 namespace dcis::gui
 {
 
-NodeItem::NodeItem(gui::GraphScene *gscene, graph::Node *node)
+NodeItem::NodeItem(GraphScene *gscene, graph::Node *node)
 {
     gscene_ = gscene;
     radius_ = getDefaultRadius();

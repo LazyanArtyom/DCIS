@@ -23,12 +23,8 @@ namespace dcis::common::graph
 class Edge
 {
   public:
-    explicit Edge(EdgeSetType::iterator &it) : parNode_(*it)
-    {
-    }
-    Edge(NodePairType &parNode) : parNode_(parNode)
-    {
-    }
+    explicit Edge(EdgeSetType::iterator &it) : parNode_(*it) {}
+    Edge(NodePairType &parNode) : parNode_(parNode) {}
 
     Node *u() const
     {

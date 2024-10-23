@@ -2,11 +2,11 @@
 #define DCIS_COMMON_UTILS_TERMINALWIDGET_H_
 
 // Qt includes
-#include <QContextMenuEvent>
-#include <QEvent>
 #include <QMenu>
-#include <QTextEdit>
+#include <QEvent>
 #include <QWidget>
+#include <QTextEdit>
+#include <QContextMenuEvent>
 
 namespace dcis::common::utils
 {

@@ -17,7 +17,7 @@ class NodeItem : public QObject, public QGraphicsItem
 {
     Q_OBJECT
   public:
-    NodeItem(gui::GraphScene *gscene, graph::Node *node);
+    NodeItem(GraphScene *gscene, graph::Node *node);
 
     enum
     {
@@ -56,7 +56,7 @@ class NodeItem : public QObject, public QGraphicsItem
     bool isMoving_;
 
     graph::Node *node_ = nullptr;
-    gui::GraphScene *gscene_ = nullptr;
+    GraphScene *gscene_ = nullptr;
 
     const int fontSize_ = 10;
     const QString font_ = "Source Code Pro";

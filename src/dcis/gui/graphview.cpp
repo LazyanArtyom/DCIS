@@ -29,14 +29,14 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
 
     // graph view widget
     graph_ = new graph::Graph(false);
-    graphScene_ = new gui::GraphScene(graph_);
+    graphScene_ = new GraphScene(graph_);
     setScene(graphScene_);
 
     // connections
-    connect(this, &gui::GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
+    connect(this, &GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
         // txtConsole_->setText(txt);
     });
-    connect(this, &gui::GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
+    connect(this, &GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
             showNewNodeDialog(pos);
@@ -46,31 +46,31 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
         graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
         emit sigGraphChanged();
     });
-    connect(this, &gui::GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
+    connect(this, &GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
         if (graph_->removeNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
+    connect(this, &GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
         if (graph_->isolateNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigEdgeRemoved, this, [this](const std::string &uname, const std::string &vname) {
+    connect(this, &GraphView::sigEdgeRemoved, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->removeEdge(uname, vname))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
+    connect(this, &GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->setEdge(uname, vname))
         {
             emit sigGraphChanged();
         }
     });
-    connect(this, &gui::GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
+    connect(this, &GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
 
@@ -97,7 +97,7 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
             }
         }
     });
-    connect(this, &gui::GraphView::sigSetNodeType, this,
+    connect(this, &GraphView::sigSetNodeType, this,
             [this](const std::string &nodeName, const graph::Node::NodeType &type) {
                 if (graph_->getNode(nodeName))
                 {
@@ -105,7 +105,7 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
                     emit sigGraphChanged();
                 }
             });
-    connect(this, &gui::GraphView::sigSetDrone, this,
+    connect(this, &GraphView::sigSetDrone, this,
             [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
                 if (graph_->getNode(nodeName))
                 {
@@ -116,7 +116,7 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
                 }
             });
 
-    connect(this, &gui::GraphView::sigSetAttacker, this,
+    connect(this, &GraphView::sigSetAttacker, this,
             [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
                 if (graph_->getNode(nodeName))
                 {
@@ -134,7 +134,7 @@ void GraphView::setScene(GraphScene *scene)
     connect(scene, &GraphScene::sigNeedRedraw, this, &GraphView::onRedraw);
     connect(scene, &GraphScene::sigItemMoved, this, [this] { emit sigNodeMoved(); });
 
-    connect(this, &GraphView::sigGraphChanged, scene, &gui::GraphScene::onReload);
+    connect(this, &GraphView::sigGraphChanged, scene, &GraphScene::onReload);
     QGraphicsView::setScene(scene);
 }
 

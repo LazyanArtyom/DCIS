@@ -30,7 +30,7 @@ ImageEditor::ImageEditor(QWidget *parent) : QGraphicsView(parent)
         setScene(graphicsScene);
 
         // connections
-        connect(this, &ImageEditor::sigGraphChanged, graphicsScene, &gui::GraphScene::onReload); */
+        connect(this, &ImageEditor::sigGraphChanged, graphicsScene, &GraphScene::onReload); */
 }
 
 void ImageEditor::zoomIn()

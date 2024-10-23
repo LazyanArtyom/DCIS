@@ -43,9 +43,9 @@ class GraphEditingTool : public QWidget
 
   private:
     graph::Graph *graph_;
-    gui::GraphView *graphView_;
-    gui::GraphScene *graphScene_;
-    gui::ImageEditor *imageEditor_;
+    GraphView *graphView_;
+    GraphScene *graphScene_;
+    ImageEditor *imageEditor_;
 };
 
 } // end namespace dcis::gui

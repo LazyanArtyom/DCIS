@@ -18,8 +18,8 @@ namespace dcis::common::graph
 class Node;
 using NodeListType = std::list<Node *>;
 using NodePairType = std::pair<Node *, Node *>;
-using NodeSetType = std::unordered_set<Node>;
-using EdgeSetType = std::unordered_set<NodePairType>;
+using NodeSetType  = std::unordered_set<Node>;
+using EdgeSetType  = std::unordered_set<NodePairType>;
 
 class Node
 {

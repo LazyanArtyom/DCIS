@@ -1,10 +1,9 @@
 #include "mainwindow.h"
 
-// App includes
+// APP includes
 #include <graph/graph.h>
-// #include <graphprocessor/graphprocessor.h>
 
-// Qt includes
+// QT includes
 #include <QVBoxLayout>
 
 // STL includes
@@ -51,9 +50,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // server
     server_ = new Server(terminalWidget_, this);
     server_->run(2323);
-
-    //    GraphProcessor::GraphProcessor*  process = new GraphProcessor::GraphProcessor();
-    //    process->sendFileToDrone("proxy55.rt3.io", 30375, QFile(""));
 }
 
 MainWindow::~MainWindow()
