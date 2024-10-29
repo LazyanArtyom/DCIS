@@ -1,8 +1,10 @@
+#include "net/resource.h"
 #include <net/client.h>
 
-// App includes
+// APP includes
 #include <graph/graph.h>
 #include <user/userinfo.h>
+
 // STL includes
 
 // QT includes
@@ -19,6 +21,7 @@ namespace dcis::client
 Client::Client(common::utils::ILogger *terminalWidget, QObject *parent)
     : terminalWidget_{terminalWidget}, QObject(parent)
 {
+    packetHandlerFactory_ = std::make_unique<PacketHandlerFactory>(this);
 }
 
 Client::~Client()
@@ -64,89 +67,19 @@ void Client::sendCommand(const QString cmd)
 
 void Client::handle(const common::resource::Header &header, const QByteArray &body)
 {
-    QString msg = "Success: data size is " + QString::number(body.size() + 128) +
-                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n";
-    terminalWidget_->appendText(msg);
+    terminalWidget_->appendText("********* Packet received *******\n");
+    terminalWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
+                  " bytes \nCommand: " + header.command_ + " \nResourceType: " + header.resourceType_ + "\nStatus: " + header.status_ + "\n");
+    terminalWidget_->appendText("*********************************\n");
 
-    header_ = header;
-
-    if (header.resourceType_ == common::resource::type::Text)
+    auto handler = packetHandlerFactory_->createHandler(header.resourceType_);
+    if (handler)
     {
-        handleText(body);
+        handler->handlePacket(header, body);
     }
-    else if (header.resourceType_ == common::resource::type::Json)
+    else
     {
-        handleJson(body);
-    }
-    else if (header.resourceType_ == common::resource::type::Attachment)
-    {
-        handleAttachment(body);
-    }
-    else if (header.resourceType_ == common::resource::type::Command)
-    {
-        handleCommand(header.command_);
-    }
-    else {
-        handleUnknown();
-    }
-}
-
-void Client::handleUnknown()
-{
-    terminalWidget_->appendText("Unknown message, doing nothing.\n");
-}
-
-void Client::handleAttachment(const QByteArray &data)
-{
-    if (header_.command_ == common::resource::command::client::ShowImage)
-    {
-        QImage img = QImage::fromData(data);
-        emit sigShowImage(img);
-    }
-}
-
-void Client::handleText(const QByteArray &data)
-{
-    if (header_.command_ == common::resource::command::PrintText)
-    {
-        terminalWidget_->appendText(QString::fromUtf8(data));
-    }
-}
-
-void Client::handleJson(const QByteArray &data)
-{
-    if (header_.command_ == common::resource::command::client::UpdateGraph)
-    {
-        QJsonDocument json = QJsonDocument::fromJson(data);
-        emit sigUpdateGraph(json);
-    }
-}
-
-void Client::handleCommand(const QString cmd)
-{
-    if (header_.command_ == common::resource::command::server::GetUserInfo)
-    {
-        common::user::UserInfo userInfo;
-        userInfo.name = username_;
-        userInfo.password = password_;
-
-        sendJson(common::user::UserInfo::toJson(userInfo), common::resource::command::server::SetUserInfo);
-    }
-    else if (header_.command_ == common::resource::command::StatusUpdate)
-    {
-        if (header_.status_ == common::resource::status::UserAccepted)
-        {
-            terminalWidget_->appendText("Succsesfully connected to server\n");
-            emit sigUserAccepted(true);
-        }
-        else if (header_.status_ == common::resource::status::UserDeclined)
-        {
-            emit sigUserAccepted(false);
-        }
-        else if (header_.status_ == common::resource::status::UserAlreadyConnected)
-        {
-            emit sigUserAccepted(false);
-        }
+        terminalWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
     }
 }
 
@@ -237,6 +170,11 @@ QString Client::getPassword() const
 void Client::setUserName(const QString userName)
 {
     username_ = userName;
+}
+
+common::utils::ILogger* Client::getTerminalWidget() const
+{
+    return terminalWidget_;
 }
 
 void Client::setPassword(const QString password)

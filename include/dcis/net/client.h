@@ -2,7 +2,9 @@
 #define DCIS_CLIENT_MAINWINDOW_H_
 
 // App includes
+#include <memory>
 #include <net/resource.h>
+#include <net/handlers.h>
 #include <utils/terminalwidget.h>
 
 // Qt includes
@@ -24,15 +26,10 @@ class Client : public QObject
     void sendJson(const QJsonDocument &json, const QString cmd);
     void sendAttachment(const QString &filePath, const QString cmd);
     void sendCommand(const QString cmd);
+    bool sendToServer(const QByteArray &data);
 
-    /* Handlers */
     void handle(const common::resource::Header &header, const QByteArray &body);
-    void handleUnknown();
-    void handleAttachment(const QByteArray &data);
-    void handleText(const QByteArray &data);
-    void handleJson(const QByteArray &data);
-    void handleCommand(const QString cmd);
-
+    
     bool connectToServer(const QString &ip, const QString &port);
     bool checkServerConnected() const;
 
@@ -40,6 +37,8 @@ class Client : public QObject
     QString getPassword() const;
     void setUserName(const QString userName);
     void setPassword(const QString password);
+
+    common::utils::ILogger *getTerminalWidget() const;
 
   public slots:
     void onReadyRead();
@@ -52,13 +51,11 @@ class Client : public QObject
     void sigUpdateGraph(const QJsonDocument &json);
 
   private:
-    bool sendToServer(const QByteArray &data);
-
     QString username_;
     QString password_;
     QTcpSocket *socket_ = nullptr;
-    common::resource::Header header_;
     common::utils::ILogger *terminalWidget_ = nullptr;
+    std::unique_ptr<PacketHandlerFactory> packetHandlerFactory_;
 };
 
 } // end namespace dcis::client
