@@ -1,4 +1,21 @@
-#include <net/handlers.h>
+/*
+ * Project Name: DCIS - Drone Collective Intelligence System
+ * Copyright (C) 2022 Artyom Lazyan, Agit Atashyan, Davit Hayrapetyan
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+#include <net/clienthandlers.h>
 
 // APP includes
 #include <net/client.h>
@@ -9,49 +26,6 @@
 
 namespace dcis::client
 {
-void APacketHandler::handlePacket(const common::resource::Header &header, const QByteArray &body)
-{
-    auto handlerIt = commandHandlers_.find(header.command_);
-    if (handlerIt != commandHandlers_.end())
-    {
-        handlerIt->second(header, body);
-    }
-    else
-    {
-        qWarning() << "No command handler found for client command: " << header.command_;
-    }
-}
-
-void APacketHandler::registerCommand(const QString command, CommandHandlerType handler)
-{
-    commandHandlers_[command] = std::move(handler);
-}
-
-PacketHandlerFactory::PacketHandlerFactory(Client *client)
-{
-    // register handlers
-    registerHandler(common::resource::type::Text, [client]() { return std::make_unique<TextPacketHandler>(client); });
-    registerHandler(common::resource::type::Json, [client]() { return std::make_unique<JsonPacketHandler>(client); });
-    registerHandler(common::resource::type::Command,
-                    [client]() { return std::make_unique<CommandPacketHandler>(client); });
-    registerHandler(common::resource::type::Attachment,
-                    [client]() { return std::make_unique<AttachmentPacketHandler>(client); });
-}
-void PacketHandlerFactory::registerHandler(const QString type, HandlerCreatorType creator)
-{
-    handlers_[type] = std::move(creator);
-}
-
-std::unique_ptr<APacketHandler> PacketHandlerFactory::createHandler(const QString type) const
-{
-    auto handlerIt = handlers_.find(type);
-    if (handlerIt != handlers_.end())
-    {
-        return handlerIt->second();
-    }
-
-    return nullptr;
-}
 
 TextPacketHandler::TextPacketHandler(Client *client)
 {

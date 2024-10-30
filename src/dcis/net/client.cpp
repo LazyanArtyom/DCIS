@@ -1,3 +1,20 @@
+/*
+ * Project Name: DCIS - Drone Collective Intelligence System
+ * Copyright (C) 2022 Artyom Lazyan, Agit Atashyan, Davit Hayrapetyan
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "net/resource.h"
 #include <net/client.h>
 
@@ -21,7 +38,16 @@ namespace dcis::client
 Client::Client(common::utils::ILogger *terminalWidget, QObject *parent)
     : terminalWidget_{terminalWidget}, QObject(parent)
 {
-    packetHandlerFactory_ = std::make_unique<PacketHandlerFactory>(this);
+    packetHandlerFactory_ = std::make_unique<common::resource::PacketHandlerFactory>();
+
+    // register handlers
+    packetHandlerFactory_->registerHandler(common::resource::type::Text, [this]() { return std::make_unique<TextPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Json, [this]() { return std::make_unique<JsonPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Command,
+                    [this]() { return std::make_unique<CommandPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Attachment,
+                    [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
+
 }
 
 Client::~Client()

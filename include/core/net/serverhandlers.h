@@ -15,38 +15,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef DCIS_GUI_ELEMENTPROPERTIESTABLE_H_
-#define DCIS_GUI_ELEMENTPROPERTIESTABLE_H_
+#ifndef DCIS_SERVER_HANDLERS_H_
+#define DCIS_SERVER_HANDLERS_H_
 
 // APP includes
-#include <graph/graph.h>
+#include <net/resource.h>
 
 // QT includes
-#include <QHeaderView>
-#include <QTableWidget>
+#include <QByteArray>
+#include <QString>
 
-namespace dcis::gui
-{
-using namespace common;
+// STL includes
 
-class ElementPropertiesTable : public QTableWidget
+namespace dcis::server
 {
-    Q_OBJECT
+
+class Server;
+class TextPacketHandler : public common::resource::APacketHandler
+{
   public:
-    explicit ElementPropertiesTable(graph::Graph *graph);
-    explicit ElementPropertiesTable(graph::Graph *graph, int sectionSize);
-
-  public slots:
-    void onUnSelected();
-    void onGraphChanged();
-    void onSetGraph(graph::Graph *graph);
-    void onNodeSelected(const std::string &nodeName);
-    void onEdgeSelected(const std::string &uName, const std::string &vName);
-
-  private:
-    void clearTable();
-    graph::Graph *graph_;
+    explicit TextPacketHandler(Server *server);
 };
 
-} // end namespace dcis::gui
-#endif // DCIS_GUI_ELEMENTPROPERTIESTABLE_H_
+class JsonPacketHandler : public common::resource::APacketHandler
+{
+  public:
+    explicit JsonPacketHandler(Server *server);
+};
+
+class CommandPacketHandler : public common::resource::APacketHandler
+{
+  public:
+    explicit CommandPacketHandler(Server *server);
+};
+
+class AttachmentPacketHandler : public common::resource::APacketHandler
+{
+  public:
+    explicit AttachmentPacketHandler(Server *server);
+};
+
+} // end namespace dcis::server
+#endif // DCIS_SERVER_HANDLERS_H_
