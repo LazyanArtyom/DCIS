@@ -3,7 +3,7 @@
 A software system aimed at the modeling of self-organizing swarm of drones equipped with 
 collective intelligence for area monitoring and tasks performance is planned to promote.
 
-* [UAV unmanned aerial vehicles swarm model video link](https://www.youtube.com/watch?v=8nds8JJwQI0&t=8s)
+* [Drone Collective Intelligence System Video Link](https://www.youtube.com/watch?v=MJZwPcIx7gw)
 
 ## Setup instructions
 
