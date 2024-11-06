@@ -155,7 +155,6 @@ void GraphProcessor::initGraphDirs()
 
 void GraphProcessor::clearCycles()
 {
-    qDebug() << " skzbi klir";
     auto currPoint = startNode_;
     size_t startDirId = startNode_->getCurrNeighbourId();
     std::set<std::pair<Node *, Node *>> uniqueSteps;
@@ -167,7 +166,6 @@ void GraphProcessor::clearCycles()
         if (currPoint == startNode_ && currPoint->getCurrNeighbourId() == startDirId &&
             uniqueSteps.size() >= neighboursCount_)
             break;
-        qDebug() << "klir";
     }
     // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Start Node : " +
     // QString::number(startNode_->getID()));
@@ -185,12 +183,10 @@ void GraphProcessor::generateGraph()
     CCoordMapper oGeoCoordMapper(commGraph_->getLeftTop(), commGraph_->getRightBottom(), imgW_, imgH_);
     double lat = 0;
     double lon = 0;
-    qDebug() << "####1111";
     ///////Exploration
     vecExplorationFileNames_.resize(vecDronesStartNodes_.size());
     for (size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
     {
-        qDebug() << "####2222";
         QDir dir;
         QString WORKING_DIR = dir.absolutePath();
         vecExplorationFileNames_[i] =
@@ -203,7 +199,6 @@ void GraphProcessor::generateGraph()
         QFile file(vecExplorationFileNames_[i]);
         if (file.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text))
         {
-            qDebug() << "####3333";
             // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info, "Creating file
             // for drone " + QString::number(i));
             // dcis::common::utils::DebugStream::getInstance().log(dcis::common::utils::LogLevel::Info,

@@ -185,16 +185,6 @@ class GraphProcessor
         // sshExecProcess.setArguments(sshExecArgs);
         // sshExecProcess.start();
         // sshExecProcess.waitForFinished();
-
-        // Check if there were any errors in the processes
-        // if (sshProcess.exitCode() != 0 || /*scpProcess.exitCode() != 0 ||*/ sshExecProcess.exitCode() != 0) {
-        //    qDebug() << "Error occurred during SSH, SCP, or remote command execution.";
-        //    qDebug() << "SSH Process error: " << sshProcess.errorString();
-        // qDebug() << "SCP Process error: " << scpProcess.errorString();
-        //    qDebug() << "Remote Command Process error: " << sshExecProcess.errorString();
-        //} else {
-        //    qDebug() << "SSH, SCP, and remote command executed successfully.";
-        //}
     }
 
   private:
