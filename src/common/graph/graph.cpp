@@ -332,9 +332,8 @@ Graph *Graph::fromJSON(QJsonDocument jsonDoc)
         double x = node.toObject().value("x").toDouble();
         double y = node.toObject().value("y").toDouble();
         Node tmpNode(name, QPointF(x, y));
-        tmpNode.setNodeType(static_cast<Node::NodeType>(node.toObject().value("nodeType").toInt()));
-        tmpNode.setDrone(node.toObject().value("drone").toBool());
-        tmpNode.setAttacker(node.toObject().value("attacker").toBool());
+        tmpNode.setType(static_cast<Node::Type>(node.toObject().value("nodeType").toInt()));
+        tmpNode.setCategory(static_cast<Node::Category>(node.toObject().value("nodeCategory").toInt()));
         tmpNode.setIp(node.toObject().value("ip").toString().toStdString());
         tmpNode.setPort(node.toObject().value("port").toString().toStdString());
 
@@ -370,9 +369,8 @@ QJsonDocument Graph::toJSON(Graph *graph)
         jsonNode.insert("x", node->getX());
         jsonNode.insert("y", node->getY());
 
-        jsonNode.insert("nodeType", (int)(node->getNodeType()));
-        jsonNode.insert("drone", node->isDrone());
-        jsonNode.insert("attacker", node->isAttacker());
+        jsonNode.insert("nodeType", (int)(node->getType()));
+        jsonNode.insert("nodeCategory", (int)(node->getCategory()));
         jsonNode.insert("ip", node->getIp().c_str());
         jsonNode.insert("port", node->getPort().c_str());
 
@@ -434,23 +432,23 @@ bool Graph::isDirected() const
     return isDirected_;
 }
 
-bool Graph::setNodeType(const std::string &nodeName, const Node::NodeType nodeType)
+bool Graph::setNodeType(const std::string &nodeName, const Node::Type nodeType)
 {
     auto selectedNode = getNode(nodeName);
     if (selectedNode)
     {
-        selectedNode->setNodeType(nodeType);
+        selectedNode->setType(nodeType);
         return true;
     }
     return false;
 }
 
-bool Graph::setDrone(const std::string &nodeName, const bool isDrone)
+bool Graph::setNodeCategory(const std::string &nodeName, const Node::Category nodeCategory)
 {
     auto selectedNode = getNode(nodeName);
     if (selectedNode)
     {
-        selectedNode->setDrone(isDrone);
+        selectedNode->setCategory(nodeCategory);
         return true;
     }
     return false;

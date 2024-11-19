@@ -43,7 +43,7 @@ class Node
     explicit Node(const std::string &name);
     explicit Node(const std::string &name, QPointF euclidePos);
 
-    enum class NodeType
+    enum class Type
     {
         Inner,
         Border,
@@ -51,11 +51,22 @@ class Node
         None
     };
 
+    enum class Category
+    {
+        Generic,
+        Drone,
+        Target,
+        Attacker,
+    };
+
     QPointF getEuclidePos() const;
     void setEuclidePos(QPointF euclidePos);
 
-    void setNodeType(NodeType nodeType);
-    NodeType getNodeType();
+    void setType(Type nodeType);
+    Type getType() const;
+
+    void setCategory(Category nodeCategory);
+    Category getCategory() const;
 
     void incPosDegree();
     void incNegDegree();
@@ -68,11 +79,6 @@ class Node
     int getPosDegree() const;
     int getDirDegree() const;
     int getUndirDegree() const;
-
-    bool isDrone();
-    bool isAttacker();
-    void setDrone(bool isDrone);
-    void setAttacker(bool isAttacker);
 
     void setIp(const std::string &ip);
     void setPort(const std::string &port);
@@ -102,12 +108,13 @@ class Node
     int degPos_ = 0;
     int degNeg_ = 0;
     bool drone_ = false;
-    bool attacker_ = false;
+
     std::string name_;
     std::string ip_;
     std::string port_;
     QPointF euclidePos_;
-    NodeType nodeType_ = NodeType::Inner;
+    Type nodeType_ = Type::Inner;
+    Category nodeCategory_ = Category::Generic;
 };
 
 } // end namespace dcis::common::graph

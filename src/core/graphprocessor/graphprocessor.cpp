@@ -32,7 +32,6 @@
 #include <QtConcurrent>
 
 // STL includes
-#include <iostream>
 #include <set>
 namespace dcis::GraphProcessor
 {
@@ -88,15 +87,15 @@ void GraphProcessor::initGraph()
                 node->addNeighbour(commNodeToNodeMap_[edge.first]);
             }
         }
-        if (startNode_ == nullptr && node->getCommonNode()->getNodeType() == commonNode::NodeType::Border)
+        if (startNode_ == nullptr && node->getCommonNode()->getType() == commonNode::Type::Border)
         {
             startNode_ = node;
         }
-        if (node->getCommonNode()->isDrone())
+        if (node->getCommonNode()->getCategory() == commonNode::Category::Drone)
         {
             vecDronesStartNodes_.push_back(node);
         }
-        if (node->getCommonNode()->isAttacker())
+        if (node->getCommonNode()->getCategory() == commonNode::Category::Attacker)
         {
             vecAttackerNodes_.push_back(node);
         }
@@ -112,8 +111,8 @@ void GraphProcessor::initGraphDirs()
     NodeVectorType Neighbours = nodeIter->getNeighbours();
     for (size_t i = 0; i < Neighbours.size(); i++)
     {
-        if (Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Border ||
-            Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Corner)
+        if (Neighbours[i]->getCommonNode()->getType() == commonNode::Type::Border ||
+            Neighbours[i]->getCommonNode()->getType() == commonNode::Type::Corner)
         {
             nodeIter->setCurrNeighbourId(i);
             break;
@@ -125,8 +124,8 @@ void GraphProcessor::initGraphDirs()
         Neighbours = nodeIter->getNeighbours();
         for (size_t i = 0; i < nodeIter->getNeighbours().size(); i++)
         {
-            if ((Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Border ||
-                 Neighbours[i]->getCommonNode()->getNodeType() == commonNode::NodeType::Corner) &&
+            if ((Neighbours[i]->getCommonNode()->getType() == commonNode::Type::Border ||
+                 Neighbours[i]->getCommonNode()->getType() == commonNode::Type::Corner) &&
                 Neighbours[i]->getCurrNeighbourId() == -1)
             {
                 nodeIter->setCurrNeighbourId(i);
@@ -148,7 +147,7 @@ void GraphProcessor::initGraphDirs()
     }
     for (auto node : lstNodes_)
     {
-        if (node->getCommonNode()->getNodeType() == commonNode::NodeType::Inner)
+        if (node->getCommonNode()->getType() == commonNode::Type::Inner)
             node->setCurrNeighbourId(QRandomGenerator::global()->bounded((int)node->getNeighbours().size()));
     }
 }

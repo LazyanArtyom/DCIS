@@ -33,14 +33,24 @@ void Node::setEuclidePos(QPointF euclidePos)
     euclidePos_ = euclidePos;
 }
 
-void Node::setNodeType(NodeType nodeType)
+void Node::setType(Type nodeType)
 {
     nodeType_ = nodeType;
 }
 
-Node::NodeType Node::getNodeType()
+Node::Type Node::getType() const
 {
     return nodeType_;
+}
+
+void Node::setCategory(Category nodeCategory)
+{
+    nodeCategory_ = nodeCategory;
+}
+
+Node::Category Node::getCategory() const
+{
+    return nodeCategory_;
 }
 
 void Node::incPosDegree()
@@ -102,16 +112,6 @@ int Node::getUndirDegree() const
     return deg_;
 }
 
-void Node::setDrone(bool isDrone)
-{
-    drone_ = isDrone;
-}
-
-void Node::setAttacker(bool isAttacker)
-{
-    attacker_ = isAttacker;
-}
-
 void Node::setIp(const std::string &ip)
 {
     ip_ = ip;
@@ -130,16 +130,6 @@ std::string Node::getIp() const
 std::string Node::getPort() const
 {
     return port_;
-}
-
-bool Node::isDrone()
-{
-    return drone_;
-}
-
-bool Node::isAttacker()
-{
-    return attacker_;
 }
 
 std::string Node::getName() const

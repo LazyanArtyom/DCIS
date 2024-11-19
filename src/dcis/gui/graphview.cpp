@@ -115,29 +115,19 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
         }
     });
     connect(this, &GraphView::sigSetNodeType, this,
-            [this](const std::string &nodeName, const graph::Node::NodeType &type) {
+            [this](const std::string &nodeName, const graph::Node::Type &type) {
                 if (graph_->getNode(nodeName))
                 {
-                    graph_->getNode(nodeName)->setNodeType(type);
+                    graph_->getNode(nodeName)->setType(type);
                     emit sigGraphChanged();
                 }
             });
-    connect(this, &GraphView::sigSetDrone, this,
-            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+    connect(this, &GraphView::sigSetNodeCategory, this,
+            [this](std::string nodeName, graph::Node::Category nodeCategory, 
+                   std::string ip, std::string port) {
                 if (graph_->getNode(nodeName))
                 {
-                    graph_->getNode(nodeName)->setDrone(isDrone);
-                    graph_->getNode(nodeName)->setIp(ip);
-                    graph_->getNode(nodeName)->setPort(port);
-                    emit sigGraphChanged();
-                }
-            });
-
-    connect(this, &GraphView::sigSetAttacker, this,
-            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
-                if (graph_->getNode(nodeName))
-                {
-                    graph_->getNode(nodeName)->setAttacker(isDrone);
+                    graph_->getNode(nodeName)->setCategory(nodeCategory);
                     graph_->getNode(nodeName)->setIp(ip);
                     graph_->getNode(nodeName)->setPort(port);
                     emit sigGraphChanged();
@@ -251,7 +241,7 @@ void GraphView::scaleView(qreal scaleFactor)
         imgLength = sceneRect().height();
     }
 
-    if (expRectLength < viewportLength / 2) // minimum zoom : half of viewport
+    if (expRectLength < qreal(viewportLength) / 2) // minimum zoom : half of viewport
     {
         if (!isResized_ || scaleFactor < 1)
             return;
@@ -510,7 +500,8 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
             menu.addAction("&Isolate");
             menu.addAction("Re&name");
             menu.addSeparator();
-            if (nodeItem->getNode()->isDrone())
+
+            if (nodeItem->getNode()->getCategory() == graph::Node::Category::Drone)
             {
                 menu.addAction("&Unset drone");
             }
@@ -519,13 +510,22 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
                 menu.addAction("&Set drone");
             }
 
-            if (nodeItem->getNode()->isAttacker())
+            if (nodeItem->getNode()->getCategory() == graph::Node::Category::Attacker)
             {
                 menu.addAction("&Unset attacker");
             }
             else
             {
                 menu.addAction("&Set attacker");
+            }
+
+            if (nodeItem->getNode()->getCategory() == graph::Node::Category::Target)
+            {
+                menu.addAction("&Unset target");
+            }
+            else
+            {
+                menu.addAction("&Set target");
             }
 
             QAction *act = menu.exec(event->globalPos());
@@ -535,31 +535,38 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
                 {
                     emit sigNodeEdited(nodeName);
                 }
+
                 if (act->text() == "&Isolate")
                 {
                     emit sigNodeIsolated(nodeName);
                 }
+
                 if (act->text() == "&Delete")
                 {
                     emit sigNodeRemoved(nodeName);
                 }
+
                 if (act->text().contains("&Set edge to"))
                 {
                     isSelectTargetNode_ = true;
                     startItem_ = nodeItem;
                 }
+
                 if (act->text() == "&Set node corner")
                 {
-                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Corner);
+                    emit sigSetNodeType(nodeName, graph::Node::Type::Corner);
                 }
+
                 if (act->text() == "&Set node border")
                 {
-                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Border);
+                    emit sigSetNodeType(nodeName, graph::Node::Type::Border);
                 }
+
                 if (act->text() == "&Set node inner")
                 {
-                    emit sigSetNodeType(nodeName, graph::Node::NodeType::Inner);
+                    emit sigSetNodeType(nodeName, graph::Node::Type::Inner);
                 }
+
                 if (act->text() == "&Set drone")
                 {
                     std::string ip, port;
@@ -577,11 +584,12 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
                         return;
                     }
 
-                    emit sigSetDrone(nodeName, ip, port, true);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Drone, ip, port);
                 }
+
                 if (act->text() == "&Unset drone")
                 {
-                    emit sigSetDrone(nodeName, "", "", false);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Generic);
                 }
 
                 if (act->text() == "&Set attacker")
@@ -601,11 +609,22 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
                         return;
                     }
 
-                    emit sigSetAttacker(nodeName, ip, port, true);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Attacker, ip, port);
                 }
+
                 if (act->text() == "&Unset attacker")
                 {
-                    emit sigSetAttacker(nodeName, "", "", false);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Generic);
+                }
+
+                if (act->text() == "&Set target")
+                {
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Target);
+                }
+
+                if (act->text() == "&Unset target")
+                {
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Generic);
                 }
             }
             else

@@ -97,35 +97,43 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     if (node_ != nullptr)
     {
-        if (node_->isDrone())
+        switch (node_->getCategory())
         {
-            if (node_->isAttacker())
-            {
-                QPixmap iconPixmap(":/resources/set_attacker.png");
-                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
-                return;
-            }
-            else
+            case graph::Node::Category::Drone: 
             {
                 QPixmap iconPixmap(":/resources/set_drone.png");
                 painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
                 return;
             }
+            case graph::Node::Category::Attacker: 
+            {
+                QPixmap iconPixmap(":/resources/set_attacker.png");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            case graph::Node::Category::Target: 
+            {
+                QPixmap iconPixmap(":/resources/set_target.svg");
+                painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
+                return;
+            }
+            default:
+                break;
         }
 
-        switch (node_->getNodeType())
+        switch (node_->getType())
         {
-        case graph::Node::NodeType::Border: {
+        case graph::Node::Type::Border: {
             QPixmap iconPixmap(":/resources/set_border.png");
             painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
             return;
         }
-        case graph::Node::NodeType::Corner: {
+        case graph::Node::Type::Corner: {
             QPixmap iconPixmap(":/resources/set_corner.png");
             painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
             return;
         }
-        case graph::Node::NodeType::Inner: {
+        case graph::Node::Type::Inner: {
             QPixmap iconPixmap(":/resources/set_inner.png");
             painter->drawPixmap(-radius_ / 2, -radius_ / 2, radius_, radius_, iconPixmap);
             return;
@@ -134,18 +142,6 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
             break;
         }
     }
-    /*
-    QColor color = getDefaultColor();
-    painter->setPen(QPen(Qt::black, 2, Qt::SolidLine));
-    painter->setBrush(QBrush(color));
-    painter->drawEllipse(-radius_ / 2, -radius_ / 2, radius_, radius_);
-*/
-
-    // QFont font(font_, fontSize_);
-    // painter->setFont(font);
-    // QString txt = QString::fromStdString(getNode()->getName());
-    // QFontMetrics fm(font);
-    // painter->drawText(-fm.horizontalAdvance(txt) / 2, fm.height() / 3, txt);
 }
 
 void NodeItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)

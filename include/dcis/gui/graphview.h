@@ -79,9 +79,9 @@ class GraphView : public QGraphicsView
     void sigNodeSelected(std::string name, QPointF pos);
     void sigNodeMoved();
 
-    void sigSetNodeType(std::string name, graph::Node::NodeType nodeType);
-    void sigSetDrone(std::string name, std::string ip, std::string port, bool isDrone);
-    void sigSetAttacker(std::string name, std::string ip, std::string port, bool isDrone);
+    void sigSetNodeType(std::string nodeName, graph::Node::Type nodeType);
+    void sigSetNodeCategory(std::string nodeName, graph::Node::Category nodeCategory, 
+                            std::string ip = "", std::string port = "");
 
     void sigEdgeAdded();
     void sigEdgeAddedFrom(std::string name);

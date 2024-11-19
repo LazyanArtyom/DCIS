@@ -26,6 +26,7 @@ set(dcis_icons
     "resources/attack.png"
     "resources/set_drone.png"
     "resources/set_attacker.png"
+    "resources/set_target.svg"
     "resources/set_inner.png"
     "resources/set_corner.png"
     "resources/set_border.png"

@@ -53,11 +53,11 @@ class NodeItem : public QObject, public QGraphicsItem
     void setNode(graph::Node *node);
 
     int getRadius() const;
-    QColor getSelectedColor() const;
 
     QColor getColor() const;
     void setColor(const QColor &newColor);
 
+    QColor getSelectedColor() const;
     void setSelectedColor(const QColor &newColor);
 
   protected:

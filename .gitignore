@@ -31,8 +31,6 @@
 *.DS_Store
 
 compile_commands.json
-core
-dcis
 uploadedImages/
 
 /.vscode

@@ -100,36 +100,24 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
             }
         }
     });
-    connect(graphView_, &GraphView::sigSetDrone, this,
-            [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isDrone) {
+    connect(graphView_, &GraphView::sigSetNodeCategory, this,
+            [this](std::string nodeName, graph::Node::Category nodeCategory, 
+                   std::string ip, std::string port) {
                 auto node = graph_->getNode(nodeName);
                 if (node)
                 {
-                    node->setDrone(isDrone);
+                    node->setCategory(nodeCategory);
                     node->setIp(ip);
                     node->setIp(port);
                     emit sigGraphChanged();
                 }
             });
-    connect(
-        graphView_, &GraphView::sigSetAttacker, this,
-        [this](const std::string &nodeName, const std::string &ip, const std::string &port, const bool &isAttacker) {
-            auto node = graph_->getNode(nodeName);
-            if (node)
-            {
-                node->setAttacker(isAttacker);
-                node->setIp(ip);
-                node->setIp(port);
-                emit sigGraphChanged();
-            }
-        });
-
     connect(graphView_, &GraphView::sigSetNodeType, this,
-            [this](const std::string &nodeName, const graph::Node::NodeType &nodeType) {
+            [this](const std::string &nodeName, const graph::Node::Type &nodeType) {
                 auto node = graph_->getNode(nodeName);
                 if (node)
                 {
-                    node->setNodeType(nodeType);
+                    node->setType(nodeType);
                     emit sigGraphChanged();
                 }
             });

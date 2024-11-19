@@ -80,8 +80,8 @@ class Graph
     static bool save(Graph *graph, const QString &filePath);
     static Graph *load(const QString &filePath);
 
-    bool setNodeType(const std::string &nodeName, const Node::NodeType nodeType);
-    bool setDrone(const std::string &nodeName, const bool isDrone);
+    bool setNodeType(const std::string &nodeName, const Node::Type nodeType);
+    bool setNodeCategory(const std::string &nodeName, const Node::Category nodeCategory);
 
   private:
     QString leftTop_;
