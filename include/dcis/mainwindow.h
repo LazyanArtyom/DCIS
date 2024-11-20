@@ -20,10 +20,8 @@
 
 // App headers
 #include <net/client.h>
-#include <gui/graphinfo.h>
 #include <gui/graphview.h>
 #include <utils/terminalwidget.h>
-#include <gui/elementpropertiestable.h>
 
 // QT headers
 #include <QMenu>
@@ -124,14 +122,12 @@ class MainWindow : public QMainWindow
     QPushButton *connectButton_;
 
     client::Client *client_;
-    GraphInfo *graphInfo_;
     GraphView *graphView_;
 
     QString currentFilePath_ = "";
 
     QString leftTop_;
     QString rightBottom_;
-    ElementPropertiesTable *elementPropertiesTable_;
 };
 
 } // namespace dcis::gui
