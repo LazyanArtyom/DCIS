@@ -80,8 +80,7 @@ class GraphView : public QGraphicsView
     void sigNodeMoved();
 
     void sigSetNodeType(std::string nodeName, graph::Node::Type nodeType);
-    void sigSetNodeCategory(std::string nodeName, graph::Node::Category nodeCategory, 
-                            std::string ip = "", std::string port = "");
+    void sigSetNodeCategory(std::string nodeName, graph::Node::Category nodeCategory);
 
     void sigEdgeAdded();
     void sigEdgeAddedFrom(std::string name);

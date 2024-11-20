@@ -80,12 +80,6 @@ class Node
     int getDirDegree() const;
     int getUndirDegree() const;
 
-    void setIp(const std::string &ip);
-    void setPort(const std::string &port);
-
-    std::string getIp() const;
-    std::string getPort() const;
-
     double getX() const;
     double getY() const;
     std::string getName() const;
@@ -110,9 +104,8 @@ class Node
     bool drone_ = false;
 
     std::string name_;
-    std::string ip_;
-    std::string port_;
     QPointF euclidePos_;
+
     Type nodeType_ = Type::Inner;
     Category nodeCategory_ = Category::Generic;
 };

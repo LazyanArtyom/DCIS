@@ -123,13 +123,10 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
                 }
             });
     connect(this, &GraphView::sigSetNodeCategory, this,
-            [this](std::string nodeName, graph::Node::Category nodeCategory, 
-                   std::string ip, std::string port) {
+            [this](std::string nodeName, graph::Node::Category nodeCategory) {
                 if (graph_->getNode(nodeName))
                 {
                     graph_->getNode(nodeName)->setCategory(nodeCategory);
-                    graph_->getNode(nodeName)->setIp(ip);
-                    graph_->getNode(nodeName)->setPort(port);
                     emit sigGraphChanged();
                 }
             });
@@ -569,22 +566,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
 
                 if (act->text() == "&Set drone")
                 {
-                    std::string ip, port;
-                    DroneIpInputDialog oDialog;
-                    if (oDialog.exec() == QDialog::Accepted)
-                    {
-                        ip = oDialog.getIp().toStdString();
-                        port = oDialog.getPort().toStdString();
-                    }
-
-                    if (ip.empty() || port.empty())
-                    {
-                        QMessageBox::warning(this, tr("Drone Ip or Port is not set"),
-                                             tr("Can't set drone without ip and port."));
-                        return;
-                    }
-
-                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Drone, ip, port);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Drone);
                 }
 
                 if (act->text() == "&Unset drone")
@@ -594,22 +576,7 @@ void GraphView::contextMenuEvent(QContextMenuEvent *event)
 
                 if (act->text() == "&Set attacker")
                 {
-                    std::string ip, port;
-                    DroneIpInputDialog oDialog;
-                    if (oDialog.exec() == QDialog::Accepted)
-                    {
-                        ip = oDialog.getIp().toStdString();
-                        port = oDialog.getPort().toStdString();
-                    }
-
-                    if (ip.empty() || port.empty())
-                    {
-                        QMessageBox::warning(this, tr("Drone Ip or Port is not set"),
-                                             tr("Can't set drone without ip and port."));
-                        return;
-                    }
-
-                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Attacker, ip, port);
+                    emit sigSetNodeCategory(nodeName, graph::Node::Category::Attacker);
                 }
 
                 if (act->text() == "&Unset attacker")

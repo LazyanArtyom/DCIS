@@ -46,21 +46,5 @@ class CoordInputDialog : public QDialog
     void accept();
 };
 
-class DroneIpInputDialog : public QDialog
-{
-  public:
-    explicit DroneIpInputDialog(QWidget *parent = nullptr);
-    QString getIp() const;
-    QString getPort() const;
-
-  private:
-    QPushButton *okButton_   = nullptr;
-    QLineEdit *ipLineEdit_   = nullptr;
-    QLineEdit *portLineEdit_ = nullptr;
-
-  private slots:
-    void accept();
-};
-
 } // end namespace dcis::gui
 #endif // DCIS_GUI_COORDINPUTDIALOG_H_

@@ -281,13 +281,14 @@ void GraphProcessor::startExploration()
     QFutureSynchronizer<void> synchronizer;
     for (size_t i = 0; i < vecExplorationFileNames_.size(); ++i)
     {
-        QString ip = QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getIp());
-        int port = QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getPort()).toInt();
+//    TODO: Assign IP to drones 
+//        QString ip = QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getIp());
+//        int port = QString::fromStdString(vecDronesStartNodes_[i]->getCommonNode()->getPort()).toInt();
         QString file(vecExplorationFileNames_[i]);
 
         // Pass arguments by value (or const reference) if possible
-        QFuture<void> future = QtConcurrent::run([ip, port, file]() { sendFileToDrone(ip, port, file); });
-        synchronizer.addFuture(future);
+//        QFuture<void> future = QtConcurrent::run([ip, port, file]() { sendFileToDrone(ip, port, file); });
+//        synchronizer.addFuture(future);
     }
 
     synchronizer.waitForFinished();
@@ -298,11 +299,12 @@ void GraphProcessor::startAttack()
     QFutureSynchronizer<void> synchronizer;
     for (size_t i = 0; i < vecAttackFileNames_.size(); ++i)
     {
-        QString ip = QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getIp());
-        int port = QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getPort()).toUShort();
+//    TODO: Assign IP to drones 
+//        QString ip = QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getIp());
+//        int port = QString::fromStdString(vecAttackerNodes_[i]->getCommonNode()->getPort()).toUShort();
         QString file(vecAttackFileNames_[i]);
-        QFuture<void> future = QtConcurrent::run([ip, port, file]() { sendFileToDrone(ip, port, file); });
-        synchronizer.addFuture(future);
+//        QFuture<void> future = QtConcurrent::run([ip, port, file]() { sendFileToDrone(ip, port, file); });
+//        synchronizer.addFuture(future);
     }
     synchronizer.waitForFinished();
 }

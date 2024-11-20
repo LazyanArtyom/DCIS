@@ -28,16 +28,21 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
     // graph view widget
     graph_ = new graph::Graph(false);
     graphScene_ = new GraphScene(graph_);
-    connect(this, &GraphEditingTool::sigGraphChanged, graphScene_, &GraphScene::onReload);
 
     graphView_ = new GraphView(imageEditor_);
     graphView_->setScene(graphScene_);
 
     // connections
+    connect(this, &GraphEditingTool::sigGraphChanged, graphScene_, &GraphScene::onReload);
+
     connect(graphView_, &GraphView::sigNodeSelected, this, [this](const std::string &nodeName, QPointF pos) {
         // txtConsole_->setText(txt);
     });
-    connect(graphView_, &GraphView::sigNodeMoved, this, [this]() { emit sigNodeMoved(); });
+
+    connect(graphView_, &GraphView::sigNodeMoved, this, [this]() { 
+        emit sigNodeMoved(); 
+    });
+
     connect(graphView_, &GraphView::sigNodeAdded, this, [this](QPointF pos, bool autoNaming) {
         if (!autoNaming)
         {
@@ -48,31 +53,35 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
         graph_->addNode(graph::Node(graph_->getNextNodeName(), pos));
         emit sigGraphChanged();
     });
+
     connect(graphView_, &GraphView::sigNodeRemoved, this, [this](const std::string &nodeName) {
         if (graph_->removeNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
+
     connect(graphView_, &GraphView::sigNodeIsolated, this, [this](const std::string &nodeName) {
         if (graph_->isolateNode(nodeName))
         {
             emit sigGraphChanged();
         }
     });
-    connect(graphView_, &GraphView::sigEdgeRemoved, this,
-            [this](const std::string &uname, const std::string &vname) {
-                if (graph_->removeEdge(uname, vname))
-                {
-                    emit sigGraphChanged();
-                }
-            });
+
+    connect(graphView_, &GraphView::sigEdgeRemoved, this, [this](const std::string &uname, const std::string &vname) {
+        if (graph_->removeEdge(uname, vname))
+        {
+            emit sigGraphChanged();
+        }
+    });
+
     connect(graphView_, &GraphView::sigEdgeSet, this, [this](const std::string &uname, const std::string &vname) {
         if (graph_->setEdge(uname, vname))
         {
             emit sigGraphChanged();
         }
     });
+
     connect(graphView_, &GraphView::sigNodeEdited, this, [this](const std::string &nodeName) {
         bool ok;
         QRegularExpression re(QRegularExpression::anchoredPattern(QLatin1String("[a-zA-Z0-9]{1,30}")));
@@ -100,34 +109,33 @@ GraphEditingTool::GraphEditingTool(QWidget *parent) : QWidget(parent)
             }
         }
     });
-    connect(graphView_, &GraphView::sigSetNodeCategory, this,
-            [this](std::string nodeName, graph::Node::Category nodeCategory, 
-                   std::string ip, std::string port) {
-                auto node = graph_->getNode(nodeName);
-                if (node)
-                {
-                    node->setCategory(nodeCategory);
-                    node->setIp(ip);
-                    node->setIp(port);
-                    emit sigGraphChanged();
-                }
-            });
+
+    connect(graphView_, &GraphView::sigSetNodeCategory, this, 
+            [this](std::string nodeName, graph::Node::Category nodeCategory) {
+        auto node = graph_->getNode(nodeName);
+        if (node)
+        {
+            node->setCategory(nodeCategory);
+            emit sigGraphChanged();
+        }
+    });
+
     connect(graphView_, &GraphView::sigSetNodeType, this,
             [this](const std::string &nodeName, const graph::Node::Type &nodeType) {
-                auto node = graph_->getNode(nodeName);
-                if (node)
-                {
-                    node->setType(nodeType);
-                    emit sigGraphChanged();
-                }
-            });
+        auto node = graph_->getNode(nodeName);
+        if (node)
+        {
+            node->setType(nodeType);
+            emit sigGraphChanged();
+        }
+    });
+
     // layouts
     QVBoxLayout *vMainLayout = new QVBoxLayout();
     vMainLayout->setContentsMargins(0, 0, 0, 0);
     vMainLayout->setSpacing(0);
 
     setLayout(vMainLayout);
-
     vMainLayout->addWidget(imageEditor_);
 }
 

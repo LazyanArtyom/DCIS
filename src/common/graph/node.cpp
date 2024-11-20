@@ -112,26 +112,6 @@ int Node::getUndirDegree() const
     return deg_;
 }
 
-void Node::setIp(const std::string &ip)
-{
-    ip_ = ip;
-}
-
-void Node::setPort(const std::string &port)
-{
-    port_ = port;
-}
-
-std::string Node::getIp() const
-{
-    return ip_;
-}
-
-std::string Node::getPort() const
-{
-    return port_;
-}
-
 std::string Node::getName() const
 {
     return name_;

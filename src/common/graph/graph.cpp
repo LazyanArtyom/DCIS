@@ -334,8 +334,6 @@ Graph *Graph::fromJSON(QJsonDocument jsonDoc)
         Node tmpNode(name, QPointF(x, y));
         tmpNode.setType(static_cast<Node::Type>(node.toObject().value("nodeType").toInt()));
         tmpNode.setCategory(static_cast<Node::Category>(node.toObject().value("nodeCategory").toInt()));
-        tmpNode.setIp(node.toObject().value("ip").toString().toStdString());
-        tmpNode.setPort(node.toObject().value("port").toString().toStdString());
 
         graph->addNode(tmpNode);
     }
@@ -371,8 +369,6 @@ QJsonDocument Graph::toJSON(Graph *graph)
 
         jsonNode.insert("nodeType", (int)(node->getType()));
         jsonNode.insert("nodeCategory", (int)(node->getCategory()));
-        jsonNode.insert("ip", node->getIp().c_str());
-        jsonNode.insert("port", node->getPort().c_str());
 
         nodes.push_back(jsonNode);
     }
