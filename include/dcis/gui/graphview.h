@@ -71,23 +71,19 @@ class GraphView : public QGraphicsView
 
   signals:
     void sigGraphChanged();
-
     void sigNodeEdited(std::string name);
     void sigNodeRemoved(std::string name);
     void sigNodeIsolated(std::string name);
     void sigNodeAdded(QPointF pos, bool autoNaming);
     void sigNodeSelected(std::string name, QPointF pos);
     void sigNodeMoved();
-
     void sigSetNodeType(std::string nodeName, graph::Node::Type nodeType);
     void sigSetNodeCategory(std::string nodeName, graph::Node::Category nodeCategory);
-
     void sigEdgeAdded();
     void sigEdgeAddedFrom(std::string name);
     void sigEdgeSet(std::string uname, std::string vname);
     void sigEdgeRemoved(std::string uname, std::string vname);
     void sigEdgeSelected(std::string uname, std::string vname);
-
     void sigUnSelected();
 
   private:

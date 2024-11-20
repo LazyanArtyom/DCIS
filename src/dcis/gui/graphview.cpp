@@ -114,22 +114,24 @@ GraphView::GraphView(QWidget *parent) : QGraphicsView(parent)
             }
         }
     });
+
     connect(this, &GraphView::sigSetNodeType, this,
             [this](const std::string &nodeName, const graph::Node::Type &type) {
-                if (graph_->getNode(nodeName))
-                {
-                    graph_->getNode(nodeName)->setType(type);
-                    emit sigGraphChanged();
-                }
-            });
+        if (graph_->getNode(nodeName))
+        {
+            graph_->getNode(nodeName)->setType(type);
+            emit sigGraphChanged();
+        }
+    });
+
     connect(this, &GraphView::sigSetNodeCategory, this,
             [this](std::string nodeName, graph::Node::Category nodeCategory) {
-                if (graph_->getNode(nodeName))
-                {
-                    graph_->getNode(nodeName)->setCategory(nodeCategory);
-                    emit sigGraphChanged();
-                }
-            });
+        if (graph_->getNode(nodeName))
+        {
+            graph_->getNode(nodeName)->setCategory(nodeCategory);
+            emit sigGraphChanged();
+        }
+    });
 }
 
 void GraphView::setScene(GraphScene *scene)
