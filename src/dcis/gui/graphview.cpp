@@ -17,9 +17,10 @@
  */
 #include <gui/graphview.h>
 
+// APP includes
 #include <gui/coordinputdialog.h>
-#include <utils/debugstream.h>
 
+// STL includes
 #include <iostream>
 #include <sstream>
 #include <string>

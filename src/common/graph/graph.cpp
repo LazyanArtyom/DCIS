@@ -18,7 +18,6 @@
 #include <graph/graph.h>
 
 // App includes
-#include <utils/debugstream.h>
 
 // Qt includes
 #include <QFile>
