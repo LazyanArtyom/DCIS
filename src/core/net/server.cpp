@@ -20,6 +20,7 @@
 // App includes
 #include <graph/graph.h>
 #include <net/resource.h>
+#include <utils/imageprovider.h>
 
 // Qt includes
 #include <QDir>
@@ -28,11 +29,27 @@
 
 // STL includes
 
-namespace dcis::server
+namespace dcis::core
 {
 
 Server::Server(common::utils::ILogger *terminalWidget, QObject *parent)
-    : terminalWidget_(terminalWidget), QTcpServer(parent) {}
+    : terminalWidget_(terminalWidget), QTcpServer(parent) 
+{
+    QDir dir;
+    const QString workingDir = dir.absolutePath() + "/uploadedImages";
+    imageProvider_ = std::make_shared<utils::ImageProvider>();
+    imageProvider_->setWorkingDirectoryPath(workingDir);
+
+    packetHandlerFactory_ = std::make_unique<common::resource::PacketHandlerFactory>();
+
+    // register handlers
+    packetHandlerFactory_->registerHandler(common::resource::type::Text, [this]() { return std::make_unique<TextPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Json, [this]() { return std::make_unique<JsonPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Command,
+                    [this]() { return std::make_unique<CommandPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Attachment,
+                    [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
+}
 
 Server::~Server() {}
 
@@ -55,6 +72,8 @@ void Server::addClient(common::user::UserInfo userInfo)
 
     QString msg = "Client:" + userInfo.name + " connected\n";
     terminalWidget_->appendText(msg);
+
+    delete graphProc_;
 }
 
 bool Server::run(const int port)
@@ -91,6 +110,21 @@ void Server::incomingConnection(qintptr socketDescriptor)
 
     // Send cmd to get info about client
     sendCommand(common::resource::command::server::GetUserInfo, socketDescriptor);
+}
+
+bool Server::publishWeb(const QByteArray &data)
+{
+    for (const auto &[client, socket] : clientMap_.asKeyValueRange())
+    {
+        if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
+        {
+            QThread::msleep(100);
+            socket->write(data);
+            socket->flush();
+        }
+    }
+
+    return true;
 }
 
 bool Server::publish(const QByteArray &data, qintptr socketDesc)
@@ -254,217 +288,46 @@ void Server::onDisconected()
     updateSockets();
 }
 
+void Server::setCurrentSocket(qintptr socketDescriptor)
+{ 
+    currentSocket_ = socketDescriptor; 
+}
+
+int Server::getClientsCount() const
+{
+    return clientMap_.count();
+}
+
+qintptr Server::getCurrentSocket() const 
+{ 
+    return currentSocket_; 
+}
+
+common::utils::ILogger *Server::getTerminalWidget() const 
+{
+    return terminalWidget_;
+}
+
+std::shared_ptr<utils::ImageProvider> Server::getImageProvider() const
+{
+    return imageProvider_;
+}
+
 void Server::handle(const common::resource::Header &header, const QByteArray &body)
 {
-    terminalWidget_->appendText("Success: data size is " + QString::number(body.size() + 128) +
-                  " bytes, Command: " + header.command_ + " ResourceType: " + header.resourceType_ + "\n");
+    terminalWidget_->appendText("********* Packet received *******\n");
+    terminalWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
+                  " bytes \nCommand: " + header.command_ + " \nResourceType: " + header.resourceType_ + "\nStatus: " + header.status_ + "\n");
+    terminalWidget_->appendText("*********************************\n");
 
-    header_ = header;
-
-    if (header.resourceType_ == common::resource::type::Text)
+    auto handler = packetHandlerFactory_->createHandler(header.resourceType_);
+    if (handler)
     {
-        handleText(body);
+        handler->handlePacket(header, body);
     }
-    else if (header.resourceType_ == common::resource::type::Json)
+    else
     {
-        handleJson(body);
-    }
-    else if (header.resourceType_ == common::resource::type::Attachment)
-    {
-        handleAttachment(body);
-    }
-    else if (header.resourceType_ == common::resource::type::Command)
-    {
-        handleCommand(header.command_);
-    }
-    else {
-        handleUnknown();
-    }
-}
-
-void Server::handleUnknown()
-{
-    terminalWidget_->appendText("Unknown message, doing nothing.\n");
-}
-
-void Server::handleAttachment(const QByteArray &data)
-{
-    QDir dir;
-    QString WORKING_DIR = dir.absolutePath() + UPLOADED_IMAGES_PATH;
-    dir.mkdir(WORKING_DIR);
-
-    CURRENT_IMAGE_PATH = WORKING_DIR + "/" + header_.fileName_;
-
-    QFile file(CURRENT_IMAGE_PATH);
-    if (file.open(QIODevice::WriteOnly))
-    {
-        file.write(data);
-    }
-
-    QImageReader imgReader(CURRENT_IMAGE_PATH);
-    if (imgReader.canRead())
-    {
-        QImage img = imgReader.read();
-        terminalWidget_->appendText("IMG width: " + QString::number(img.width()) + " height: " + QString::number(img.height()) + "\n");
-
-        imgW_ = img.width();
-        imgH_ = img.height();
-    }
-
-    QString msg = "File saved at " + WORKING_DIR;
-    terminalWidget_->appendText(msg);
-
-    if (header_.command_ == common::resource::command::server::Publish)
-    {
-        terminalWidget_->appendText("Sending Image to clients\n");
-
-        QByteArray body = data;
-        publishAll(common::resource::create(common::resource::command::client::ShowImage, 
-                                                 common::resource::type::Attachment, 
-                                                 common::resource::status::Ok, body),
-                                                 QSet<qintptr>{currentSocket_});
-
-        for (const auto &[client, socket] : clientMap_.asKeyValueRange())
-        {
-            if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
-            {
-                QThread::msleep(100);
-                QJsonObject jsonObj;
-                jsonObj["imagePath"] = CURRENT_IMAGE_PATH;
-                jsonObj["width"] = QString::number(imgW_);
-                jsonObj["height"] = QString::number(imgH_);
-                QJsonDocument jsonDoc(jsonObj);
-
-                socket->write(jsonDoc.toJson());
-                socket->flush();
-            }
-        }
-    }
-}
-
-void Server::handleText(const QByteArray &data)
-{
-    terminalWidget_->appendText("Recived Text: " + data + "\n");
-
-    if (header_.command_ == common::resource::command::PrintText)
-    {
-        terminalWidget_->appendText(QString::fromUtf8(data));
-    }
-}
-
-void Server::handleJson(const QByteArray &data)
-{
-    if (header_.command_ == common::resource::command::server::Publish)
-    {
-        terminalWidget_->appendText("Recived Json\n");
-
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(data);
-        if (commGraph_)
-        {
-            delete commGraph_;
-        }
-        commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
-
-        terminalWidget_->appendText("TOP_LEFT: " + commGraph_->getLeftTop() + "\n");
-        terminalWidget_->appendText("BOTTOM_RIGHT: " + commGraph_->getRightBottom() + "\n");
-
-        if (clientMap_.count() > 1)
-        {
-            terminalWidget_->appendText("Sending JSON to clients\n");
-
-            QByteArray body = data;
-            publishAll(common::resource::create(common::resource::command::client::UpdateGraph, 
-                                                common::resource::type::Json,
-                                                common::resource::status::Ok, 
-                                                body), 
-                                                QSet<qintptr>{currentSocket_});
-
-            for (const auto &[client, socket] : clientMap_.asKeyValueRange())
-            {
-                if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
-                {
-                    QThread::msleep(100);
-                    socket->write(data);
-                    socket->flush();
-                }
-            }
-        }
-    }
-    else if (header_.command_ == common::resource::command::server::SetUserInfo)
-    {
-        QJsonDocument json = QJsonDocument::fromJson(data);
-        common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
-
-        // TO DO: Create normal login system
-        if (userInfo.name == "artyom" && userInfo.password == "al1234" ||
-            userInfo.name == "agit"   && userInfo.password == "aa1234" ||
-            userInfo.name == "davit"  && userInfo.password == "dh1234" ||
-            userInfo.name == "root"   && userInfo.password == "root")
-        {
-            addClient(userInfo);
-            sendStatusUpdate(common::resource::status::UserAccepted, currentSocket_);
-
-            // sync new user
-            if (clientMap_.count() > 1)
-            {
-                sendAttachment(CURRENT_IMAGE_PATH, common::resource::command::client::ShowImage, currentSocket_);
-
-                if (commGraph_ == nullptr)
-                {
-                    return;
-                }
-
-                QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
-                sendJson(json, common::resource::command::client::UpdateGraph, currentSocket_);
-            }
-        }
-        else
-        {
-            sendStatusUpdate(common::resource::status::UserDeclined, currentSocket_);
-        }
-    }
-}
-
-void Server::handleCommand(const QString cmd)
-{
-    if (cmd == common::resource::command::server::ClearCycles)
-    {
-        terminalWidget_->appendText("ClearCycles\n");
-
-        if (graphProc_)
-        {
-            delete graphProc_;
-        }
-        graphProc_ = new dcis::GraphProcessor::GraphProcessor();
-        graphProc_->setCommGraph(commGraph_);
-        graphProc_->initGraph();
-        graphProc_->initGraphDirs();
-        graphProc_->clearCycles();
-
-    }
-    else if (cmd == common::resource::command::server::GenerateGraph)
-    {
-        if (graphProc_)
-        {
-            terminalWidget_->appendText("GenereateGraph\n");
-
-            graphProc_->setImgSize(imgW_, imgH_);
-            graphProc_->generateGraph();
-        }
-    }
-    else if (cmd == common::resource::command::server::StartExploration)
-    {
-        if (graphProc_)
-        {
-            terminalWidget_->appendText("StartExploration\n");
-
-            graphProc_->startExploration();
-        }
-    }
-    else if (cmd == common::resource::command::server::StartAttack)
-    {
-        // TO DO: start attack
-        terminalWidget_->appendText("StartAttack | TO DO: Implement | \n");
+        terminalWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
     }
 }
 
@@ -486,4 +349,4 @@ void Server::updateSockets()
     }
 }
 
-} // end namespace dcis::server
+} // end namespace dcis::core

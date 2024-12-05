@@ -17,7 +17,6 @@
  */
 #include <coordmapper.h>
 #include <graphprocessor/graphprocessor.h>
-#include <utils/debugstream.h>
 
 // Qt includes
 #include <QDir>

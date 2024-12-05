@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef DCIS_SERVER_HANDLERS_H_
-#define DCIS_SERVER_HANDLERS_H_
+#ifndef DCIS_CORE_HANDLERS_H_
+#define DCIS_CORE_HANDLERS_H_
 
 // APP includes
 #include <net/resource.h>
@@ -27,7 +27,7 @@
 
 // STL includes
 
-namespace dcis::server
+namespace dcis::core
 {
 
 class Server;
@@ -55,5 +55,5 @@ class AttachmentPacketHandler : public common::resource::APacketHandler
     explicit AttachmentPacketHandler(Server *server);
 };
 
-} // end namespace dcis::server
-#endif // DCIS_SERVER_HANDLERS_H_
+} // end namespace dcis::core
+#endif // DCIS_CORE_HANDLERS_H_

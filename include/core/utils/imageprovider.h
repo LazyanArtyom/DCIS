@@ -15,37 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef DCIS_CORE_MAINWINDOW_H_
-#define DCIS_CORE_MAINWINDOW_H_
+#ifndef DCIS_CORE_UTILS_IMAGEPROVIDER_H_
+#define DCIS_CORE_UTILS_IMAGEPROVIDER_H_
 
 // App includes
-#include <net/server.h>
-#include <utils/terminalwidget.h>
 
-// STL includes
+// QT includes
+#include <QSize>
 
-// Qt includes
-#include <QMainWindow>
-#include <QTabWidget>
-
-namespace dcis::core
+namespace dcis::core::utils
 {
 
-class MainWindow : public QMainWindow
+class ImageProvider
 {
-    Q_OBJECT
+public:
+    QSize getCurrentImageSize() const;
+    QString getCurrentImagePath() const;
 
-  public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    QString getWorkingDirectoryPath() const;
+    void setWorkingDirectoryPath(const QString path);
 
-  private:
-    Server *server_;
-    QTabWidget *centralTabWidget_;
-    common::utils::ILogger *terminalWidget_;
+    void saveRawImage(const QString path, const QByteArray& data);
 
-    // std::unique_ptr<utils::DebugStream> debugStream_;
+private:
+    QString currentImageSize_;
+    QString currentImagePath_;
+    QString workingDirectoryPath_;
 };
 
-} // end namespace dcis::core
-#endif // DCIS_CORE_MAINWINDOW_H_
+} // end namespace dcis::core::utils
+#endif // DCIS_CORE_UTILS_IMAGEPROVIDER_H_

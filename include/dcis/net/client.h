@@ -35,6 +35,9 @@ class Client : public QObject
     Q_OBJECT
 
   public:
+    using LoggerPtrType = common::utils::ILogger*;
+    using PacketHandlerFactoryPtrType = std::unique_ptr<common::resource::PacketHandlerFactory>;
+
     Client(common::utils::ILogger *terminalWidget, QObject *parent = nullptr);
     ~Client();
 
@@ -71,8 +74,8 @@ class Client : public QObject
     QString username_;
     QString password_;
     QTcpSocket *socket_ = nullptr;
-    common::utils::ILogger *terminalWidget_ = nullptr;
-    std::unique_ptr<common::resource::PacketHandlerFactory> packetHandlerFactory_;
+    LoggerPtrType terminalWidget_ = nullptr;
+    PacketHandlerFactoryPtrType packetHandlerFactory_;
 };
 
 } // end namespace dcis::client

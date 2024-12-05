@@ -25,7 +25,7 @@
 
 // STL includes
 
-namespace dcis::server
+namespace dcis::core
 {
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
@@ -75,4 +75,4 @@ MainWindow::~MainWindow()
     server_->deleteLater();
 }
 
-} // end namespace dcis::server
+} // end namespace dcis::core
