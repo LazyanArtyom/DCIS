@@ -15,38 +15,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "net/resource.h"
 #include <net/client.h>
 
 // APP includes
 #include <graph/graph.h>
+#include <net/resource.h>
 #include <user/userinfo.h>
+#include <net/clientsenders.h>
 
 // STL includes
 
 // QT includes
-#include <QDebug>
 #include <QFile>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QStandardPaths>
+#include <QDebug>
 #include <QThread>
+#include <QFileInfo>
+#include <QFileDialog>
+#include <QStandardPaths>
 
 namespace dcis::client
 {
 
-Client::Client(common::utils::ILogger *terminalWidget, QObject *parent)
-    : terminalWidget_{terminalWidget}, QObject(parent)
+Client::Client(LoggerPtrType loggerWidget, QObject *parent)
+    : loggerWidget_{loggerWidget}, QObject(parent)
 {
     packetHandlerFactory_ = std::make_unique<common::resource::PacketHandlerFactory>();
 
     // register handlers
-    packetHandlerFactory_->registerHandler(common::resource::type::Text, [this]() { return std::make_unique<TextPacketHandler>(this); });
-    packetHandlerFactory_->registerHandler(common::resource::type::Json, [this]() { return std::make_unique<JsonPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Text, 
+                                        [this]() { return std::make_unique<TextPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Json, 
+                                        [this]() { return std::make_unique<JsonPacketHandler>(this); });
     packetHandlerFactory_->registerHandler(common::resource::type::Command,
-                    [this]() { return std::make_unique<CommandPacketHandler>(this); });
+                                        [this]() { return std::make_unique<CommandPacketHandler>(this); });
     packetHandlerFactory_->registerHandler(common::resource::type::Attachment,
-                    [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
+                                        [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
 
 }
 
@@ -56,47 +59,12 @@ Client::~Client()
     socket_->deleteLater();
 }
 
-void Client::sendText(const QString &text, const QString cmd)
+void Client::handle(const Client::HeaderType &header, const QByteArray &body)
 {
-    QByteArray body = text.toUtf8();
-    sendToServer(common::resource::create(cmd, common::resource::type::Text, common::resource::status::Ok, body));
-}
-
-void Client::sendJson(const QJsonDocument &json, const QString cmd)
-{
-    QByteArray body = json.toJson();
-    sendToServer(common::resource::create(cmd, common::resource::type::Json, common::resource::status::Ok, body));
-}
-
-void Client::sendAttachment(const QString &filePath, const QString cmd)
-{
-    QFile file(filePath);
-    if (file.open(QIODevice::ReadOnly))
-    {
-        QFileInfo fileInfo(file.fileName());
-        QString fileName(fileInfo.fileName());
-
-        QByteArray body = file.readAll();
-        sendToServer(common::resource::create(cmd, common::resource::type::Attachment, common::resource::status::Ok, body, fileName));
-    }
-    else
-    {
-        terminalWidget_->appendText("Can't open file!\n");
-        return;
-    }
-}
-
-void Client::sendCommand(const QString cmd)
-{
-    sendToServer(common::resource::create(cmd, common::resource::type::Command));
-}
-
-void Client::handle(const common::resource::Header &header, const QByteArray &body)
-{
-    terminalWidget_->appendText("********* Packet received *******\n");
-    terminalWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
+    loggerWidget_->appendText("********* Packet received *******\n");
+    loggerWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
                   " bytes \nCommand: " + header.command_ + " \nResourceType: " + header.resourceType_ + "\nStatus: " + header.status_ + "\n");
-    terminalWidget_->appendText("*********************************\n");
+    loggerWidget_->appendText("*********************************\n");
 
     auto handler = packetHandlerFactory_->createHandler(header.resourceType_);
     if (handler)
@@ -105,7 +73,7 @@ void Client::handle(const common::resource::Header &header, const QByteArray &bo
     }
     else
     {
-        terminalWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
+        loggerWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
     }
 }
 
@@ -119,58 +87,16 @@ bool Client::connectToServer(const QString &ip, const QString &port)
 
     if (socket_->waitForConnected())
     {
-        terminalWidget_->appendText("Succsesfully connected to " + ip + ":" + port + "\n");
+        loggerWidget_->appendText("Succsesfully connected to " + ip + ":" + port + "\n");
         return true;
     }
     else
     {
-        terminalWidget_->appendText("Error to connected to " + ip + ":" + port + "\n");
+        loggerWidget_->appendText("Error to connected to " + ip + ":" + port + "\n");
         socket_->close();
         socket_->deleteLater();
         return false;
     }
-}
-
-bool Client::sendToServer(const QByteArray &data)
-{
-    if (!checkServerConnected())
-    {
-        terminalWidget_->appendText("Server does not respond. Please reconnect!\n");
-        return false;
-    }
-
-    if (socket_->state() != QAbstractSocket::ConnectedState)
-    {
-        terminalWidget_->appendText("Socket is not in connected state.\n");
-        return false;
-    }
-
-    QDataStream socketStream(socket_);
-    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
-
-    socketStream << data;
-
-    if (socket_->state() == QAbstractSocket::ConnectedState)
-    {
-        QThread::msleep(100);
-        if (socket_->waitForBytesWritten())
-        {
-            terminalWidget_->appendText("Data sent successfully.\n");
-        }
-        else
-        {
-            terminalWidget_->appendText("Failed to send data.\n");
-            return false;
-        }
-        socket_->flush();
-    }
-    else
-    {
-        terminalWidget_->appendText("Socket is not in connected state. \n");
-        return false;
-    }
-
-    return true;
 }
 
 bool Client::checkServerConnected() const
@@ -198,14 +124,19 @@ void Client::setUserName(const QString userName)
     username_ = userName;
 }
 
-common::utils::ILogger* Client::getTerminalWidget() const
+Client::LoggerPtrType Client::getLogger() const
 {
-    return terminalWidget_;
+    return loggerWidget_;
 }
 
 void Client::setPassword(const QString password)
 {
     password_ = password;
+}
+
+QTcpSocket *Client::getSocket() const
+{
+    return socket_;
 }
 
 void Client::onReadyRead()
@@ -220,23 +151,23 @@ void Client::onReadyRead()
 
     if (socketStream.commitTransaction())
     {
-        terminalWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
+        loggerWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
 
         QByteArray headerData = buffer.mid(0, common::resource::GLOBAL_HEADER_SIZE);
         QDataStream ds(&headerData, QIODevice::ReadWrite);
-        common::resource::Header header;
+        Client::HeaderType header;
         ds >> header;
         handle(header, buffer.mid(common::resource::GLOBAL_HEADER_SIZE));
     }
     else
     {
-        terminalWidget_->appendText("Reading from server...\n");
+        loggerWidget_->appendText("Reading from server...\n");
     }
 }
 
 void Client::onDisconected()
 {
-    terminalWidget_->appendText("Server disconected.\n");
+    loggerWidget_->appendText("Server disconected.\n");
 }
 
 } // end namespace dcis::client

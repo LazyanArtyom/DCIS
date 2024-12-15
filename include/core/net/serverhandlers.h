@@ -22,8 +22,8 @@
 #include <net/resource.h>
 
 // QT includes
-#include <QByteArray>
 #include <QString>
+#include <QByteArray>
 
 // STL includes
 

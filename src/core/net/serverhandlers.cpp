@@ -15,12 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-#include "net/resource.h"
 #include <net/serverhandlers.h>
 
 // APP includes
 #include <net/server.h>
+#include <net/resource.h>
 #include <user/userinfo.h>
+#include <net/serversenders.h>
 
 // QT includes
 #include <QDir>
@@ -35,16 +36,16 @@ TextPacketHandler::TextPacketHandler(Server *server)
 {
     // command PrintText
     registerCommand(common::resource::command::PrintText,
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
-        server->getTerminalWidget()->appendText(QString::fromUtf8(body));
+        server->getLogger()->appendText(QString::fromUtf8(body));
     });
 }
 
 JsonPacketHandler::JsonPacketHandler(Server *server)
 {
     // command Publish
-    registerCommand(common::resource::command::server::Publish, [server](const common::resource::Header &header,
+    registerCommand(common::resource::command::server::Publish, [server](const Server::HeaderType &header,
                                                                          const QByteArray &body) {
         QJsonDocument jsonDocument = QJsonDocument::fromJson(body);
         /*
@@ -57,23 +58,24 @@ JsonPacketHandler::JsonPacketHandler(Server *server)
 
         if (server->getClientsCount() > 1)
         {
-            server->publishAll(common::resource::create(common::resource::command::client::UpdateGraph, 
-                                                common::resource::type::Json,
-                                                common::resource::status::Ok, 
-                                                body), 
-                                                QSet<qintptr>{server->getCurrentSocket()}); 
+            SenderBase sender(server->getCurrentSocket(), server);
+            sender.publishAll(common::resource::create(common::resource::command::client::UpdateGraph, 
+                                                       common::resource::type::Json,
+                                                       common::resource::status::Ok, 
+                                                       body), 
+                                                       QSet<qintptr>{ server->getCurrentSocket() }); 
             // send graph to web clients
-            server->publishWeb(body);
+            sender.publishWeb(body);
         }
     });
 
     // command SetUserInfo
-    registerCommand(common::resource::command::server::SetUserInfo, [server](const common::resource::Header &header,
-                                                                         const QByteArray &body) {
+    registerCommand(common::resource::command::server::SetUserInfo, [server](const Server::HeaderType &header,
+                                                                             const QByteArray &body) {
 
         qintptr currentSocket = server->getCurrentSocket();
         QJsonDocument json = QJsonDocument::fromJson(body);
-        common::user::UserInfo userInfo = common::user::UserInfo::fromJson(json);
+        Server::UserInfoType userInfo = Server::UserInfoType::fromJson(json);
 
         // TO DO: Create normal login system
         if (userInfo.name == "artyom" && userInfo.password == "al1234" ||
@@ -82,14 +84,20 @@ JsonPacketHandler::JsonPacketHandler(Server *server)
             userInfo.name == "root"   && userInfo.password == "root")
         {
             server->addClient(userInfo);
-            server->sendStatusUpdate(common::resource::status::UserAccepted, currentSocket);
+
+            {
+                StatusUpdateSender sender(currentSocket, server);
+                sender.send(common::resource::status::UserAccepted);
+            }
 
             // sync new user
             if (server->getClientsCount() > 1)
             {
-                server->sendAttachment(server->getImageProvider()->getCurrentImagePath(), 
-                                            common::resource::command::client::ShowImage, 
-                               currentSocket);
+                {
+                    AttachmentSender sender(currentSocket, server);
+                    sender.send(server->getImageProvider()->getCurrentImagePath(),
+                                common::resource::command::client::ShowImage);
+                }
 
                 /*if (commGraph_ == nullptr)
                 {
@@ -97,13 +105,17 @@ JsonPacketHandler::JsonPacketHandler(Server *server)
                 }
                 */
 
-                //QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
-                server->sendJson(json, common::resource::command::client::UpdateGraph, currentSocket);
+                {
+                    //QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
+                    JsonSender sender(currentSocket, server);
+                    sender.send(json, common::resource::command::client::UpdateGraph);
+                }
             }
         }
         else
         {
-            server->sendStatusUpdate(common::resource::status::UserDeclined, currentSocket);
+            StatusUpdateSender sender(currentSocket, server);
+            sender.send(common::resource::status::UserDeclined);
         }
     });
 }
@@ -112,7 +124,7 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
 {
     // command ClearCycles
     registerCommand(common::resource::command::server::ClearCycles, 
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
 /*
         auto graphProcessor = server->getGraphProcessor();
@@ -131,7 +143,7 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
 
     // command GenerateGraph
     registerCommand(common::resource::command::server::GenerateGraph, 
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
 /*
         QSize imgSize = server->getImageProvider()->getCurrentImageSize();
@@ -145,7 +157,7 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
 
     // command StartExploration
     registerCommand(common::resource::command::server::StartExploration, 
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
 /*
         auto graphProcessor = server->getGraphProcessor();
@@ -156,7 +168,7 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
 
     // command StartAttack
     registerCommand(common::resource::command::server::StartAttack, 
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
         // TO DO: start attack
     });
@@ -165,18 +177,19 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
 AttachmentPacketHandler::AttachmentPacketHandler(Server *server)
 {
     registerCommand(common::resource::command::server::Publish,
-                    [server](const common::resource::Header &header, const QByteArray &body) {
+                    [server](const Server::HeaderType &header, const QByteArray &body) {
 
         auto imageProvider = server->getImageProvider();
         QString imagePath = imageProvider->getWorkingDirectoryPath() + "/" + header.fileName_;
 
         imageProvider->saveRawImage(imagePath, body);
-        server->getTerminalWidget()->appendText("Image saved at " + imagePath);
+        server->getLogger()->appendText("Image saved at " + imagePath);
 
-        server->publishAll(common::resource::create(common::resource::command::client::ShowImage, 
-                                                         common::resource::type::Attachment, 
-                                                       common::resource::status::Ok, body),
-                                               QSet<qintptr>{server->getCurrentSocket()});
+        SenderBase sender(server->getCurrentSocket(), server);
+        sender.publishAll(common::resource::create(common::resource::command::client::ShowImage, 
+                                                   common::resource::type::Attachment, 
+                                                   common::resource::status::Ok, body),
+                                                   QSet<qintptr>{ server->getCurrentSocket() });
     });
 }
 

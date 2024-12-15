@@ -20,6 +20,7 @@
 // APP includes
 #include <net/client.h>
 #include <user/userinfo.h>
+#include <net/clientsenders.h>
 
 // QT includes
 #include <QJsonDocument>
@@ -33,7 +34,7 @@ TextPacketHandler::TextPacketHandler(Client *client)
     registerCommand(common::resource::command::PrintText,
                     [client](const common::resource::Header &header, const QByteArray &body) {
 
-                        client->getTerminalWidget()->appendText(QString::fromUtf8(body));
+                        client->getLogger()->appendText(QString::fromUtf8(body));
                     });
 }
 
@@ -59,10 +60,9 @@ CommandPacketHandler::CommandPacketHandler(Client *client)
                         userInfo.password = client->getPassword();
 
                         // sending user info to server
-                        QByteArray data = common::user::UserInfo::toJson(userInfo).toJson();
-                        client->sendToServer(common::resource::create(common::resource::command::server::SetUserInfo,
-                                                                       common::resource::type::Json,
-                                                                       common::resource::status::Ok, data));
+                        JsonSender sender(client->getSocket(), client);
+                        sender.sendToServer(common::user::UserInfo::toJson(userInfo), 
+                                             common::resource::command::server::SetUserInfo);
                     });
 
     // command StatusUpdate
@@ -72,7 +72,7 @@ CommandPacketHandler::CommandPacketHandler(Client *client)
                         // status UserAccepted
                         if (header.status_ == common::resource::status::UserAccepted)
                         {
-                            client->getTerminalWidget()->appendText("Succsesfully connected to server\n");
+                            client->getLogger()->appendText("Succsesfully connected to server\n");
                             emit client->sigUserAccepted(true);
                         }
                         // status UserDeclined

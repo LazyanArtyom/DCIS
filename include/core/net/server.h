@@ -20,69 +20,60 @@
 
 // App includes
 #include <net/resource.h>
-#include <net/serverhandlers.h>
 #include <user/userinfo.h>
+#include <net/serverhandlers.h>
 #include <utils/imageprovider.h>
 #include <utils/terminalwidget.h>
 #include <graphprocessor/graphprocessor.h>
 
 // QT includes
-#include <QImage>
 #include <QMap>
+#include <QImage>
 #include <QTcpServer>
 #include <QTcpSocket>
 
-namespace dcis::core
-{
+namespace dcis::core {
 
 class Server : public QTcpServer
 {
     Q_OBJECT
   public:
+    using UserInfoType  = common::user::UserInfo;
     using LoggerPtrType = common::utils::ILogger*;
+    using HeaderType    = common::resource::Header;
     using ClientMapType = QMap<common::user::UserInfo, QTcpSocket *>;
     using ImageProviderPtrType = std::shared_ptr<utils::ImageProvider>;
     using PacketHandlerFactoryPtrType = std::unique_ptr<common::resource::PacketHandlerFactory>;
 
-    Server(common::utils::ILogger *terminalWidget, QObject *parent = nullptr);
+    Server(LoggerPtrType terminalWidget, QObject *parent = nullptr);
     ~Server();
 
-    void addClient(common::user::UserInfo userInfo);
-
     bool run(const int port);
-    void incomingConnection(qintptr socketDescriptor) override;
+    void addClient(UserInfoType userInfo);
+    void handle(const HeaderType &header, const QByteArray &body);
 
-    // Senders
-    bool publishWeb(const QByteArray &data);
-    bool publish(const QByteArray &data, qintptr socketDesc);
-    bool publishAll(const QByteArray &data, QSet<qintptr> excludeSockets);
-
-    void sendText(const QString &text, const QString cmd, qintptr socketDescriptor = -1);
-    void sendJson(const QJsonDocument &json, const QString cmd, qintptr socketDescriptor = -1);
-    void sendAttachment(const QString &filePath, const QString cmd, qintptr socketDescriptor = -1);
-    void sendCommand(const QString cmd, qintptr socketDescriptor = -1);
-    void sendStatusUpdate(const QString status, qintptr socketDescriptor = -1);
-
-    void handle(const common::resource::Header &header, const QByteArray &body);
-
-    int getClientsCount() const;
     qintptr getCurrentSocket() const;
     void setCurrentSocket(qintptr socketDescriptor);
-    
-    common::utils::ILogger *getTerminalWidget() const;
-    std::shared_ptr<utils::ImageProvider> getImageProvider() const;
+
+    int getClientsCount() const;
+    LoggerPtrType getLogger() const;
+    ClientMapType getClientMap() const;
+    ImageProviderPtrType getImageProvider() const;
+
+protected:
+    void incomingConnection(qintptr socketDescriptor) override;
 
   public slots:
     void onReadyRead();
     void onDisconected();
 
-private:
+  private:
     void updateSockets();
 
   private:
     qintptr currentSocket_;
     ClientMapType clientMap_;
-    LoggerPtrType terminalWidget_;
+    LoggerPtrType loggerWidget_;
     ImageProviderPtrType imageProvider_;
     PacketHandlerFactoryPtrType packetHandlerFactory_;
 

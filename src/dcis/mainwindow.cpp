@@ -18,6 +18,7 @@
 #include "mainwindow.h"
 
 // APP include
+#include <net/clientsenders.h>
 #include <gui/coordinputdialog.h>
 
 // QT includes
@@ -146,7 +147,8 @@ void MainWindow::onUpload()
 
     if (client_->checkServerConnected())
     {
-        client_->sendAttachment(filePath, common::resource::command::server::Publish);
+        client::AttachmentSender sender(client_->getSocket(), client_);
+        sender.sendToServer(filePath, common::resource::command::server::Publish);
     }
     else
     {
@@ -219,7 +221,8 @@ void MainWindow::onClearCycles()
 
     if (client_->checkServerConnected())
     {
-        client_->sendCommand(common::resource::command::server::ClearCycles);
+        client::CommandSender sender(client_->getSocket(), client_);
+        sender.sendToServer(common::resource::command::server::ClearCycles);
     }
 
     terminalWidget_->appendText("Cycles Cleared\n");
@@ -231,7 +234,8 @@ void MainWindow::onGenerateGraph()
 
     if (client_->checkServerConnected())
     {
-        client_->sendCommand(common::resource::command::server::GenerateGraph);
+        client::CommandSender sender(client_->getSocket(), client_);
+        sender.sendToServer(common::resource::command::server::GenerateGraph);
     }
 
     terminalWidget_->appendText("Graph Generated\n");
@@ -243,7 +247,8 @@ void MainWindow::onStartExploration()
 
     if (client_->checkServerConnected())
     {
-        client_->sendCommand(common::resource::command::server::StartExploration);
+        client::CommandSender sender(client_->getSocket(), client_);
+        sender.sendToServer(common::resource::command::server::StartExploration);
     }
 }
 void MainWindow::onStartAttack()
@@ -252,7 +257,8 @@ void MainWindow::onStartAttack()
 
     if (client_->checkServerConnected())
     {
-        client_->sendCommand(common::resource::command::server::StartAttack);
+        client::CommandSender sender(client_->getSocket(), client_);
+        sender.sendToServer(common::resource::command::server::StartAttack);
     }
 }
 
@@ -281,7 +287,8 @@ void MainWindow::onGraphChanged()
     graph->setRightBottom(rightBottom_);
 
     QJsonDocument jsonData = graph::Graph::toJSON(graph);
-    client_->sendJson(jsonData, resource::command::server::Publish);
+    client::JsonSender sender(client_->getSocket(), client_);
+    sender.sendToServer(jsonData, resource::command::server::Publish);
 }
 
 void MainWindow::onUpdateGraph(const QJsonDocument &json)

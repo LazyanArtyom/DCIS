@@ -20,6 +20,7 @@
 // App includes
 #include <graph/graph.h>
 #include <net/resource.h>
+#include <net/serversenders.h>
 #include <utils/imageprovider.h>
 
 // Qt includes
@@ -32,8 +33,8 @@
 namespace dcis::core
 {
 
-Server::Server(common::utils::ILogger *terminalWidget, QObject *parent)
-    : terminalWidget_(terminalWidget), QTcpServer(parent) 
+Server::Server(LoggerPtrType loggerWidget, QObject *parent)
+    : loggerWidget_(loggerWidget), QTcpServer(parent) 
 {
     QDir dir;
     const QString workingDir = dir.absolutePath() + "/uploadedImages";
@@ -43,23 +44,26 @@ Server::Server(common::utils::ILogger *terminalWidget, QObject *parent)
     packetHandlerFactory_ = std::make_unique<common::resource::PacketHandlerFactory>();
 
     // register handlers
-    packetHandlerFactory_->registerHandler(common::resource::type::Text, [this]() { return std::make_unique<TextPacketHandler>(this); });
-    packetHandlerFactory_->registerHandler(common::resource::type::Json, [this]() { return std::make_unique<JsonPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Text, 
+                                        [this]() { return std::make_unique<TextPacketHandler>(this); });
+    packetHandlerFactory_->registerHandler(common::resource::type::Json, 
+                                        [this]() { return std::make_unique<JsonPacketHandler>(this); });
     packetHandlerFactory_->registerHandler(common::resource::type::Command,
-                    [this]() { return std::make_unique<CommandPacketHandler>(this); });
+                                        [this]() { return std::make_unique<CommandPacketHandler>(this); });
     packetHandlerFactory_->registerHandler(common::resource::type::Attachment,
-                    [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
+                                        [this]() { return std::make_unique<AttachmentPacketHandler>(this); });
 }
 
 Server::~Server() {}
 
-void Server::addClient(common::user::UserInfo userInfo)
+void Server::addClient(UserInfoType userInfo)
 {
     for (const auto &[client, socket] : clientMap_.asKeyValueRange())
     {
         if (client.name == userInfo.name)
         {
-            sendStatusUpdate(common::resource::status::UserAlreadyConnected, currentSocket_);
+            StatusUpdateSender sender(currentSocket_, this);
+            sender.send(common::resource::status::UserAlreadyConnected);
             return;
         }
     }
@@ -70,8 +74,7 @@ void Server::addClient(common::user::UserInfo userInfo)
     userInfo.socketDescriptor = currentSocket_;
     clientMap_[userInfo] = socket;
 
-    QString msg = "Client:" + userInfo.name + " connected\n";
-    terminalWidget_->appendText(msg);
+    loggerWidget_->appendText("Client:" + userInfo.name + " connected\n");
 
     delete graphProc_;
 }
@@ -80,19 +83,19 @@ bool Server::run(const int port)
 {
     if (listen(QHostAddress::Any, port))
     {
-        terminalWidget_->appendText("Starting server, listening to " + QString::number(port) + " port\n");
+        loggerWidget_->appendText("Starting server, listening to " + QString::number(port) + " port\n");
         return true;
     }
     else
     {
-        terminalWidget_->appendText("Filed to start server at " + QString::number(port) + " port\n");
+        loggerWidget_->appendText("Filed to start server at " + QString::number(port) + " port\n");
         return false;
     }
 }
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
-    terminalWidget_->appendText("New incoming connection ... \n");
+    loggerWidget_->appendText("New incoming connection ... \n");
 
     currentSocket_ = socketDescriptor;
 
@@ -103,133 +106,19 @@ void Server::incomingConnection(qintptr socketDescriptor)
     connect(socket, &QTcpSocket::readyRead, this, &Server::onReadyRead);
     connect(socket, &QTcpSocket::disconnected, this, &Server::onDisconected);
 
-    common::user::UserInfo userInfo;
+    UserInfoType userInfo;
     userInfo.socketDescriptor = socketDescriptor;
 
     clientMap_[userInfo] = socket;
 
     // Send cmd to get info about client
-    sendCommand(common::resource::command::server::GetUserInfo, socketDescriptor);
-}
-
-bool Server::publishWeb(const QByteArray &data)
-{
-    for (const auto &[client, socket] : clientMap_.asKeyValueRange())
-    {
-        if (client.isStream && socket->state() == QAbstractSocket::ConnectedState)
-        {
-            QThread::msleep(100);
-            socket->write(data);
-            socket->flush();
-        }
-    }
-
-    return true;
-}
-
-bool Server::publish(const QByteArray &data, qintptr socketDesc)
-{
-    QTcpSocket *socket = clientMap_.value(common::user::UserInfo{socketDesc});
-
-    QDataStream socketStream(socket);
-    socketStream.setVersion(common::resource::GLOBAL_DATASTREAM_VERSION);
-
-    socketStream << data;
-
-    QThread::msleep(100);
-    if (socket->state() == QAbstractSocket::ConnectedState)
-    {
-        if (socket->waitForBytesWritten())
-        {
-            terminalWidget_->appendText("Succsesfully sent to client" + QString::number(data.size()) + " bytes\n");
-        }
-        else
-        {
-            terminalWidget_->appendText("Error to send to client\n");
-            return false;
-        }
-        socket->flush();
-    }
-
-    return true;
-}
-
-bool Server::publishAll(const QByteArray &data, QSet<qintptr> excludeSockets)
-{
-    for (const auto &[client, socket] : clientMap_.asKeyValueRange())
-    {
-        if (!excludeSockets.contains(client.socketDescriptor) && !client.isStream)
-        {
-            publish(data, client.socketDescriptor);
-        }
-    }
-
-    return true;
-}
-
-void Server::sendText(const QString &text, const QString cmd, qintptr socketDescriptor)
-{
-    QByteArray body = text.toUtf8();
-    publish(common::resource::create(cmd, 
-                                     common::resource::type::Text, 
-                                     common::resource::status::Ok, 
-                                     body), 
-                                     socketDescriptor);
-}
-
-void Server::sendJson(const QJsonDocument &json, const QString cmd, qintptr socketDescriptor)
-{
-    QByteArray body = json.toJson();
-    publish(common::resource::create(cmd, 
-                                     common::resource::type::Json, 
-                                     common::resource::status::Ok, 
-                                     body), 
-                                     socketDescriptor);
-}
-
-void Server::sendAttachment(const QString &filePath, const QString cmd, qintptr socketDescriptor)
-{
-    QFile file(filePath);
-    if (file.open(QIODevice::ReadOnly))
-    {
-        QFileInfo fileInfo(file.fileName());
-        QString fileName(fileInfo.fileName());
-
-        QByteArray body = file.readAll();
-        publish(common::resource::create(cmd, 
-                                         common::resource::type::Attachment, 
-                                         common::resource::status::Ok, 
-                                         body, 
-                                         fileName), 
-                                         socketDescriptor);
-    }
-    else
-    {
-        terminalWidget_->appendText("Can't open file!\n");
-        return;
-    }
-}
-
-void Server::sendCommand(const QString cmd, qintptr socketDescriptor)
-{
-    publish(common::resource::create(cmd, 
-                                     common::resource::type::Command), 
-                                     socketDescriptor);
-}
-
-
-void Server::sendStatusUpdate(const QString status, qintptr socketDescriptor)
-{
-    publish(common::resource::create(common::resource::command::StatusUpdate, 
-                                     common::resource::type::Command, 
-                                     status),
-                                     socketDescriptor);
+    CommandSender sender(socketDescriptor, this);
+    sender.send(common::resource::command::server::GetUserInfo);
 }
 
 // slots
 void Server::onReadyRead()
 {
-    terminalWidget_->appendText("ON READY READ\n");
     QByteArray buffer;
     QTcpSocket *socket = reinterpret_cast<QTcpSocket *>(sender());
 
@@ -242,7 +131,7 @@ void Server::onReadyRead()
 
     if (socketStream.commitTransaction())
     {
-        terminalWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
+        loggerWidget_->appendText("Buffer size: : " + QString::number(buffer.size()) + " bytes\n");
 
         QByteArray headerData = buffer.mid(0, common::resource::GLOBAL_HEADER_SIZE);
         QDataStream ds(&headerData, QIODevice::ReadWrite);
@@ -252,8 +141,8 @@ void Server::onReadyRead()
     }
     else
     {
-        terminalWidget_->appendText("#");
-        /*terminalWidget_->appendText("Reading from client: " +
+        loggerWidget_->appendText("#");
+        /*loggerWidget_->appendText("Reading from client: " +
                                               QString::number(socket->socketDescriptor()) +
                                               "  Bytes recived: " + QString::number(socket->bytesAvailable()) + "
            bytes\n");*/
@@ -262,17 +151,16 @@ void Server::onReadyRead()
     // This is for web server, the header size is fixed 65 bytes
     if (socket->bytesAvailable() == 65 && socket->readAll().contains("Stream"))
     {
-        terminalWidget_->appendText("New stream connection\n");
+        loggerWidget_->appendText("New stream connection\n");
 
         for (const auto &[client, socket] : clientMap_.asKeyValueRange())
         {
             if (socket->socketDescriptor() == currentSocket_)
             {
-                terminalWidget_->appendText("Adding to user Map\n");
-                QTcpSocket *socket = clientMap_.value(common::user::UserInfo{currentSocket_});
-                clientMap_.remove(common::user::UserInfo{currentSocket_});
+                QTcpSocket *socket = clientMap_.value(UserInfoType{ currentSocket_ });
+                clientMap_.remove(UserInfoType{ currentSocket_ });
 
-                common::user::UserInfo userInfo;
+                UserInfoType userInfo;
                 userInfo.socketDescriptor = currentSocket_;
                 userInfo.isStream = true;
                 clientMap_[userInfo] = socket;
@@ -290,7 +178,7 @@ void Server::onDisconected()
 
 void Server::setCurrentSocket(qintptr socketDescriptor)
 { 
-    currentSocket_ = socketDescriptor; 
+    currentSocket_ = socketDescriptor;
 }
 
 int Server::getClientsCount() const
@@ -298,36 +186,41 @@ int Server::getClientsCount() const
     return clientMap_.count();
 }
 
+Server::ClientMapType Server::getClientMap() const
+{
+    return clientMap_;
+}
+
 qintptr Server::getCurrentSocket() const 
 { 
     return currentSocket_; 
 }
 
-common::utils::ILogger *Server::getTerminalWidget() const 
+Server::LoggerPtrType Server::getLogger() const 
 {
-    return terminalWidget_;
+    return loggerWidget_;
 }
 
-std::shared_ptr<utils::ImageProvider> Server::getImageProvider() const
+Server::ImageProviderPtrType Server::getImageProvider() const
 {
     return imageProvider_;
 }
 
-void Server::handle(const common::resource::Header &header, const QByteArray &body)
+void Server::handle(const HeaderType &header, const QByteArray &body)
 {
-    terminalWidget_->appendText("********* Packet received *******\n");
-    terminalWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
+    loggerWidget_->appendText("********* Packet received *******\n");
+    loggerWidget_->appendText("Pakcet size: " + QString::number(common::resource::GLOBAL_HEADER_SIZE + body.size()) +
                   " bytes \nCommand: " + header.command_ + " \nResourceType: " + header.resourceType_ + "\nStatus: " + header.status_ + "\n");
-    terminalWidget_->appendText("*********************************\n");
+    loggerWidget_->appendText("*********************************\n");
 
     auto handler = packetHandlerFactory_->createHandler(header.resourceType_);
-    if (handler)
+    if (handler != nullptr)
     {
         handler->handlePacket(header, body);
     }
     else
     {
-        terminalWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
+        loggerWidget_->appendText("No handler found for " + header.resourceType_ + "\n");
     }
 }
 
@@ -344,7 +237,7 @@ void Server::updateSockets()
             it.value()->close();
             it.value()->deleteLater();
             it = clientMap_.erase(it);
-            terminalWidget_->appendText(msg);
+            loggerWidget_->appendText(msg);
         }
     }
 }

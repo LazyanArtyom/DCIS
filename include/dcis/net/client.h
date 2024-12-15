@@ -19,7 +19,6 @@
 #define DCIS_CLIENT_MAINWINDOW_H_
 
 // App includes
-#include <memory>
 #include <net/resource.h>
 #include <net/clienthandlers.h>
 #include <utils/terminalwidget.h>
@@ -27,38 +26,34 @@
 // Qt includes
 #include <QTcpSocket>
 
-namespace dcis::client
-{
+// STL includes
+#include <memory>
+
+namespace dcis::client {
 
 class Client : public QObject
 {
     Q_OBJECT
-
   public:
+    using HeaderType = common::resource::Header;
     using LoggerPtrType = common::utils::ILogger*;
     using PacketHandlerFactoryPtrType = std::unique_ptr<common::resource::PacketHandlerFactory>;
 
-    Client(common::utils::ILogger *terminalWidget, QObject *parent = nullptr);
+    Client(LoggerPtrType loggerWidget, QObject *parent = nullptr);
     ~Client();
 
-    /* Senders */
-    void sendText(const QString &text, const QString cmd);
-    void sendJson(const QJsonDocument &json, const QString cmd);
-    void sendAttachment(const QString &filePath, const QString cmd);
-    void sendCommand(const QString cmd);
-    bool sendToServer(const QByteArray &data);
+    void handle(const HeaderType &header, const QByteArray &body);
 
-    void handle(const common::resource::Header &header, const QByteArray &body);
-    
-    bool connectToServer(const QString &ip, const QString &port);
     bool checkServerConnected() const;
+    bool connectToServer(const QString &ip, const QString &port);
 
     QString getUserName() const;
     QString getPassword() const;
     void setUserName(const QString userName);
     void setPassword(const QString password);
 
-    common::utils::ILogger *getTerminalWidget() const;
+    QTcpSocket *getSocket() const;
+    LoggerPtrType getLogger() const;
 
   public slots:
     void onReadyRead();
@@ -73,8 +68,8 @@ class Client : public QObject
   private:
     QString username_;
     QString password_;
-    QTcpSocket *socket_ = nullptr;
-    LoggerPtrType terminalWidget_ = nullptr;
+    QTcpSocket *socket_;
+    LoggerPtrType loggerWidget_;
     PacketHandlerFactoryPtrType packetHandlerFactory_;
 };
 

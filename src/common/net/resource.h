@@ -36,10 +36,11 @@ const QDataStream::Version GLOBAL_DATASTREAM_VERSION = QDataStream::Qt_6_4;
 // resource types
 namespace type
 {
-    constexpr auto Text       = "Text";
-    constexpr auto Json       = "Json";
-    constexpr auto Command    = "Command";
-    constexpr auto Attachment = "Attachment";
+    constexpr auto Text         = "Text";
+    constexpr auto Json         = "Json";
+    constexpr auto Command      = "Command";
+    constexpr auto Attachment   = "Attachment";
+    constexpr auto StatusUpdate = "StatusUpdate";
 }
 
 // status codes
@@ -126,8 +127,11 @@ class PacketHandlerFactory
     HandlerMapType handlers_;
 };
 
-static QByteArray create(const QString cmd, const QString type, const QString status = status::Ok,
-                         QByteArray body = QByteArray(), const QString fileName = "")
+static QByteArray create(const QString cmd, 
+                         const QString type, 
+                         const QString status = status::Ok,
+                         const QByteArray body = QByteArray(), 
+                         const QString fileName = "")
 {
     Header header;
     header.command_ = cmd;
