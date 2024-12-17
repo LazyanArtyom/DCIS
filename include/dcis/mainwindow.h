@@ -21,6 +21,7 @@
 // App headers
 #include <net/client.h>
 #include <gui/graphview.h>
+#include <gui/mapwidget.h>
 #include <utils/terminalwidget.h>
 
 // QT headers
@@ -57,6 +58,8 @@ class MainWindow : public QMainWindow
     void setupUi();
     void setWorkspaceEnabled(bool enable);
 
+    void uploadImage(const QString imagePath);
+
   protected:
     void resizeEvent(QResizeEvent *event) override;
 
@@ -76,44 +79,22 @@ class MainWindow : public QMainWindow
 
   private:
     void createMenu();
+    void createFolders();
     void createToolBar();
+    void createMapWidget();
     void createEntryWidget();
     void createWorkingWiget();
     void createGraphInfoWidget();
 
   private:
-    QAction *actSave_;
-    QAction *actExit_;
-    QAction *actSaveAs_;
-    QAction *actionBFS_;
-    QAction *actionDFS_;
-    QAction *actAddNode_;
-    QAction *actAddEdge_;
-    QAction *actDelNode_;
-    QAction *actDelEdge_;
-    QAction *actCredits_;
-    QAction *actNewGraph_;
-    QAction *actEditEdge_;
-    QAction *actOpenGraph_;
-
-    QMenu *menuFile_;
-    QMenu *menuGraph_;
-    QMenu *menuAdd_;
-    QMenu *menuEdit_;
-    QMenu *menuDelete_;
-    QMenu *menuAlgorithms_;
-
-    QMenuBar *menuBar_;
     QToolBar *toolBar_;
-
-    // Workspace
+    MapWidget *mapWidget_;
     QWidget *workingWidget_;
     QDockWidget *dockWidget_;
     QStackedWidget *centralWidget_;
     QWidget *entryWidget_ = nullptr;
     common::utils::ILogger *terminalWidget_;
 
-    // Entry Widget
     QLabel *backgroundLabel_;
     QLineEdit *username_;
     QLineEdit *password_;
@@ -123,11 +104,6 @@ class MainWindow : public QMainWindow
 
     client::Client *client_;
     GraphView *graphView_;
-
-    QString currentFilePath_ = "";
-
-    QString leftTop_;
-    QString rightBottom_;
 };
 
 } // namespace dcis::gui

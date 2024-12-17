@@ -34,11 +34,17 @@ set(dcis_icons
     "resources/background.png"
 )
 
+set(dcis_webchannel
+    "resources/qwebchannel.js"
+    "resources/index.html"
+)
+
 qt_add_resources(dcis "dcis"
     PREFIX
         "/"
     FILES
         ${dcis_icons}
+        ${dcis_webchannel}
 )
 
 target_link_libraries(dcis PRIVATE
@@ -46,6 +52,8 @@ target_link_libraries(dcis PRIVATE
     Qt6::Widgets
     Qt6::Network
     Qt6::Location
+    Qt6::WebChannel
+    Qt6::WebEngineWidgets
     )
 
 set_target_properties(dcis PROPERTIES

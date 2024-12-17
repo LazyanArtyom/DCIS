@@ -19,6 +19,7 @@
 
 // APP include
 #include <net/clientsenders.h>
+#include <config/configmanager.h>
 #include <gui/coordinputdialog.h>
 
 // QT includes
@@ -71,6 +72,8 @@ void MainWindow::setupUi()
     // Console
     terminalWidget_ = new utils::LoggerWidget(this);
 
+    createFolders();
+    createMapWidget();
     createEntryWidget();
     createWorkingWiget();
     createGraphInfoWidget();
@@ -87,9 +90,13 @@ void MainWindow::setWorkspaceEnabled(bool enable)
         if (username_->text() == "root" && password_->text() == "root")
         {
             toolBar_->show();
+            centralWidget_->setCurrentWidget(mapWidget_);
         }
-        // dockWidget_->show();
-        centralWidget_->setCurrentWidget(workingWidget_);
+        else
+        {
+            // dockWidget_->show();
+            centralWidget_->setCurrentWidget(workingWidget_);
+        }
     }
     else
     {
@@ -113,36 +120,41 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
 }
 
-void MainWindow::onUpload()
+void MainWindow::uploadImage(const QString imagePath)
 {
-    QString filePath = QFileDialog::getOpenFileName(this, ("Select an attachment"),
-                                                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-                                                    ("File (*.json *.txt *.png *.jpg *.jpeg *.mp4)"));
-
-    if (filePath.isEmpty())
+    qDebug() << "***** OPENING IMAGE : " << imagePath;
+    if (imagePath.isEmpty())
     {
-        terminalWidget_->appendText("You haven't selected any attachment! \n");
+        terminalWidget_->appendText("Image doesn't exist ! \n");
         return;
     }
 
-    QImageReader imgReader(filePath);
+    QImageReader imgReader(imagePath);
     if (imgReader.canRead())
     {
         graph::Graph *graph = new graph::Graph(false);
         graphView_->updateGraph(graph);
 
         QImage img = imgReader.read();
-        // imageEditor_->showImage(img);
         graphView_->setImage(img);
-        CoordInputDialog cordDialog;
-        if (cordDialog.exec() == QDialog::Accepted)
-        {
-            leftTop_ = cordDialog.leftTopCoordinate();
-            rightBottom_ = cordDialog.rightBottomCoordinate();
-        }
+    }
+}
 
-        terminalWidget_->appendText("LeftTop: " + leftTop_ + " \n");
-        terminalWidget_->appendText("RightBottom: " + rightBottom_ + " \n");
+void MainWindow::onUpload()
+{
+    QString uploadedImagesPath = common::config::ConfigManager::getConfig("uploaded_images_path").toString();
+    QString filePath = QFileDialog::getOpenFileName(this, 
+                                                   tr("Select an attachment"),
+                                                       uploadedImagesPath,
+                                                    ("File (*.json *.txt *.png *.jpg *.jpeg *.mp4)"));
+    centralWidget_->setCurrentWidget(workingWidget_);
+    uploadImage(filePath);
+
+    CoordInputDialog cordDialog;
+    if (cordDialog.exec() == QDialog::Accepted)
+    {
+        mapWidget_->setLeftTop(cordDialog.leftTopCoordinate());
+        mapWidget_->setRightBottom(cordDialog.rightBottomCoordinate());
     }
 
     if (client_->checkServerConnected())
@@ -283,8 +295,8 @@ void MainWindow::onConnectBtnClicked()
 void MainWindow::onGraphChanged()
 {
     graph::Graph *graph = graphView_->getGraph();
-    graph->setLeftTop(leftTop_);
-    graph->setRightBottom(rightBottom_);
+    graph->setLeftTop(mapWidget_->getLeftTop());
+    graph->setRightBottom(mapWidget_->getRightBottom());
 
     QJsonDocument jsonData = graph::Graph::toJSON(graph);
     client::JsonSender sender(client_->getSocket(), client_);
@@ -299,95 +311,53 @@ void MainWindow::onUpdateGraph(const QJsonDocument &json)
 
 void MainWindow::onSaveGraph()
 {
-    QString filePath;
-    if (currentFilePath_.isEmpty())
+    QString savedGraphsPath = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), savedGraphsPath, tr("JSON Files (*.json)"));
+    if (!filePath.isEmpty())
     {
-        QString defaultPath = QDir::currentPath() + "/untitled.json";
-        filePath = QFileDialog::getSaveFileName(this, tr("Save File"), defaultPath, tr("JSON Files (*.json)"));
-        if (filePath.isEmpty())
+        graph::Graph *currentGraph = graphView_->getGraph();
+        if (currentGraph == nullptr)
         {
             return;
         }
-    }
-    else
-    {
-        filePath = currentFilePath_;
-    }
 
-    graph::Graph *currentGraph = graphView_->getGraph();
-    if (currentGraph == nullptr)
-    {
-        return;
-    }
-
-    if (graph::Graph::save(currentGraph, filePath))
-    {
-        currentFilePath_ = filePath;
+        graph::Graph::save(currentGraph, filePath);
     }
 }
 
 void MainWindow::onLoadGraph()
 {
-    QString filePath =
-        QFileDialog::getOpenFileName(this, tr("Open File"), QDir::currentPath(), tr("JSON Files (*.json)"));
+    centralWidget_->setCurrentWidget(workingWidget_);
+
+    QString savedGraphsPath = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
+    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), savedGraphsPath, tr("JSON Files (*.json)"));
     if (!filePath.isEmpty())
     {
         graph::Graph *graph = graph::Graph::load(filePath);
         graphView_->updateGraph(graph);
-        currentFilePath_ = filePath;
+        onGraphChanged();
     }
-    else
-    {
-        return;
-    }
-
-    onGraphChanged();
 }
 
 void MainWindow::createMenu()
 {
-    // file
-    actSave_ = new QAction(this);
-    actSave_->setObjectName("actSave");
-    actExit_ = new QAction(this);
-    actExit_->setObjectName("actExit");
-    actSaveAs_ = new QAction(this);
-    actSaveAs_->setObjectName("actSaveAs");
-    actCredits_ = new QAction(this);
-    actCredits_->setObjectName("actCredits");
-    actNewGraph_ = new QAction(this);
-    actNewGraph_->setObjectName("actNewGraph");
-    actOpenGraph_ = new QAction(this);
-    actOpenGraph_->setObjectName("actOpenGraph");
+}
 
-    // graph
-    actAddNode_ = new QAction(this);
-    actAddNode_->setObjectName("actAddNode");
-    actAddEdge_ = new QAction(this);
-    actAddEdge_->setObjectName("actAddEdge");
-    actDelNode_ = new QAction(this);
-    actDelNode_->setObjectName("actDelNode");
-    actDelEdge_ = new QAction(this);
-    actDelEdge_->setObjectName("actDelEdge");
-    actEditEdge_ = new QAction(this);
-    actEditEdge_->setObjectName("actEditEdge");
+void MainWindow::createFolders()
+{
+    QString savedGraphsPath = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
+    QDir dir(savedGraphsPath);
+    if (!dir.exists())
+    {
+        dir.mkpath(".");
+    }
 
-    // algorithms
-    actionBFS_ = new QAction(this);
-    actionBFS_->setObjectName("actBFS");
-    actionDFS_ = new QAction(this);
-    actionDFS_->setObjectName("actDFS");
-    actAddNode_ = new QAction(this);
-
-    /*
-    menuFile_;
-    menuGraph_;
-    menuAdd_;
-    menuEdit_;
-    menuDelete_;
-    menuAlgorithms_;
-
-    menuBar_;*/
+    QString uploadedImagesPath = common::config::ConfigManager::getConfig("uploaded_images_path").toString();
+    dir.setPath(uploadedImagesPath);
+    if (!dir.exists())
+    {
+        dir.mkpath(".");
+    }
 }
 
 void MainWindow::createToolBar()
@@ -429,6 +399,32 @@ void MainWindow::createToolBar()
     connect(actLoadGraph, &QAction::triggered, this, &MainWindow::onLoadGraph);
     connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
     connect(actCreateGrid, &QAction::triggered, this, &MainWindow::onCreateGrid);
+}
+
+void MainWindow::createMapWidget()
+{
+    mapWidget_ = new MapWidget(centralWidget_);
+    mapWidget_->setObjectName("mapWidget");
+    mapWidget_->setWindowTitle(tr("Map"));
+
+    centralWidget_->addWidget(mapWidget_);
+
+    // Connections
+    connect(mapWidget_, &MapWidget::sigDataReady, [this]() {
+        QString imagePath = mapWidget_->getImagePath();
+        centralWidget_->setCurrentWidget(workingWidget_);
+
+        uploadImage(imagePath);
+        if (client_->checkServerConnected())
+        {
+            client::AttachmentSender sender(client_->getSocket(), client_);
+            sender.sendToServer(imagePath, common::resource::command::server::Publish);
+        }
+        else
+        {
+            terminalWidget_->appendText("Server does not respond. Please reconnect! \n");
+        }
+    });
 }
 
 void MainWindow::createEntryWidget()
@@ -550,7 +546,6 @@ void MainWindow::createWorkingWiget()
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
 
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage &img) {
-        terminalWidget_->appendText("*************** Showing image ***************\n");
         graphView_->setImage(img);
     });
 

@@ -2,10 +2,10 @@
 
 # Define paths
 CMAKE_PATH="/Users/artyom/Qt/Tools/CMake/CMake.app/Contents/bin/cmake"
-BUILD_DIR="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug"
-CORE_EXEC="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/src/core/core.app/Contents/MacOS/core"
-DCIS_EXEC="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/src/dcis/dcis.app/Contents/MacOS/dcis"
-COMPILE_COMMANDS="/Users/artyom/Documents/MyProjects/build-DCIS-Qt_6_6_0_for_macOS-Debug/compile_commands.json"
+BUILD_DIR="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug"
+CORE_EXEC="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/src/core/core.app/Contents/MacOS/core"
+DCIS_EXEC="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/src/dcis/dcis.app/Contents/MacOS/dcis"
+COMPILE_COMMANDS="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/compile_commands.json"
 
 # Function to clean the build
 clean() {

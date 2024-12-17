@@ -29,21 +29,14 @@
 #include <QJsonDocument>
 #include <QtCore/qjsonobject.h>
 
-namespace dcis::common::config
-{
+namespace dcis::common::config {
 
 class ConfigManager
 {
   public:
-    static ConfigManager &instance()
+    static QJsonObject loadConfig()
     {
-        static ConfigManager instance_;
-        return instance_;
-    }
-
-    void loadConfig(const QString &configFilePath)
-    {
-        QFile file(configFilePath);
+        QFile file("configs.json");
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             throw std::runtime_error("Failed to open config file");
@@ -58,43 +51,35 @@ class ConfigManager
             throw std::runtime_error("Failed to parse config file");
         }
 
-        config_ = doc.object();
-        configFilePath_ = configFilePath;
+        return doc.object();
     }
 
-    void saveConfig()
+    static QVariant getConfig(const QString &key)
     {
-        QFile file(configFilePath_);
+        auto config = loadConfig();
+        if (config.contains(key))
+        {
+            return config[key].toVariant();
+        }
+        return QVariant();
+    }
+
+    static void setConfig(const QString &key, const QVariant &value)
+    {
+        auto config = loadConfig();
+        config[key] = QJsonValue::fromVariant(value);
+
+        QFile file("configs.json");
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             throw std::runtime_error("Failed to open config file");
         }
 
-        QJsonDocument doc(config_);
+        QJsonDocument doc(config);
         file.write(doc.toJson());
         file.close();
+
     }
-
-    QVariant getConfig(const QString &key) const
-    {
-        if (config_.contains(key))
-        {
-            return config_[key].toVariant();
-        }
-        return QVariant();
-    }
-
-    void setConfig(const QString &key, const QVariant &value)
-    {
-        config_[key] = QJsonValue::fromVariant(value);
-    }
-
-  private:
-    ConfigManager() = default;
-    ~ConfigManager() = default;
-
-    QJsonObject config_;
-    QString configFilePath_;
 };
 
 } // namespace dcis::common::config

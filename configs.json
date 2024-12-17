@@ -1,12 +1,7 @@
 {
-    "client_commands": [
-        "ClientClearCycles",
-        "ClientStartExploration",
-        "ClientStartAttack",
-        "ClientGenerateGraph",
-        "ClientUpdateGraph",
-        "ClientSetUserInfo"
-    ],
+    "uploaded_images_path": "uploadedImages",
+    "saved_graphs_path": "savedGraphs",
+
     "resource_types": [
         "Text",
         "Json",

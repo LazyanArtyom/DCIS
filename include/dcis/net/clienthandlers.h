@@ -25,8 +25,7 @@
 
 // STL includes
 
-namespace dcis::client
-{
+namespace dcis::client {
 
 class Client;
 class TextPacketHandler : public common::resource::APacketHandler

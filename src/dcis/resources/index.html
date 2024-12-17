@@ -1,0 +1,220 @@
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Widget</title>
+
+    <script src="qrc:/resources/qwebchannel.js"></script>
+    <script>
+        let mapWidget;
+
+        // Setup QWebChannel and bind the backend object
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            mapWidget = channel.objects.mapWidget;
+
+            document.getElementById('sendDataButton').addEventListener('click', function() {
+                mapWidget.onReceiveDataFromHtml("Hello from JavaScript!");
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Map Widget</h1>
+    <button id="sendDataButton">Send Data to C++</button>
+    <p id="content">No data received yet.</p>
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map</title>
+ 
+  <script src="qrc:/resources/qwebchannel.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=471e6c57-6649-4e28-b17c-7ea468c36e57&lang=en_RU" type="text/javascript"></script>
+  <style>
+    body{
+        margin: 0;
+        padding: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+    #map .ymaps-2-1-79-gotoymaps, #map .ymaps-2-1-79-copyrights-pane{
+        display: none;
+    }
+    #coordinates {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    #selectButton {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #selectButton:hover {
+      background-color: #45a049;
+    }
+    .resize-handle {
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      position: absolute;
+      cursor: nwse-resize;
+      border-radius: 50%;
+      z-index: 1000;
+    }
+    #map .ymaps-2-1-79-searchbox-input__input::placeholder{
+        color: #ffffffa8;
+    }
+    #map .ymaps-2-1-79-searchbox-input__input, #map .ymaps-2-1-79-searchbox-input{
+        background: #13253b;
+        color: #ffffff;
+        border-radius: 10px 0 0 10px;
+        height: 45px;
+    }
+    #map .ymaps-2-1-79-searchbox-button{
+        background-color: #ed5b25;
+        height: 45px;
+        color: #fff;
+        border-radius: 0 10px 10px 0 ;
+    }
+    #map .ymaps-2-1-79-searchbox-button-text{
+        height: 45px;
+        line-height: 45px;
+        color: #fff;
+    }
+  </style>
+</head>
+<body>
+   <div id="map"></div>
+    <script>
+       let mapWidget;
+
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            mapWidget = channel.objects.mapWidget;
+        });
+
+        ymaps.ready(init);
+
+        let rectangle, startCoords, isDrawing = false, isPointSelectionMode = false;
+        let map, marker, screenshotCoords = null;
+
+        function init() {
+            map = new ymaps.Map("map", {
+                center: [40.1792, 44.4991],
+                zoom: 13,
+                type: 'yandex#satellite',
+                controls: ['searchControl']
+            });
+
+            map.events.add('mousedown', function (e) {
+                if (isPointSelectionMode) return;
+
+                if (e.get('domEvent').originalEvent.ctrlKey) {
+                    map.behaviors.enable('drag');
+                    return;
+                } else {
+                    isDrawing = true;
+                    startCoords = e.get('coords');
+                    map.behaviors.disable('drag');
+
+                    if (rectangle) {
+                        map.geoObjects.remove(rectangle);
+                    }
+
+                    rectangle = new ymaps.Rectangle([startCoords, startCoords], {
+                        hintContent: "Drag to select area"
+                    }, {
+                        fillColor: '#AA0000',
+                        strokeColor: '#0000FF',
+                        strokeWidth: 2,
+                        fillOpacity: 0.3
+                    });
+
+                    map.geoObjects.add(rectangle);
+                    map.events.add('mousemove', onMouseMove);
+                }
+            });
+
+            function onMouseMove(e) {
+                if (!isDrawing) return;
+                const currentCoords = e.get('coords');
+                rectangle.geometry.setCoordinates([startCoords, currentCoords]);
+            }
+
+            document.addEventListener('mouseup', function () {
+                if (!isDrawing) return;
+                isDrawing = false;
+                map.behaviors.enable('drag');
+                map.events.remove('mousemove', onMouseMove);
+
+                const coords = rectangle.geometry.getCoordinates();
+                if (coords && coords.length === 2) {
+                    screenshotCoords = coords;
+
+                    console.log('Top-left, Bottom-right:', coords);
+                    mapWidget.onReceiveCoords(coords.toString());
+
+                    getScreenshot()
+                } else {
+                    console.error("Rectangle coordinates are not set correctly.");
+                }
+            });
+
+           async function getScreenshot() {
+               if (!screenshotCoords) return;
+
+               const topLeft = screenshotCoords[0];
+               const bottomRight = screenshotCoords[1];
+               const center = [
+                   (topLeft[0] + bottomRight[0]) / 2,
+                   (topLeft[1] + bottomRight[1]) / 2,
+               ];
+               const bbox = `${topLeft[1]},${topLeft[0]}~${bottomRight[1]},${bottomRight[0]}`;
+
+               // Single tile URL
+               const imageUrl = `https://static-maps.yandex.ru/1.x/?ll=${center[1]},${center[0]}&bbox=${bbox}&size=650,450&l=sat`;
+
+               // Load the image
+               const img = new Image();
+               img.crossOrigin = "Anonymous"; // Handle cross-origin issues
+
+               const canvas = document.createElement("canvas");
+               const ctx = canvas.getContext("2d");
+
+               img.onload = () => {
+                   const scaleFactor = 2; // Increase for better visual scaling (2x, 3x, etc.)
+                   canvas.width = img.width * scaleFactor;
+                   canvas.height = img.height * scaleFactor;
+
+                   // Draw scaled image onto the canvas
+                   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                   // Convert the canvas to a data URL
+                   const scaledImageURL = canvas.toDataURL("image/png");
+
+                   // Pass the scaled image URL to Qt
+                   mapWidget.onReceiveImageURL(scaledImageURL);
+               };
+
+               img.onerror = (err) => {
+                   console.error("Failed to load image", err);
+               };
+
+               img.src = imageUrl;
+           }
+        }
+    </script>
+</body>
+</html>
