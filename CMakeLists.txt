@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 # Drone Collective Intelligence System
 project(DCIS VERSION 1.0.0 LANGUAGES CXX)
@@ -6,7 +6,7 @@ project(DCIS VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# For NVIM tags
+# For tags
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # For MacOS build pass
