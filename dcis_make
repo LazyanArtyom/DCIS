@@ -1,42 +1,78 @@
 #!/bin/bash
 
-# Define paths
+# Get the project directory dynamically (where the script is executed from)
+PROJECT_DIR="$(pwd)"
 CMAKE_PATH="/Users/artyom/Qt/Tools/CMake/CMake.app/Contents/bin/cmake"
-BUILD_DIR="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug"
-CORE_EXEC="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/src/core/core.app/Contents/MacOS/core"
-DCIS_EXEC="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/src/dcis/dcis.app/Contents/MacOS/dcis"
-COMPILE_COMMANDS="/Users/artyom/Documents/MyProjects/DCIS/build/Qt_6_8_1_for_macOS-Debug/compile_commands.json"
+
+# Define build directories
+BUILD_DIR_DEBUG="$PROJECT_DIR/build/debug"
+BUILD_DIR_RELEASE="$PROJECT_DIR/build/release"
 
 # Function to clean the build
 clean() {
-	$CMAKE_PATH --build $BUILD_DIR --target clean
+    echo "Cleaning build directories..."
+    rm -rf "$BUILD_DIR_DEBUG" "$BUILD_DIR_RELEASE"
+    echo "Build directories cleaned."
 }
 
-# Function to build the project
+# Function to configure and build the project
 build() {
-	$CMAKE_PATH --build $BUILD_DIR --target all
-	cp $CORE_EXEC .
-	cp $DCIS_EXEC .
-	cp $COMPILE_COMMANDS .
+    local build_dir=$1
+    local build_type=$2
+
+    echo "Building project in $build_type mode..."
+
+    # Create build directory if it doesn't exist
+    mkdir -p "$build_dir"
+
+    # Run CMake configuration if necessary
+    if [ ! -f "$build_dir/CMakeCache.txt" ]; then
+        $CMAKE_PATH -S "$PROJECT_DIR" -B "$build_dir" -DCMAKE_BUILD_TYPE=$build_type -DCMAKE_RUNTIME_OUTPUT_DIRECTORY="$build_dir"
+    fi
+
+    # Build the project
+    $CMAKE_PATH --build "$build_dir" --target all
+
+    # Ensure binaries are placed correctly in build/debug or build/release
+    echo "Moving binaries to correct locations..."
+    
+    # Find all .app bundles and extract the actual binary
+    find "$build_dir" -type d -name "*.app" | while read -r app_dir; do
+        bin_name=$(basename "$app_dir" .app)
+        bin_path="$app_dir/Contents/MacOS/$bin_name"
+        
+        if [ -f "$bin_path" ]; then
+            mv "$bin_path" "$build_dir/$bin_name"
+            echo "Moved: $bin_name -> $build_dir/"
+        fi
+    done
+
+    # Move static libraries (.a files) if found
+    find "$build_dir" -type f -name "*.a" -exec mv {} "$build_dir/" \;
+
+    echo "Build completed successfully in $build_type mode. Binaries are in: $build_dir"
 }
 
-# Check for the correct number of arguments
+# Check for correct number of arguments
 if [ "$#" -ne 1 ]; then
-	echo "Usage: $0 {clean|build}"
-	exit 1
+    echo "Usage: $0 {clean|release|debug}"
+    exit 1
 fi
 
 # Execute the corresponding function based on the argument
 case "$1" in
-clean)
-	clean
-	;;
-build)
-	build
-	;;
-*)
-	echo "Invalid argument: $1"
-	echo "Usage: $0 {clean|build}"
-	exit 1
-	;;
+    clean)
+        clean
+        ;;
+    release)
+        build "$BUILD_DIR_RELEASE" "Release"
+        ;;
+    debug)
+        build "$BUILD_DIR_DEBUG" "Debug"
+        ;;
+    *)
+        echo "Invalid argument: $1"
+        echo "Usage: $0 {clean|release|debug}"
+        exit 1
+        ;;
 esac
