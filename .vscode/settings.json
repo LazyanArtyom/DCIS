@@ -44,6 +44,5 @@
         "--header-filter=${workspaceFolder}/.*",
         "--checks=bugprone-unused*,bugprone-suspicious*,performance-*,readability-*,clang-analyzer-core.*,modernize-*",
         "--quiet"
-    ],
-    "C_Cpp.default.compileCommands": "/Users/artyom/Documents/MyProjects/DCIS/compile_commands.json"
+    ]
 }
