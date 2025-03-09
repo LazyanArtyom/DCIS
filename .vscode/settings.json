@@ -4,6 +4,8 @@
     "terminal.integrated.fontSize": 14,
     "workbench.sideBar.location": "right",
     "editor.fontSize": 14,
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json",
+    "C_Cpp.codeAnalysis.runAutomatically": false,
 
     // Cmake
     "cmake.options.advanced": {
@@ -37,9 +39,9 @@
     // Clang tidy
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
     "C_Cpp.codeAnalysis.clangTidy.path": "/usr/local/bin/clang-tidy",
-    "C_Cpp.codeAnalysis.runAutomatically": true,
+    //"C_Cpp.codeAnalysis.runAutomatically": true,
     "C_Cpp.codeAnalysis.clangTidy.args": [
-        "--header-filter=/Users/artyom/Documents/MyProjects/DCIS/.*",
+        "--header-filter=${workspaceFolder}/.*",
         "--checks=bugprone-unused*,bugprone-suspicious*,performance-*,readability-*,clang-analyzer-core.*,modernize-*",
         "--quiet"
     ],
