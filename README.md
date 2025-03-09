@@ -16,10 +16,6 @@ This project depends on some packages, which need to be installed prior to build
 ## Build and run
 
 ``` bash
-> cd DCIS && mkdir build && cd build
-> cmake .. && cmake --build .
-> ./core
-> ./dcis
 ```
 
 ## Run with Docker
