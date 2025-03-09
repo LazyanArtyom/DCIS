@@ -1,0 +1,80 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "create-debug-dir",
+            "type": "shell",
+            "command": "mkdir -p build/debug",
+            "problemMatcher": []
+        },
+        {
+            "label": "create-release-dir",
+            "type": "shell",
+            "command": "mkdir -p build/release",
+            "problemMatcher": []
+        },
+        {
+            "label": "configure-debug",
+            "type": "shell",
+            "command": "cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "dependsOn": ["create-debug-dir"]
+        },
+        {
+            "label": "configure-release",
+            "type": "shell",
+            "command": "cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "dependsOn": ["create-release-dir"]
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "cmake --build build/debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "dependsOn": ["configure-debug"]
+        },
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "cmake --build build/release",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": ["$gcc"],
+            "dependsOn": ["configure-release"]
+        },
+        {
+            "label": "copy-compile-commands-debug",
+            "type": "shell",
+            "command": "cp build/debug/compile_commands.json ./",
+            "problemMatcher": [],
+            "dependsOn": ["build-debug"]
+        },
+        {
+            "label": "copy-compile-commands-release",
+            "type": "shell",
+            "command": "cp build/release/compile_commands.json ./",
+            "problemMatcher": [],
+            "dependsOn": ["build-release"]
+        },
+        {
+            "label": "build-project-debug",
+            "dependsOn": ["build-debug", "copy-compile-commands-debug"],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "build-project-release",
+            "dependsOn": ["build-release", "copy-compile-commands-release"],
+            "group": {
+                "kind": "build"
+            }
+        }
+    ]
+}

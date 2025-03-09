@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     {
         QCoreApplication app(argc, argv);
         QCoreApplication::setApplicationName("DCIS Server");
-        QCoreApplication::setApplicationVersion("0.0.1");
+        QCoreApplication::setApplicationVersion("1.0.0");
 
         // console
         dcis::common::utils::ILogger* terminalWidget_ = new dcis::common::utils::LoggerCore();

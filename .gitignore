@@ -34,7 +34,6 @@ compile_commands.json
 uploadedImages/
 savedGraphs/
 
-/.vscode
 /.cache
 /build
 /.idea

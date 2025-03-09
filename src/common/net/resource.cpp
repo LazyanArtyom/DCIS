@@ -22,7 +22,7 @@ namespace dcis::common::resource
 {
 
 Header::Header(const int size, const QString name, const QString cmd, const QString type, const QString status)
-    : bodySize_{size}, fileName_{name}, command_{cmd}, resourceType_{type}, status_{status}
+    : bodySize_{size}, status_{status}, command_{cmd}, fileName_{name}, resourceType_{type}
 {
 }
 

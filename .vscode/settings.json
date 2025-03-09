@@ -1,0 +1,47 @@
+{
+    // Editor
+    "editor.fontFamily": "Jetbrains Mono, Menlo, Monaco, 'Courier New', monospace",
+    "terminal.integrated.fontSize": 14,
+    "workbench.sideBar.location": "right",
+    "editor.fontSize": 14,
+
+    // Cmake
+    "cmake.options.advanced": {
+        "build": {
+            "statusBarVisibility": "visible"
+        },
+        "launch": {
+            "statusBarVisibility": "visible"
+        },
+        "debug": {
+            "statusBarVisibility": "visible"
+        }
+    },
+
+    "cmake.options.statusBarVisibility": "visible",
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+    "cmake.configureOnOpen": true,
+    "cmake.useCMakePresets": "always",
+    "files.autoSave": "afterDelay",
+
+    // Codeium
+    "codeium.enableCodeLens": false,  
+    "codeium.enableConfig": {
+        "*": true
+    },
+
+    // Clangd
+    // "C_Cpp.intelliSenseEngine": "disabled",
+    // "clangd.path": "/Users/artyom/Library/Application Support/Code/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/19.1.2/clangd_19.1.2/bin/clangd",
+
+    // Clang tidy
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "C_Cpp.codeAnalysis.clangTidy.path": "/usr/local/bin/clang-tidy",
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.codeAnalysis.clangTidy.args": [
+        "--header-filter=/Users/artyom/Documents/MyProjects/DCIS/.*",
+        "--checks=bugprone-unused*,bugprone-suspicious*,performance-*,readability-*,clang-analyzer-core.*,modernize-*",
+        "--quiet"
+    ],
+    "C_Cpp.default.compileCommands": "/Users/artyom/Documents/MyProjects/DCIS/compile_commands.json"
+}
