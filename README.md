@@ -11,17 +11,3 @@ This project depends on some packages, which need to be installed prior to build
 
 * [Qt6 libraries installation](https://doc.qt.io/qt-6/get-and-install-qt.html)
 * [CMake installation](https://cmake.org/install/)
-
-
-## Build and run
-
-``` bash
-```
-
-## Run with Docker
-
-This example shows how to run project with command line interface (Cli) using docker-compose.
-
-``` bash
-sudo docker-compose up --build
-```
