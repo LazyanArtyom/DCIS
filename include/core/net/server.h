@@ -44,6 +44,8 @@ class Server : public QTcpServer
     using ClientMapType = QMap<common::user::UserInfo, QTcpSocket *>;
     using ImageProviderPtrType = std::shared_ptr<utils::ImageProvider>;
     using PacketHandlerFactoryPtrType = std::unique_ptr<common::resource::PacketHandlerFactory>;
+    using CommonGraphType = GraphProcessor::commonGraph;
+    using GraphProcType = GraphProcessor::GraphProcessor;
 
     Server(LoggerPtrType terminalWidget, QObject *parent = nullptr);
     ~Server();
@@ -59,6 +61,11 @@ class Server : public QTcpServer
     LoggerPtrType getLogger() const;
     ClientMapType getClientMap() const;
     ImageProviderPtrType getImageProvider() const;
+
+    void setCommGraph(CommonGraphType* commGraph);
+    CommonGraphType* getCommGraph() const;
+    void setGraphProc(GraphProcType* gp);
+    GraphProcType* getGraphProc() const;
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;

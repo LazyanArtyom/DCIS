@@ -45,6 +45,7 @@ class Node
     Node *getCurrNeighbour();
     int getCurrNeighbourId();
     void incrCurrNeighbourId();
+    void decrCurrNeighbourId();
     void setCurrNeighbourId(size_t id);
     NodeVectorType &getNeighbours();
     commonNode *getCommonNode();

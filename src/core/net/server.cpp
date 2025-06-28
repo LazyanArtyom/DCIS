@@ -206,6 +206,24 @@ Server::ImageProviderPtrType Server::getImageProvider() const
     return imageProvider_;
 }
 
+void Server::setCommGraph(Server::CommonGraphType* cg)
+{
+    commGraph_ = cg;
+}
+
+Server::CommonGraphType* Server::getCommGraph() const
+{
+    return commGraph_;
+}
+void Server::setGraphProc(Server::GraphProcType* gp)
+{
+    graphProc_ = gp;
+}
+Server::GraphProcType* Server::getGraphProc() const
+{
+    return graphProc_;
+}
+
 void Server::handle(const HeaderType &header, const QByteArray &body)
 {
     loggerWidget_->appendText("********* Packet received *******\n");
