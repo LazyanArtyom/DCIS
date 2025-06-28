@@ -48,13 +48,13 @@ JsonPacketHandler::JsonPacketHandler(Server *server)
     registerCommand(common::resource::command::server::Publish, [server](const Server::HeaderType &header,
                                                                          const QByteArray &body) {
         QJsonDocument jsonDocument = QJsonDocument::fromJson(body);
-        /*
-        if (commGraph_)
+
+        if (auto commGraph = server->getCommGraph())
         {
-            delete commGraph_;
+            delete commGraph;
         }
-        commGraph_ = GraphProcessor::commonGraph::fromJSON(jsonDocument);
-        */
+        server->setCommGraph(GraphProcessor::commonGraph::fromJSON(jsonDocument));
+
 
         if (server->getClientsCount() > 1)
         {
@@ -99,14 +99,9 @@ JsonPacketHandler::JsonPacketHandler(Server *server)
                                 common::resource::command::client::ShowImage);
                 }
 
-                /*if (commGraph_ == nullptr)
+                if(auto commGraph = server->getCommGraph())
                 {
-                    return;
-                }
-                */
-
-                {
-                    //QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph_);
+                    QJsonDocument json = GraphProcessor::commonGraph::toJSON(commGraph);
                     JsonSender sender(currentSocket, server);
                     sender.send(json, common::resource::command::client::UpdateGraph);
                 }
@@ -126,44 +121,42 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
     registerCommand(common::resource::command::server::ClearCycles, 
                     [server](const Server::HeaderType &header, const QByteArray &body) {
 
-/*
-        auto graphProcessor = server->getGraphProcessor();
+
+        auto graphProcessor = server->getGraphProc();
         if (graphProcessor)
         {
             delete graphProcessor;
         }
-        graphProcessor = new dcis::GraphProcessor::GraphProcessor();
-        server->setGraphProcessor(graphProcessor);
-        graphProcessor->setCommGraph(commGraph_);
+        graphProcessor = new Server::GraphProcType();
+        server->setGraphProc(graphProcessor);
+        graphProcessor->setCommGraph(server->getCommGraph());
         graphProcessor->initGraph();
         graphProcessor->initGraphDirs();
         graphProcessor->clearCycles();
-*/
+
     });
 
     // command GenerateGraph
     registerCommand(common::resource::command::server::GenerateGraph, 
                     [server](const Server::HeaderType &header, const QByteArray &body) {
 
-/*
         QSize imgSize = server->getImageProvider()->getCurrentImageSize();
-        auto graphProcessor = server->getGraphProcessor();
-        server->getTerminalWidget()->appendText("GenereateGraph\n");
+        auto graphProcessor = server->getGraphProc();
+        //TODO logging
+        //server->getTerminalWidget()->appendText("GenereateGraph\n");
 
         graphProcessor->setImgSize(imgSize.width(), imgSize.height());
         graphProcessor->generateGraph();
-                    */
     });
 
     // command StartExploration
     registerCommand(common::resource::command::server::StartExploration, 
                     [server](const Server::HeaderType &header, const QByteArray &body) {
 
-/*
-        auto graphProcessor = server->getGraphProcessor();
-        server->getTerminalWidget()->appendText("StartExploration\n");
+        auto graphProcessor = server->getGraphProc();
+        //TODO logging
+        //server->getTerminalWidget()->appendText("StartExploration\n");
         graphProcessor->startExploration();
-                    */
     });
 
     // command StartAttack

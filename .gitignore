@@ -40,3 +40,5 @@ savedGraphs/
 /.idea
 /cmake-build-*
 /CMakeLists.txt.user
+/exploration*
+/src/dcis/build

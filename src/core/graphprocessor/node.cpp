@@ -54,6 +54,14 @@ void Node::incrCurrNeighbourId()
         currNeighbourId_ %= vecNodeNeighbours_.size();
 }
 
+void Node::decrCurrNeighbourId()
+{
+    currNeighbourId_--;
+    if(currNeighbourId_ < 0)
+        currNeighbourId_ = vecNodeNeighbours_.size() - 1;
+
+}
+
 void Node::setCurrNeighbourId(size_t id)
 {
     currNeighbourId_ = id;

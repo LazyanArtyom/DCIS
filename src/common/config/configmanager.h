@@ -28,6 +28,9 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QtCore/qjsonobject.h>
+#include <QDebug>
+#include <QDir>
+#include <QCoreApplication>
 
 namespace dcis::common::config {
 
@@ -36,20 +39,36 @@ class ConfigManager
   public:
     static QJsonObject loadConfig()
     {
+        qDebug() << "## 1 ##\n";
+
         QFile file("configs.json");
+        qDebug() << "## 2 ##\n";
+        qDebug() << "Working dir:" << QDir::currentPath();
+        qDebug() << "Executable dir:" << QCoreApplication::applicationDirPath();
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
+            qDebug() << "## 3 ##\n";
+
             throw std::runtime_error("Failed to open config file");
         }
+        qDebug() << "## 4 ##\n";
 
         QByteArray data = file.readAll();
+        qDebug() << "## 5 ##\n";
+
         file.close();
+        qDebug() << "## 6 ##\n";
 
         QJsonDocument doc = QJsonDocument::fromJson(data);
+        qDebug() << "## 7 ##\n";
+
         if (doc.isNull() || !doc.isObject())
         {
+            qDebug() << "## 8 ##\n";
+
             throw std::runtime_error("Failed to parse config file");
         }
+        qDebug() << "## 9 ##\n";
 
         return doc.object();
     }
