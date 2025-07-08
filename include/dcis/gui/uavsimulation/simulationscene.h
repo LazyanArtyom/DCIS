@@ -20,8 +20,7 @@
 
 // App includes
 #include <graph/graph.h>
-#include <gui/edgeitem.h>
-#include <gui/nodeitem.h>
+#include <graph/graphics_items.h>
 
 // Qt includes
 #include <QGraphicsScene>
@@ -33,18 +32,23 @@ class UAVSimulationScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
-    UAVSimulationScene() = default;
-    ~UAVSimulationScene() = default;
+    explicit UAVSimulationScene(QObject* parent = nullptr);
+    ~UAVSimulationScene() override;
 
-    void updateGraph(graph::Graph *newGraph);
-    NodeItem* getNodeItem(const std::string &name);
-    void addNodeItem(const std::string &name, NodeItem *nodeItem);
+    void clearAll(bool keepBackground = false);
+
+    void updateGraph(common::graph::Graph *newGraph);
+    common::graph::NodeItemBase* getNodeItem(const std::string &name);
+    void addNodeItem(const std::string &name, common::graph::NodeItemBase *nodeItem);
+
+    void testAnimation();
 
 private:
-    void animateNodeMovement(NodeItem *node, const QPointF &newPos);
+    void animateNodeMovement(common::graph::NodeItemBase *node, const QPointF &newPos);
 
-    std::unordered_map<std::string, NodeItem *> nodeItems_;
-    std::unordered_map<std::string, QVector<QPointF>> trajectories_;
+    std::unordered_map<std::string, common::graph::NodeItemBase *> nodeItems_;
+    std::unordered_map<std::string, QGraphicsPathItem*> trajectoryItems_;
+    std::unordered_map<std::string, QPainterPath> trajectories_;
 };
 
 } // end namespace dcis::gui

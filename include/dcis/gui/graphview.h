@@ -57,6 +57,7 @@ class GraphView : public QGraphicsView
 
     ImageInfo getImageInfo();
     void setImage(const QImage &img);
+    QImage getImage() const;
     void showNewNodeDialog(QPointF pos = QPointF(0, 0));
 
   public slots:
@@ -104,6 +105,8 @@ class GraphView : public QGraphicsView
     graph::Graph *graph_;
     GraphScene *graphScene_;
     ImageInfo imageInfo_;
+
+    QGraphicsPixmapItem *pixmapItem_ = nullptr;
 };
 
 } // end namespace dcis::gui
