@@ -29,19 +29,12 @@ namespace dcis::gui
 
 UAVSimulationView::UAVSimulationView(QWidget *parent) : QGraphicsView(parent)
 {
-    setDragMode(ScrollHandDrag);
     setCacheMode(CacheBackground);
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform | QPainter::TextAntialiasing);
     setViewportUpdateMode(BoundingRectViewportUpdate);
-    // setViewportUpdateMode(FullViewportUpdate);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    // When zooming, the view stay centered over the mouse
-    setTransformationAnchor(AnchorUnderMouse);
-    setResizeAnchor(AnchorViewCenter);
-
     setStyleSheet("background-color: rgba(0, 0, 0, 0);");
-
     setBackgroundBrush(Qt::transparent); // Set transparent background
 
     graphScene_ = new UAVSimulationScene();
@@ -69,95 +62,27 @@ void UAVSimulationView::test()
     graphScene_->testAnimation();
 }
 
-void UAVSimulationView::viewFit()
-{
-    fitInView(sceneRect(), Qt::KeepAspectRatio);
-    isResized_ = true;
-
-    if (sceneRect().width() > sceneRect().height())
-        isLandscape_ = true;
-    else
-        isLandscape_ = false;
-}
-
-void UAVSimulationView::scaleView(qreal scaleFactor)
-{
-    if (sceneRect().isEmpty())
-        return;
-
-    int imgLength;
-    int viewportLength;
-    qreal expRectLength;
-    QRectF rectExpectedRect = transform().scale(scaleFactor, scaleFactor).mapRect(sceneRect());
-
-    if (isLandscape_)
-    {
-        expRectLength = rectExpectedRect.width();
-        viewportLength = viewport()->rect().width();
-        imgLength = sceneRect().width();
-    }
-    else
-    {
-        expRectLength = rectExpectedRect.height();
-        viewportLength = viewport()->rect().height();
-        imgLength = sceneRect().height();
-    }
-
-    if (expRectLength < qreal(viewportLength) / 2) // minimum zoom : half of viewport
-    {
-        if (!isResized_ || scaleFactor < 1)
-            return;
-    }
-    else if (expRectLength > imgLength * 10) // maximum zoom : x10
-    {
-        if (!isResized_ || scaleFactor > 1)
-            return;
-    }
-    else
-    {
-        isResized_ = false;
-    }
-
-    scale(scaleFactor, scaleFactor);
-}
-
-UAVSimulationView::ImageInfo UAVSimulationView::getImageInfo()
-{
-    imageInfo_.sceneRectSize = QSizeF(scene()->sceneRect().width(), scene()->sceneRect().height());
-    imageInfo_.viewportSize = viewport()->size();
-
-    return imageInfo_;
-}
-
 auto UAVSimulationView::getImage() const -> QImage           
 {                                              
-    if (pixmapItem_) {                         
+    if (pixmapItem_ != nullptr) {                         
         return pixmapItem_->pixmap().toImage();
     }                                          
-    return QImage();                           
+    return QImage{};                           
 }                                              
 
 void UAVSimulationView::setImage(const QImage &img)
 {
-    if (!scene())
-        return;
-
     if (!scene()->sceneRect().isEmpty())
+    {
         scene()->clear();
+    }
 
-    imageInfo_.imageSize = QSizeF(img.width(), img.height());
     pixmapItem_ = new QGraphicsPixmapItem(QPixmap::fromImage(img));
     scene()->addItem(pixmapItem_);
 
     fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
-    pixmapItem_->setPos(scene()->width() / 2 - pixmapItem_->boundingRect().width() / 2,
-                        scene()->height() / 2 - pixmapItem_->boundingRect().height() / 2);
-}
-
-void UAVSimulationView::resizeEvent(QResizeEvent *event)
-{
-    isResized_ = true;
-    QGraphicsView::resizeEvent(event);
+    pixmapItem_->setPos((scene()->width() / 2) - (pixmapItem_->boundingRect().width() / 2),
+                        (scene()->height() / 2) - (pixmapItem_->boundingRect().height() / 2));
 }
 
 } // end namespace dcis::gui

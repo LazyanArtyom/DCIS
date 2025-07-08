@@ -37,10 +37,10 @@ UAVSimulationScene::~UAVSimulationScene()
     trajectories_.clear();
 }
 
-common::graph::NodeItemBase* UAVSimulationScene::getNodeItem(const std::string &name)
+auto UAVSimulationScene::getNodeItem(const std::string &name) -> common::graph::NodeItemBase *
 {
-    auto it = nodeItems_.find(name);
-    return (it != nodeItems_.end()) ? it->second : nullptr;
+    auto nodeIt = nodeItems_.find(name);
+    return (nodeIt != nodeItems_.end()) ? nodeIt->second : nullptr;
 }
 
 void UAVSimulationScene::addNodeItem(const std::string &name, common::graph::NodeItemBase *nodeItem)
@@ -105,38 +105,44 @@ void UAVSimulationScene::clearAll(bool keepBackground)
 
 void UAVSimulationScene::updateGraph(common::graph::Graph *newGraph)
 {
-    clearAll(true);
+   /* clearAll(true);
 
     for (const auto& node : newGraph->getNodes())
     {
-        if (node->getCategory() != common::graph::Node::Category::Drone)
+        if (node->getCategory() != common::graph::Node::Category::Drone) 
+        {
             continue;
+        }
 
-        common::graph::NodeItemBase* nodeItem = new common::graph::NodeItemBase(node);
+        auto nodeItem = new common::graph::NodeItemBase(node);
         nodeItem->setRadius(40);
 
         addItem(nodeItem);
         nodeItems_[node->getName()] = nodeItem;
-    }
-    update();
-
-    
-  /*  for (const auto& node : newGraph->getNodes())
+    }*/
+    for (const auto& node : newGraph->getNodes())
     {
-        if (auto nodeItem = getNodeItem(node->getName()))
+        if (node->getCategory() != common::graph::Node::Category::Drone) 
+        {
+            continue;
+        }
+
+        if (auto *nodeItem = getNodeItem(node->getName()))
         {
             QPointF newPos(node->getX(), node->getY());
             animateNodeMovement(nodeItem, newPos);
-            trajectories_[node->getName()].append(newPos);
+            QPainterPath path(newPos);
+            trajectories_[node->getName()] = path;
         }
         else
         {
-            nodeItem = new graph::NodeItemBase(node);
+            nodeItem = new common::graph::NodeItemBase(node);
+            nodeItem->setRadius(40);
 
             addItem(nodeItem);
             nodeItems_[node->getName()] = nodeItem;
         }
-    }*/
+    }
 }
 
 void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, const QPointF &newPos)
@@ -149,7 +155,7 @@ void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, 
         QPainterPath path(startPos);
         trajectories_[name] = path;
 
-        QGraphicsPathItem *pathItem = new QGraphicsPathItem(path);
+        auto *pathItem = new QGraphicsPathItem(path);
         QPen pen(Qt::red, 3); // You can style it as needed
         pathItem->setPen(pen);
         addItem(pathItem);
@@ -158,7 +164,7 @@ void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, 
     }
 
     // Create animation
-    QPropertyAnimation* animation = new QPropertyAnimation(node, "pos");
+    auto *animation = new QPropertyAnimation(node, "pos");
     animation->setDuration(7000);  // in ms
     animation->setStartValue(startPos);
     animation->setEndValue(newPos);

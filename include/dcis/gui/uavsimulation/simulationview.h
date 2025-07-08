@@ -33,13 +33,6 @@ class UAVSimulationView : public QGraphicsView
 {
     Q_OBJECT
 public:
-    struct ImageInfo
-    {
-        QSizeF imageSize;
-        QSizeF viewportSize;
-        QSizeF sceneRectSize;
-    };
-    
     UAVSimulationView(QWidget *parent = nullptr);
 
     void setGraph(common::graph::Graph *graph);
@@ -47,27 +40,12 @@ public:
     void setSceneSize(int width, int height);
     void test();
 
-    void viewFit();
-    void scaleView(qreal scaleFactor);
-
-    ImageInfo getImageInfo();
     auto getImage() const -> QImage;
     void setImage(const QImage &img);
 
-protected:
-    void resizeEvent(QResizeEvent *event) override;
-
 private:
-    qreal currentScale_ = 1.;
-    const qreal scaleMax_ = 1.5;
-
-    bool isResized_ = false;
-    bool isLandscape_ = false;
-    ImageInfo imageInfo_;
-    QPixmap backgroundImage_;
-    common::graph::Graph *graph_;
-    UAVSimulationScene *graphScene_;
-
+    common::graph::Graph *graph_     = nullptr;
+    UAVSimulationScene *graphScene_  = nullptr;
     QGraphicsPixmapItem *pixmapItem_ = nullptr;
 };
 

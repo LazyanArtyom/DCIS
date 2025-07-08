@@ -38,7 +38,7 @@ public:
     void clearAll(bool keepBackground = false);
 
     void updateGraph(common::graph::Graph *newGraph);
-    common::graph::NodeItemBase* getNodeItem(const std::string &name);
+    auto getNodeItem(const std::string &name) -> common::graph::NodeItemBase *;
     void addNodeItem(const std::string &name, common::graph::NodeItemBase *nodeItem);
 
     void testAnimation();
