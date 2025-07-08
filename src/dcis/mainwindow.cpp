@@ -299,8 +299,38 @@ void MainWindow::onDroneSimulation()
     centralWidget_->setCurrentWidget(simulationWidget_);
     simulationView_->setImage(graphView_->getImage());  
     simulationView_->setGraph(graph);                   
-                                                        
-    simulationView_->test();                            
+/*   Simulation test example   
+     // Clone the graph and schedule updates
+    const int numIterations = 35;
+    const int intervalMs = 1000;
+
+    QVector<graph::Graph*> graphClones;
+    graphClones.append(graph); // Include the original
+
+    for (int i = 0; i < numIterations; ++i)
+    {
+        graphClones.append(graphClones.last()->cloneWithRandomPos());
+    }
+
+    int* index = new int(0); // keep track across lambda calls
+
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, [=]() mutable {
+        if (*index >= graphClones.size())
+        {
+            timer->stop();
+            delete timer;
+            delete index;
+            return;
+        }
+
+        simulationView_->setGraph(graphClones[*index]);
+        ++(*index);
+    });
+
+    timer->start(intervalMs);
+    //simulationView_->test();                            
+    */
 }                                                       
 void MainWindow::onGraphChanged()
 {

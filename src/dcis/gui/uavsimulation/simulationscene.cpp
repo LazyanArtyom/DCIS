@@ -131,8 +131,18 @@ void UAVSimulationScene::updateGraph(common::graph::Graph *newGraph)
         {
             QPointF newPos(node->getX(), node->getY());
             animateNodeMovement(nodeItem, newPos);
-            QPainterPath path(newPos);
-            trajectories_[node->getName()] = path;
+
+            if (trajectories_.find(node->getName()) == trajectories_.end())
+            {
+                QPainterPath path(nodeItem->pos());
+                trajectories_[node->getName()] = path;
+
+                auto *pathItem = new QGraphicsPathItem(path);
+                QPen pen(Qt::red, 3);
+                pathItem->setPen(pen);
+                addItem(pathItem);
+                trajectoryItems_[node->getName()] = pathItem;
+            }
         }
         else
         {
