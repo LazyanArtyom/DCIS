@@ -23,6 +23,7 @@
 #include <gui/graphview.h>
 #include <gui/mapwidget.h>
 #include <utils/terminalwidget.h>
+#include <gui/uavsimulation/simulationview.h>
 
 // QT headers
 #include <QMenu>
@@ -71,6 +72,7 @@ class MainWindow : public QMainWindow
     void onGenerateGraph();
     void onStartExploration();
     void onConnectBtnClicked();
+    void onDroneSimulation();
     void onUpdateGraph(const QJsonDocument &json);
 
     void onSaveGraph();
@@ -85,10 +87,12 @@ class MainWindow : public QMainWindow
     void createEntryWidget();
     void createWorkingWiget();
     void createGraphInfoWidget();
+    void createDroneSimulationWidget();
 
   private:
     QToolBar *toolBar_;
     MapWidget *mapWidget_;
+    QWidget *simulationWidget_;
     QWidget *workingWidget_;
     QDockWidget *dockWidget_;
     QStackedWidget *centralWidget_;
@@ -104,6 +108,7 @@ class MainWindow : public QMainWindow
 
     client::Client *client_;
     GraphView *graphView_;
+    UAVSimulationView *simulationView_;
 };
 
 } // namespace dcis::gui

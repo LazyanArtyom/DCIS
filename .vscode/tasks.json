@@ -30,7 +30,7 @@
         {
             "label": "build-debug",
             "type": "shell",
-            "command": "cmake --build build/debug",
+            "command": "cmake --build build/debug -- -j$(sysctl -n hw.ncpu)",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -41,7 +41,7 @@
         {
             "label": "build-release",
             "type": "shell",
-            "command": "cmake --build build/release",
+            "command": "cmake --build build/release -- -j$(sysctl -n hw.ncpu)",
             "group": {
                 "kind": "build"
             },
@@ -49,16 +49,34 @@
             "dependsOn": ["configure-release"]
         },
         {
+            "label": "clean-debug",
+            "type": "shell",
+            "command": "rm -rf build/debug",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "clean-release",
+            "type": "shell",
+            "command": "rm -rf build/release",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "copy-compile-commands-debug",
             "type": "shell",
-            "command": "cp build/debug/compile_commands.json ./",
+            "command": "cp build/debug/compile_commands.json ./ && touch compile_commands.json",
             "problemMatcher": [],
             "dependsOn": ["build-debug"]
         },
         {
             "label": "copy-compile-commands-release",
             "type": "shell",
-            "command": "cp build/release/compile_commands.json ./",
+            "command": "cp build/release/compile_commands.json ./ && touch compile_commands.json",
             "problemMatcher": [],
             "dependsOn": ["build-release"]
         },
@@ -74,6 +92,42 @@
             "dependsOn": ["build-release", "copy-compile-commands-release"],
             "group": {
                 "kind": "build"
+            }
+        },
+        {
+            "label": "run-core",
+            "type": "shell",
+            "command": "./build/debug/src/core/core.app/Contents/MacOS/core",
+            "group": {
+                "kind": "test"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "build-project-debug"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "run-dcis",
+            "type": "shell",
+            "command": "./build/debug/src/dcis/dcis.app/Contents/MacOS/dcis",
+            "group": {
+                "kind": "test"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "build-projectdebug"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
             }
         }
     ]

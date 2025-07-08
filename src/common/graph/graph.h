@@ -41,6 +41,8 @@ class Graph
 
     void clear();
     bool isDirected() const;
+    Graph* clone() const;
+    Graph* cloneWithRandomPos() const;
 
     bool setEdge(Node *u, Node *v);
     Edge getEdge(Node *u, Node *v) const;

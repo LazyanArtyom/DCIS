@@ -427,6 +427,65 @@ bool Graph::isDirected() const
     return isDirected_;
 }
 
+Graph* Graph::clone() const
+{
+    Graph* copy = new Graph(this->isDirected_);
+    copy->setLeftTop(this->leftTop_);
+    copy->setRightBottom(this->rightBottom_);
+
+    // Clone nodes
+    for (const auto& node : this->getNodes())
+    {
+        Node clonedNode(node->getName(), node->getEuclidePos());
+        clonedNode.setType(node->getType());
+        clonedNode.setCategory(node->getCategory());
+        copy->addNode(clonedNode);
+    }
+
+    // Clone edges
+    for (const auto& [u, v] : this->getEdges())
+    {
+        if (u && v)
+        {
+            copy->setEdge(u->getName(), v->getName());
+        }
+    }
+
+    return copy;
+}
+
+Graph* Graph::cloneWithRandomPos() const
+{
+    Graph* copy = new Graph(this->isDirected_);
+    copy->setLeftTop(this->leftTop_);
+    copy->setRightBottom(this->rightBottom_);
+
+    // Seed the random generator
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
+    // Clone nodes with random position offset
+    for (const auto& node : this->getNodes())
+    {
+        double offsetX = (std::rand() % 100) - 50; // range: [-50, +49]
+        double offsetY = (std::rand() % 100) - 50;
+
+        QPointF newPos = node->getEuclidePos() + QPointF(offsetX, offsetY);
+
+        Node clonedNode(node->getName(), newPos);
+        clonedNode.setType(node->getType());
+        clonedNode.setCategory(node->getCategory());
+        copy->addNode(clonedNode);
+    }
+
+    // Clone edges between renamed nodes
+    for (const auto& [u, v] : this->getEdges())
+    {
+        copy->setEdge(u->getName(), v->getName());
+    }
+
+    return copy;
+}
+
 bool Graph::setNodeType(const std::string &nodeName, const Node::Type nodeType)
 {
     auto selectedNode = getNode(nodeName);

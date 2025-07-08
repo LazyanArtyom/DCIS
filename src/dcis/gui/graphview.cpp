@@ -284,13 +284,20 @@ void GraphView::setImage(const QImage &img)
         scene()->clear();
 
     imageInfo_.imageSize = QSizeF(img.width(), img.height());
-    QGraphicsPixmapItem *pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(img));
-
-    scene()->addItem(pixmapItem);
+    pixmapItem_ = new QGraphicsPixmapItem(QPixmap::fromImage(img));
+    scene()->addItem(pixmapItem_);
 
     fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
-    pixmapItem->setPos(scene()->width() / 2 - pixmapItem->boundingRect().width() / 2,
-                       scene()->height() / 2 - pixmapItem->boundingRect().height() / 2);
+    pixmapItem_->setPos(scene()->width() / 2 - pixmapItem_->boundingRect().width() / 2,
+                        scene()->height() / 2 - pixmapItem_->boundingRect().height() / 2);
+}
+
+QImage GraphView::getImage() const
+{
+    if (pixmapItem_) {
+        return pixmapItem_->pixmap().toImage();
+    }
+    return QImage();
 }
 
 void GraphView::showNewNodeDialog(QPointF pos)

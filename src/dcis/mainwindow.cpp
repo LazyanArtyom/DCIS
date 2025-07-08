@@ -77,6 +77,7 @@ void MainWindow::setupUi()
     createEntryWidget();
     createWorkingWiget();
     createGraphInfoWidget();
+    createDroneSimulationWidget();
     createMenu();
     createToolBar();
 
@@ -292,6 +293,45 @@ void MainWindow::onConnectBtnClicked()
     }
 }
 
+void MainWindow::onDroneSimulation()                    
+{                                                       
+    graph::Graph *graph = graphView_->getGraph();       
+    centralWidget_->setCurrentWidget(simulationWidget_);
+    simulationView_->setImage(graphView_->getImage());  
+    simulationView_->setGraph(graph);                   
+/*   Simulation test example   
+     // Clone the graph and schedule updates
+    const int numIterations = 35;
+    const int intervalMs = 1000;
+
+    QVector<graph::Graph*> graphClones;
+    graphClones.append(graph); // Include the original
+
+    for (int i = 0; i < numIterations; ++i)
+    {
+        graphClones.append(graphClones.last()->cloneWithRandomPos());
+    }
+
+    int* index = new int(0); // keep track across lambda calls
+
+    QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, [=]() mutable {
+        if (*index >= graphClones.size())
+        {
+            timer->stop();
+            delete timer;
+            delete index;
+            return;
+        }
+
+        simulationView_->setGraph(graphClones[*index]);
+        ++(*index);
+    });
+
+    timer->start(intervalMs);
+    //simulationView_->test();                            
+    */
+}                                                       
 void MainWindow::onGraphChanged()
 {
     graph::Graph *graph = graphView_->getGraph();
@@ -390,6 +430,9 @@ void MainWindow::createToolBar()
     QAction *actCreateGrid = new QAction(QIcon(QPixmap(":/resources/grid.png")), tr("Grid"));
     toolBar_->addAction(actCreateGrid);
 
+    QAction *actDroneSimulation = new QAction(QIcon(QPixmap(":/resources/grid.png")), tr("FroneSimulation"));
+    toolBar_->addAction(actDroneSimulation);                                                                 
+
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
     connect(actClearCycles, &QAction::triggered, this, &MainWindow::onClearCycles);
@@ -399,6 +442,7 @@ void MainWindow::createToolBar()
     connect(actLoadGraph, &QAction::triggered, this, &MainWindow::onLoadGraph);
     connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
     connect(actCreateGrid, &QAction::triggered, this, &MainWindow::onCreateGrid);
+    connect(actDroneSimulation, &QAction::triggered, this, &MainWindow::onDroneSimulation);
 }
 
 void MainWindow::createMapWidget()
@@ -567,6 +611,21 @@ void MainWindow::createWorkingWiget()
     hLayoutWorking->addWidget(static_cast<common::utils::LoggerWidget*>(terminalWidget_));
     vSplitter->addWidget(static_cast<common::utils::LoggerWidget*>(terminalWidget_));
     vSplitter->setSizes(QList<int>() << 700 << 200);
+}
+
+void MainWindow::createDroneSimulationWidget()   
+{                                                
+    simulationWidget_ = new QWidget(this);       
+    simulationWidget_->setObjectName("widget");  
+    QHBoxLayout* layout = new QHBoxLayout();     
+    simulationWidget_->setLayout(layout);        
+                                                 
+    // Graph view                                
+    simulationView_ = new UAVSimulationView();   
+    layout->addWidget(simulationView_);          
+                                                 
+    // Layouts                                   
+    centralWidget_->addWidget(simulationWidget_);
 }
 
 void MainWindow::createGraphInfoWidget()
