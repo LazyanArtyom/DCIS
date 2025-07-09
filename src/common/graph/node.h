@@ -82,6 +82,8 @@ class Node
 
     double getX() const;
     double getY() const;
+    void setX(double x);
+    void setY(double y);
     std::string getName() const;
 
     bool operator==(const Node &other) const

@@ -74,6 +74,7 @@ class MainWindow : public QMainWindow
     void onConnectBtnClicked();
     void onDroneSimulation();
     void onUpdateGraph(const QJsonDocument &json);
+    void onSimulateGraph(const QJsonDocument &json);
 
     void onSaveGraph();
     void onLoadGraph();

@@ -297,41 +297,13 @@ void MainWindow::onDroneSimulation()
 {                                                       
     graph::Graph *graph = graphView_->getGraph();       
     centralWidget_->setCurrentWidget(simulationWidget_);
-    simulationView_->setImage(graphView_->getImage());  
-    simulationView_->setGraph(graph);                   
-/*   Simulation test example   
-     // Clone the graph and schedule updates
-    const int numIterations = 35;
-    const int intervalMs = 1000;
+    simulationView_->setImage(graphView_->getImage());
+    simulationView_->setGraph(graph);
 
-    QVector<graph::Graph*> graphClones;
-    graphClones.append(graph); // Include the original
+    client::CommandSender sender(client_->getSocket(), client_);
+    sender.sendToServer(resource::command::server::StartSimulation);
+}         
 
-    for (int i = 0; i < numIterations; ++i)
-    {
-        graphClones.append(graphClones.last()->cloneWithRandomPos());
-    }
-
-    int* index = new int(0); // keep track across lambda calls
-
-    QTimer* timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, [=]() mutable {
-        if (*index >= graphClones.size())
-        {
-            timer->stop();
-            delete timer;
-            delete index;
-            return;
-        }
-
-        simulationView_->setGraph(graphClones[*index]);
-        ++(*index);
-    });
-
-    timer->start(intervalMs);
-    //simulationView_->test();                            
-    */
-}                                                       
 void MainWindow::onGraphChanged()
 {
     graph::Graph *graph = graphView_->getGraph();
@@ -347,6 +319,12 @@ void MainWindow::onUpdateGraph(const QJsonDocument &json)
 {
     graph::Graph *graph = graph::Graph::fromJSON(json);
     graphView_->updateGraph(graph);
+}
+
+void MainWindow::onSimulateGraph(const QJsonDocument &json)
+{
+    graph::Graph *graph = graph::Graph::fromJSON(json);
+    simulationView_->setGraph(graph);
 }
 
 void MainWindow::onSaveGraph()
@@ -588,6 +566,7 @@ void MainWindow::createWorkingWiget()
     connect(graphView_, &GraphView::sigGraphChanged, this, &MainWindow::onGraphChanged);
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
+    connect(client_, &client::Client::sigSimulateGraph, this, &MainWindow::onSimulateGraph);
 
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage &img) {
         graphView_->setImage(img);

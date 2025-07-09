@@ -67,6 +67,8 @@ class Server : public QTcpServer
     void setGraphProc(GraphProcType* gp);
     GraphProcType* getGraphProc() const;
 
+    void startSimulation();
+
 protected:
     void incomingConnection(qintptr socketDescriptor) override;
 

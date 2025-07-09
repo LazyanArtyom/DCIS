@@ -44,5 +44,8 @@
         "--header-filter=${workspaceFolder}/.*",
         "--checks=bugprone-unused*,bugprone-suspicious*,performance-*,readability-*,clang-analyzer-core.*,modernize-*",
         "--quiet"
-    ]
+    ],
+    "files.associations": {
+        "unordered_set": "cpp"
+    }
 }
