@@ -65,6 +65,8 @@ namespace command::client
 {
     constexpr auto ShowImage        = "ShowImage";
     constexpr auto UpdateGraph      = "UpdateGraph";
+    constexpr auto SimulateGraph    = "SimulateGraph";
+    constexpr auto LiveUpdateGraph  = "LiveUpdateGraph";
 }
 
 // server commands
@@ -76,6 +78,8 @@ namespace command::server
     constexpr auto StartAttack          = "StartAttack";
     constexpr auto GetUserInfo          = "GetUserInfo";
     constexpr auto GenerateGraph        = "GenerateGraph";
+    constexpr auto StartSimulation      = "StartSimulation";
+    constexpr auto StartLiveControl     = "StartLiveControl";
     constexpr auto StartExploration     = "StartExploration";
 }
 

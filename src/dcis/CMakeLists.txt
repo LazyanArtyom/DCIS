@@ -22,6 +22,8 @@ set(dcis_icons
     "resources/load_graph.png"
     "resources/save_graph.png"
     "resources/grid.png"
+    "resources/drone_cntrl.png"
+    "resources/drone_sim.png"
     "resources/graph.png"
     "resources/attack.png"
     "resources/set_drone.png"

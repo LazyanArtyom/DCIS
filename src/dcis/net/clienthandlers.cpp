@@ -47,6 +47,18 @@ JsonPacketHandler::JsonPacketHandler(Client *client)
                         QJsonDocument json = QJsonDocument::fromJson(body);
                         emit client->sigUpdateGraph(json);
                     });
+
+    registerCommand(common::resource::command::client::SimulateGraph,
+                    [client](const common::resource::Header &header, const QByteArray &body) {
+                        QJsonDocument json = QJsonDocument::fromJson(body);
+                        emit client->sigSimulateGraph(json);
+                    });
+
+    registerCommand(common::resource::command::client::LiveUpdateGraph,
+                [client](const common::resource::Header &header, const QByteArray &body) {
+                    QJsonDocument json = QJsonDocument::fromJson(body);
+                    emit client->sigLiveUpdateGraph(json);
+                });
 }
 
 CommandPacketHandler::CommandPacketHandler(Client *client)

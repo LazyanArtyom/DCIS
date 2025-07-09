@@ -127,4 +127,14 @@ double Node::getY() const
     return euclidePos_.y();
 }
 
+void Node::setX(double x)
+{
+    euclidePos_.setX(x);
+}
+
+void Node::setY(double y)
+{
+    euclidePos_.setY(y);
+}
+
 } // end namespace dcis::common::graph

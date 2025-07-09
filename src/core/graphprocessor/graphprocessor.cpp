@@ -449,7 +449,6 @@ void GraphProcessor::startSimulation()
                 }
             }
         }
-        // TODO Artyom send coords from vecDronesCurCoords to GUI
     };
 
     QTimer timer;

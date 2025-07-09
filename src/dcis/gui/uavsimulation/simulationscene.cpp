@@ -19,6 +19,7 @@
 
 // Qt includes
 #include <QPropertyAnimation>
+#include <QRandomGenerator>
 
 namespace dcis::gui
 {
@@ -157,8 +158,15 @@ void UAVSimulationScene::updateGraph(common::graph::Graph *newGraph)
 
 void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, const QPointF &newPos)
 {
-    const std::string name = node->getNode()->getName();
+   const std::string name = node->getNode()->getName();
     QPointF startPos = node->pos();
+
+    if (trajectoryColors_.find(name) == trajectoryColors_.end())
+    {
+        int hue = QRandomGenerator::global()->bounded(360);
+        QColor color = QColor::fromHsv(hue, 255, 200);
+        trajectoryColors_[name] = color;
+    }
 
     if (trajectories_.find(name) == trajectories_.end())
     {
@@ -166,7 +174,7 @@ void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, 
         trajectories_[name] = path;
 
         auto *pathItem = new QGraphicsPathItem(path);
-        QPen pen(Qt::red, 3); // You can style it as needed
+        QPen pen(trajectoryColors_[name], 3);  // Use drone-specific color
         pathItem->setPen(pen);
         addItem(pathItem);
 

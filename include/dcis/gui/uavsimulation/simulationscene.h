@@ -49,6 +49,7 @@ private:
     std::unordered_map<std::string, common::graph::NodeItemBase *> nodeItems_;
     std::unordered_map<std::string, QGraphicsPathItem*> trajectoryItems_;
     std::unordered_map<std::string, QPainterPath> trajectories_;
+    std::unordered_map<std::string, QColor> trajectoryColors_;
 };
 
 } // end namespace dcis::gui

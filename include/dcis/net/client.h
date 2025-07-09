@@ -64,6 +64,8 @@ class Client : public QObject
     void sigShowText(const QString &str);
     void sigShowImage(const QImage &img);
     void sigUpdateGraph(const QJsonDocument &json);
+    void sigSimulateGraph(const QJsonDocument &json);
+    void sigLiveUpdateGraph(const QJsonDocument &json);
 
   private:
     QString username_;

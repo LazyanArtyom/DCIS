@@ -85,4 +85,14 @@ void UAVSimulationView::setImage(const QImage &img)
                         (scene()->height() / 2) - (pixmapItem_->boundingRect().height() / 2));
 }
 
+void UAVSimulationView::resizeEvent(QResizeEvent *event)
+{
+    QGraphicsView::resizeEvent(event);
+
+    if (scene() && !scene()->sceneRect().isEmpty())
+    {
+        fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
+    }
+}
+
 } // end namespace dcis::gui
