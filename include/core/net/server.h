@@ -68,6 +68,7 @@ class Server : public QTcpServer
     GraphProcType* getGraphProc() const;
 
     void startSimulation();
+    void startLiveControl();
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;

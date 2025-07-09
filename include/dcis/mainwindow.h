@@ -73,8 +73,11 @@ class MainWindow : public QMainWindow
     void onStartExploration();
     void onConnectBtnClicked();
     void onDroneSimulation();
+    void onLiveControl();
     void onUpdateGraph(const QJsonDocument &json);
     void onSimulateGraph(const QJsonDocument &json);
+    void onLiveUpdateGraph(const QJsonDocument &json);
+
 
     void onSaveGraph();
     void onLoadGraph();
@@ -91,14 +94,18 @@ class MainWindow : public QMainWindow
     void createDroneSimulationWidget();
 
   private:
-    QToolBar *toolBar_;
-    MapWidget *mapWidget_;
-    QWidget *simulationWidget_;
-    QWidget *workingWidget_;
-    QDockWidget *dockWidget_;
-    QStackedWidget *centralWidget_;
+    QToolBar *toolBar_ = nullptr;
+    MapWidget *mapWidget_ = nullptr;
+    QWidget *simulationWidget_ = nullptr;
+    QWidget *workingWidget_ = nullptr;
+    QDockWidget *dockWidget_ = nullptr;
+    QStackedWidget *centralWidget_ = nullptr;
     QWidget *entryWidget_ = nullptr;
-    common::utils::ILogger *terminalWidget_;
+    common::utils::ILogger *terminalWidget_ = nullptr;
+
+    QWidget* liveControlContainer_ = nullptr;
+    GraphView* liveGraphView_ = nullptr;
+    UAVSimulationView* liveSimulationView_ = nullptr;
 
     QLabel *backgroundLabel_;
     QLineEdit *username_;

@@ -302,7 +302,48 @@ void MainWindow::onDroneSimulation()
 
     client::CommandSender sender(client_->getSocket(), client_);
     sender.sendToServer(resource::command::server::StartSimulation);
-}         
+}
+
+void MainWindow::onLiveControl()
+{
+    if (!liveControlContainer_)
+    {
+        // Create container widget
+        liveControlContainer_ = new QWidget(this);
+        QHBoxLayout *layout = new QHBoxLayout(liveControlContainer_);
+        layout->setSpacing(0);
+        layout->setContentsMargins(0, 0, 0, 0);
+
+        // Create new views
+        liveGraphView_ = new GraphView();
+        liveSimulationView_ = new UAVSimulationView();
+
+        // Copy current graph & image
+        common::graph::Graph* currentGraph = graphView_->getGraph();
+        QImage currentImage = graphView_->getImage();
+
+        liveGraphView_->setImage(currentImage);
+        liveGraphView_->updateGraph(currentGraph);
+        
+        liveSimulationView_->setImage(currentImage);
+        liveSimulationView_->setGraph(currentGraph);
+
+        // Splitter
+        QSplitter *splitter = new QSplitter(Qt::Horizontal, liveControlContainer_);
+        splitter->addWidget(liveGraphView_);
+        splitter->addWidget(liveSimulationView_);
+        splitter->setSizes(QList<int>() << width() / 2 << width() / 2);
+
+        layout->addWidget(splitter);
+        centralWidget_->addWidget(liveControlContainer_);
+    }
+
+    // Show Live Control layout
+    centralWidget_->setCurrentWidget(liveControlContainer_);
+
+    client::CommandSender sender(client_->getSocket(), client_);
+    sender.sendToServer(resource::command::server::StartLiveControl);
+}
 
 void MainWindow::onGraphChanged()
 {
@@ -325,6 +366,12 @@ void MainWindow::onSimulateGraph(const QJsonDocument &json)
 {
     graph::Graph *graph = graph::Graph::fromJSON(json);
     simulationView_->setGraph(graph);
+}
+
+void MainWindow::onLiveUpdateGraph(const QJsonDocument &json)
+{
+    graph::Graph *graph = graph::Graph::fromJSON(json);
+    liveSimulationView_->setGraph(graph);
 }
 
 void MainWindow::onSaveGraph()
@@ -408,8 +455,11 @@ void MainWindow::createToolBar()
     QAction *actCreateGrid = new QAction(QIcon(QPixmap(":/resources/grid.png")), tr("Grid"));
     toolBar_->addAction(actCreateGrid);
 
-    QAction *actDroneSimulation = new QAction(QIcon(QPixmap(":/resources/grid.png")), tr("FroneSimulation"));
+    QAction *actDroneSimulation = new QAction(QIcon(QPixmap(":/resources/drone_sim.png")), tr("DroneSimulation"));
     toolBar_->addAction(actDroneSimulation);                                                                 
+
+    QAction *actLiveControl = new QAction(QIcon(QPixmap(":/resources/drone_cntrl.png")), tr("LiveControl"));
+    toolBar_->addAction(actLiveControl);
 
     // conections
     connect(actUpload, &QAction::triggered, this, &MainWindow::onUpload);
@@ -421,6 +471,7 @@ void MainWindow::createToolBar()
     connect(actSaveGraph, &QAction::triggered, this, &MainWindow::onSaveGraph);
     connect(actCreateGrid, &QAction::triggered, this, &MainWindow::onCreateGrid);
     connect(actDroneSimulation, &QAction::triggered, this, &MainWindow::onDroneSimulation);
+    connect(actLiveControl, &QAction::triggered, this, &MainWindow::onLiveControl);
 }
 
 void MainWindow::createMapWidget()
@@ -567,6 +618,7 @@ void MainWindow::createWorkingWiget()
     connect(graphView_, &GraphView::sigNodeMoved, this, &MainWindow::onGraphChanged);
     connect(client_, &client::Client::sigUpdateGraph, this, &MainWindow::onUpdateGraph);
     connect(client_, &client::Client::sigSimulateGraph, this, &MainWindow::onSimulateGraph);
+    connect(client_, &client::Client::sigLiveUpdateGraph, this, &MainWindow::onLiveUpdateGraph);
 
     connect(client_, &client::Client::sigShowImage, this, [this](const QImage &img) {
         graphView_->setImage(img);

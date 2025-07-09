@@ -43,6 +43,9 @@ public:
     auto getImage() const -> QImage;
     void setImage(const QImage &img);
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     common::graph::Graph *graph_     = nullptr;
     UAVSimulationScene *graphScene_  = nullptr;

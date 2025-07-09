@@ -169,6 +169,16 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
         server->startSimulation();
     });
 
+    // command StartLiveControl
+    registerCommand(common::resource::command::server::StartLiveControl, [server](const Server::HeaderType &header,
+                                                                                 const QByteArray &body) {
+        
+        Q_UNUSED(header);
+        Q_UNUSED(body);
+
+        server->startLiveControl();
+    });
+
     // command StartAttack
     registerCommand(common::resource::command::server::StartAttack, 
                     [server](const Server::HeaderType &header, const QByteArray &body) {
