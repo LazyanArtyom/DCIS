@@ -165,7 +165,6 @@ CommandPacketHandler::CommandPacketHandler(Server *server)
         
         Q_UNUSED(header);
         Q_UNUSED(body);
-
         server->startSimulation();
     });
 

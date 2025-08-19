@@ -232,19 +232,22 @@ void Server::startSimulation()
 
     // TODO: Davit periodicaly send the changed graph converted to json as in example below for simulation
     // Start periodic updates using QTimer
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, [this]() {
-        for (auto &node : commGraph_->getNodes())
-        {
-            node->setX(node->getX() + 50);
-            node->setY(node->getY() + 50);
-        }
+    auto js = new JsonSender(currentSocket_, this);
+    graphProc_->setJsonSender(js);
+    graphProc_->startSimulation();
+    // QTimer *timer = new QTimer(this);
+    // connect(timer, &QTimer::timeout, this, [this]() {
+    //     for (auto &node : commGraph_->getNodes())
+    //     {
+    //         node->setX(node->getX() + 50);
+    //         node->setY(node->getY() + 50);
+    //     }
 
-        QJsonDocument updatedJson = GraphProcessor::commonGraph::toJSON(commGraph_);
-        JsonSender sender(currentSocket_, this);
-        sender.send(updatedJson, common::resource::command::client::SimulateGraph);
-    });
-    timer->start(1000); // Update every 1 second
+    //     QJsonDocument updatedJson = GraphProcessor::commonGraph::toJSON(commGraph_);
+    //     JsonSender sender(currentSocket_, this);
+    //     sender.send(updatedJson, common::resource::command::client::SimulateGraph);
+    // });
+    // timer->start(1000); // Update every 1 second
 }
 
 void Server::startLiveControl()

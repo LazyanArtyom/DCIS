@@ -23,6 +23,18 @@ namespace dcis::common::graph
 Node::Node(const std::string &name) : name_(name) {}
 Node::Node(const std::string &name, QPointF euclidePos) : name_(name), euclidePos_(euclidePos) {}
 
+Node::Node(const Node &node)
+{
+    deg_ = node.deg_;
+    degPos_ = node.degPos_;
+    degNeg_ = node.degNeg_;
+    drone_ = node.drone_;
+    name_ = node.name_;
+    euclidePos_ = node.euclidePos_;
+    nodeType_ = node.nodeType_;
+    nodeCategory_ = node.nodeCategory_;
+}
+
 QPointF Node::getEuclidePos() const
 {
     return euclidePos_;
