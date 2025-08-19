@@ -42,6 +42,7 @@ class Node
   public:
     explicit Node(const std::string &name);
     explicit Node(const std::string &name, QPointF euclidePos);
+    explicit Node(const Node &node);
 
     enum class Type
     {

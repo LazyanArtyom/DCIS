@@ -183,7 +183,7 @@ void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, 
 
     // Create animation
     auto *animation = new QPropertyAnimation(node, "pos");
-    animation->setDuration(7000);  // in ms
+    animation->setDuration(300);  // in ms
     animation->setStartValue(startPos);
     animation->setEndValue(newPos);
     animation->setEasingCurve(QEasingCurve::OutCubic);

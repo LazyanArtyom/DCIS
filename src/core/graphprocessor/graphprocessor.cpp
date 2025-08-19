@@ -17,6 +17,7 @@
  */
 #include <coordmapper.h>
 #include <graphprocessor/graphprocessor.h>
+#include <net/serversenders.h>
 
 // Qt includes
 #include <QDir>
@@ -33,12 +34,18 @@
 
 // STL includes
 #include <set>
+#include <memory>
 namespace dcis::GraphProcessor
 {
 
 GraphProcessor::GraphProcessor(QObject* parent) : QObject(parent)
 {
     initDrones();
+}
+
+GraphProcessor::~GraphProcessor()
+{
+    delete pJsonSender_;
 }
 
 void GraphProcessor::setCommGraph(commonGraph *graph)
@@ -359,7 +366,7 @@ void GraphProcessor::startAttack()
 void GraphProcessor::startSimulation()
 {
     //TODO calculate step distance
-    double stepDist = 10;
+    double stepDist = 25;
     NodeVectorType vecDronesCurrPos;
     std::vector<size_t> vecDronesStartDir;
     std::vector<bool> vecLandedInStartPos;
@@ -374,14 +381,15 @@ void GraphProcessor::startSimulation()
         vecDronesCurCoords.push_back(std::make_pair(drone->getCommonNode()->getX()
                                                     , drone->getCommonNode()->getY()));
     }
+    qDebug() << vecDronesCurrPos.size();
+    qDebug() << vecDroneLanded.size();
     auto checkCompleted = [&vecLandedInStartPos]() {
         bool res = true;
         for (const auto& droneRes : vecLandedInStartPos)
             res = (res && droneRes);
         return res;
     };
-
-    auto isDroneAlowedToFinish = [&](size_t currDroneNum) {
+    auto isDroneAlowedToFinish = [=, this](size_t currDroneNum) mutable {
         for (int i = 0; i < vecDronesStartNodes_.size(); ++i)
         {
             if (vecDronesCurrPos[currDroneNum] == vecDronesStartNodes_[i] &&
@@ -394,7 +402,6 @@ void GraphProcessor::startSimulation()
         }
         return false;
     };
-
     auto calcDist = [](const double& x1, const double& y1, const double& x2, const double& y2){
         return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
     };
@@ -413,7 +420,8 @@ void GraphProcessor::startSimulation()
 
         return { x1 + d * ux, y1 + d * uy };
     };
-    auto processDrones = [&](){
+    QTimer* timer = new QTimer(this);
+    auto processDrones = [=, this]() mutable {
         for (size_t droneNum = 0; droneNum < vecDronesCurrPos.size(); ++droneNum)
         {
             auto distRem = stepDist;
@@ -432,6 +440,7 @@ void GraphProcessor::startSimulation()
                         vecDronesCurCoords[droneNum].first = posComNode->getX();
                         vecDronesCurCoords[droneNum].second = posComNode->getY();
                         vecDronesCurrPos[droneNum] = posiblePos;
+
                     }
                     else
                     {
@@ -440,7 +449,6 @@ void GraphProcessor::startSimulation()
                         vecDronesCurrPos[droneNum]->decrCurrNeighbourId();
                         break;
                     }
-
                     if (isDroneAlowedToFinish(droneNum))
                     {
                         vecDroneLanded[droneNum] = true;
@@ -449,15 +457,31 @@ void GraphProcessor::startSimulation()
                 }
             }
         }
+        qDebug() << "sending drones";
+        auto tmpComGraph = std::make_unique<commonGraph>(false);
+        for (size_t i = 0; i < vecDronesStartNodes_.size(); ++i)
+        {
+            commonNode cpcm(*(vecDronesStartNodes_[i]->getCommonNode()));
+            cpcm.setX(vecDronesCurCoords[i].first);
+            cpcm.setY(vecDronesCurCoords[i].second);
+            tmpComGraph->addNode(cpcm);
+        }
+        QJsonDocument updatedJson = commonGraph::toJSON(tmpComGraph.get());
+        pJsonSender_->send(updatedJson, common::resource::command::client::SimulateGraph);//SimulateGraph);
+        // if(checkCompleted())
+        //     timer->stop();
     };
+   // QTimer* timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, processDrones);
+    timer->start(500);
 
-    QTimer timer;
-    connect(&timer, &QTimer::timeout, this, processDrones);
-    timer.start(2000);
 
-    if(checkCompleted())
-        timer.stop();
 
+}
+
+void GraphProcessor::setJsonSender(core::JsonSender *pJsonSender)
+{
+    pJsonSender_ = pJsonSender;
 }
 
 void GraphProcessor::setImgSize(size_t imgW, size_t imgH)

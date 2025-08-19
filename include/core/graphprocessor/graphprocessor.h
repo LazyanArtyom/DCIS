@@ -25,6 +25,12 @@
 // App includes
 #include <graphprocessor/node.h>
 
+namespace dcis::core
+{
+class JsonSender;
+}
+
+
 namespace dcis::GraphProcessor
 {
 
@@ -39,6 +45,7 @@ class GraphProcessor : public QObject
     Q_OBJECT
   public:
     GraphProcessor(QObject* parent = nullptr);
+    ~GraphProcessor();
     void setCommGraph(commonGraph *graph);
     size_t getDronesCount();
     Node *getDroneNode(size_t id);
@@ -52,6 +59,7 @@ class GraphProcessor : public QObject
     void startAttack();
     void setImgSize(size_t imgW, size_t imgH);
     void startSimulation();
+    void setJsonSender(dcis::core::JsonSender *pJsonSender);
     static void sendFileToDrone(const QString& serverIP, QString file);
   private:
     commonGraph *commGraph_ = nullptr;
@@ -66,6 +74,7 @@ class GraphProcessor : public QObject
     size_t imgW_ = 0;
     size_t imgH_ = 0;
     std::vector<DroneInfo> drones_;
+    dcis::core::JsonSender *pJsonSender_ = nullptr;
 };
 
 } // end namespace dcis::GraphProcessor
