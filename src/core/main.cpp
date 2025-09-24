@@ -24,6 +24,11 @@
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setOrganizationName("IIAP NAS RA");
+    QCoreApplication::setOrganizationDomain("iiap.am");   // not "IIAP"
+    QCoreApplication::setApplicationName("DCIS Server");
+    QCoreApplication::setApplicationVersion("1.0.0");
+
     bool headlessMode = false;
 
     for (int i = 1; i < argc; ++i) 
@@ -38,8 +43,6 @@ int main(int argc, char *argv[])
     if (headlessMode)
     {
         QCoreApplication app(argc, argv);
-        QCoreApplication::setApplicationName("DCIS Server");
-        QCoreApplication::setApplicationVersion("1.0.0");
 
         // console
         dcis::common::utils::ILogger* terminalWidget_ = new dcis::common::utils::LoggerCore();

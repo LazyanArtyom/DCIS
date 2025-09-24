@@ -21,7 +21,12 @@
 #include <QApplication>
 
 int main(int argc, char *argv[])
-{
+{ 
+    QCoreApplication::setOrganizationName("IIAP NAS RA");
+    QCoreApplication::setOrganizationDomain("iiap.am");   // not "IIAP"
+    QCoreApplication::setApplicationName("DCIS Client");
+    QCoreApplication::setApplicationVersion("1.0.0");
+    
     QApplication a(argc, argv);
     dcis::gui::MainWindow w;
     w.show();
