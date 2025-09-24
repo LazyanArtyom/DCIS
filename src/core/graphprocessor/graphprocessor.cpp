@@ -366,16 +366,14 @@ void GraphProcessor::startAttack()
 void GraphProcessor::startSimulation()
 {
     //TODO calculate step distance
-    double stepDist = 25;
-    NodeVectorType vecDronesCurrPos;
-    std::vector<size_t> vecDronesStartDir;
-    std::vector<bool> vecLandedInStartPos;
-    std::vector<bool> vecDroneLanded;
-    std::vector<std::pair<double, double>> vecDronesCurCoords;
+
     for (auto drone : vecDronesStartNodes_)
     {
         vecDronesCurrPos.push_back(drone);
         vecDronesStartDir.push_back(drone->getCurrNeighbourId());
+        drone->incrCurrNeighbourId();
+        vecDronesPosiblePos.push_back(drone->getCurrNeighbour());
+
         vecLandedInStartPos.push_back(false);
         vecDroneLanded.push_back(false);
         vecDronesCurCoords.push_back(std::make_pair(drone->getCommonNode()->getX()
@@ -383,45 +381,45 @@ void GraphProcessor::startSimulation()
     }
     qDebug() << vecDronesCurrPos.size();
     qDebug() << vecDroneLanded.size();
-    auto checkCompleted = [&vecLandedInStartPos]() {
-        bool res = true;
-        for (const auto& droneRes : vecLandedInStartPos)
-            res = (res && droneRes);
-        return res;
-    };
-    auto isDroneAlowedToFinish = [=, this](size_t currDroneNum) mutable {
-        for (int i = 0; i < vecDronesStartNodes_.size(); ++i)
-        {
-            if (vecDronesCurrPos[currDroneNum] == vecDronesStartNodes_[i] &&
-                vecDronesCurrPos[currDroneNum]->getCurrNeighbourId() == vecDronesStartDir[i] &&
-                vecLandedInStartPos[i] == false)
+    auto processDrones = [this]() {
+        auto checkCompleted = [this]() {
+            bool res = true;
+            for (const auto& droneRes : vecLandedInStartPos)
+                res = (res && droneRes);
+            return res;
+        };
+        auto isDroneAlowedToFinish = [this](size_t currDroneNum) mutable {
+            for (int i = 0; i < vecDronesStartNodes_.size(); ++i)
             {
-                vecLandedInStartPos[i] = true;
-                return true;
+                if (vecDronesPosiblePos[currDroneNum] == vecDronesStartNodes_[i] &&
+                    vecDronesPosiblePos[currDroneNum]->getCurrNeighbourId() == vecDronesStartDir[i] &&
+                    vecLandedInStartPos[i] == false)
+                {
+                    vecLandedInStartPos[i] = true;
+                    return true;
+                }
             }
-        }
-        return false;
-    };
-    auto calcDist = [](const double& x1, const double& y1, const double& x2, const double& y2){
-        return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-    };
+            return false;
+        };
+        auto calcDist = [](const double& x1, const double& y1, const double& x2, const double& y2){
+            return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+        };
 
-    auto pointOnSegmentAtDistance = [](double x1, double y1, double x2, double y2, double d) -> std::pair<double, double> {
-        double dx = x2 - x1;
-        double dy = y2 - y1;
-        double length = std::sqrt(dx * dx + dy * dy);
+        auto pointOnSegmentAtDistance = [](double x1, double y1, double x2, double y2, double d) -> std::pair<double, double> {
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            double length = std::sqrt(dx * dx + dy * dy);
 
-        if (d < 0 || d > length) {
-            throw std::invalid_argument("d must be between 0 and the length of segment AB");
-        }
+            if (d < 0 || d > length) {
+                throw std::invalid_argument("d must be between 0 and the length of segment AB");
+            }
 
-        double ux = dx / length;
-        double uy = dy / length;
+            double ux = dx / length;
+            double uy = dy / length;
 
-        return { x1 + d * ux, y1 + d * uy };
-    };
-    QTimer* timer = new QTimer(this);
-    auto processDrones = [=, this]() mutable {
+            return { x1 + d * ux, y1 + d * uy };
+        };
+
         for (size_t droneNum = 0; droneNum < vecDronesCurrPos.size(); ++droneNum)
         {
             auto distRem = stepDist;
@@ -429,8 +427,7 @@ void GraphProcessor::startSimulation()
             {
                 while(distRem > 0.0)
                 {
-                    vecDronesCurrPos[droneNum]->incrCurrNeighbourId();
-                    auto posiblePos = vecDronesCurrPos[droneNum]->getCurrNeighbour();
+                    auto posiblePos = vecDronesPosiblePos[droneNum];
                     auto posComNode = posiblePos->getCommonNode();
                     double curDist = calcDist(vecDronesCurCoords[droneNum].first, vecDronesCurCoords[droneNum].second,
                                               posComNode->getX(), posComNode->getY());
@@ -439,21 +436,23 @@ void GraphProcessor::startSimulation()
                         distRem -= curDist;
                         vecDronesCurCoords[droneNum].first = posComNode->getX();
                         vecDronesCurCoords[droneNum].second = posComNode->getY();
-                        vecDronesCurrPos[droneNum] = posiblePos;
+                        if (isDroneAlowedToFinish(droneNum))
+                        {
+                            vecDroneLanded[droneNum] = true;
+                            break;
+                        }
+                        vecDronesCurrPos[droneNum] = vecDronesPosiblePos[droneNum];
+                        vecDronesCurrPos[droneNum]->incrCurrNeighbourId();
+                        vecDronesPosiblePos[droneNum] = vecDronesCurrPos[droneNum]->getCurrNeighbour();
 
                     }
                     else
                     {
                         vecDronesCurCoords[droneNum] = pointOnSegmentAtDistance(vecDronesCurCoords[droneNum].first, vecDronesCurCoords[droneNum].second,
                                                               posComNode->getX(), posComNode->getY(), distRem);
-                        vecDronesCurrPos[droneNum]->decrCurrNeighbourId();
                         break;
                     }
-                    if (isDroneAlowedToFinish(droneNum))
-                    {
-                        vecDroneLanded[droneNum] = true;
-                        break;
-                    }
+
                 }
             }
         }
@@ -468,12 +467,12 @@ void GraphProcessor::startSimulation()
         }
         QJsonDocument updatedJson = commonGraph::toJSON(tmpComGraph.get());
         pJsonSender_->send(updatedJson, common::resource::command::client::SimulateGraph);//SimulateGraph);
-        // if(checkCompleted())
-        //     timer->stop();
+        if(checkCompleted())
+             timer->stop();
     };
-   // QTimer* timer = new QTimer(this);
+    timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, processDrones);
-    timer->start(500);
+    timer->start(1);
 
 
 

@@ -22,6 +22,7 @@
 #include <QFile>
 #include <QProcess>
 #include <QObject>
+#include <QTimer>
 // App includes
 #include <graphprocessor/node.h>
 
@@ -75,6 +76,16 @@ class GraphProcessor : public QObject
     size_t imgH_ = 0;
     std::vector<DroneInfo> drones_;
     dcis::core::JsonSender *pJsonSender_ = nullptr;
+
+    //simulation state
+    QTimer* timer;
+    double stepDist = 25;
+    NodeVectorType vecDronesCurrPos;
+    NodeVectorType vecDronesPosiblePos;
+    std::vector<size_t> vecDronesStartDir;
+    std::vector<bool> vecLandedInStartPos;
+    std::vector<bool> vecDroneLanded;
+    std::vector<std::pair<double, double>> vecDronesCurCoords;
 };
 
 } // end namespace dcis::GraphProcessor

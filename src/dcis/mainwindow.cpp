@@ -143,29 +143,61 @@ void MainWindow::uploadImage(const QString imagePath)
 
 void MainWindow::onUpload()
 {
-    QString uploadedImagesPath = common::config::ConfigManager::getConfig("uploaded_images_path").toString();
-    QString filePath = QFileDialog::getOpenFileName(this, 
-                                                   tr("Select an attachment"),
-                                                       uploadedImagesPath,
-                                                    ("File (*.json *.txt *.png *.jpg *.jpeg *.mp4)"));
+    // 1) Pick a start dir that actually exists
+    QString startDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (startDir.isEmpty())
+        startDir = QDir::homePath();
+
+    // Prefer your configured "uploaded_images_path" if it exists
+    const QString cfgUploads = common::config::ConfigManager::getConfig("uploaded_images_path").toString();
+    if (!cfgUploads.isEmpty() && QDir(cfgUploads).exists())
+        startDir = QDir(cfgUploads).absolutePath();
+
+    const QString filter = tr("Files (*.json *.txt *.png *.jpg *.jpeg *.mp4)");
+
+    // 2) FIRST TRY: native dialog (macOS)
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Select an attachment"),
+        startDir,
+        filter
+    );
+
+    // 3) If native dialog failed or returned empty, FALLBACK to Qt dialog (non-native)
+    if (filePath.isEmpty()) {
+        QFileDialog dlg(this, tr("Select an attachment"), startDir, filter);
+        dlg.setFileMode(QFileDialog::ExistingFile);
+        dlg.setViewMode(QFileDialog::Detail);
+        dlg.setOption(QFileDialog::DontUseNativeDialog, true); // force Qt dialog
+
+        if (dlg.exec() == QDialog::Accepted) {
+            const QStringList files = dlg.selectedFiles();
+            if (!files.isEmpty())
+                filePath = files.first();
+        }
+    }
+
+    // 4) User cancelled or dialogs failed → stop here
+    if (filePath.isEmpty()) {
+        terminalWidget_->appendText("No file selected (dialog canceled or failed).\n");
+        return;
+    }
+
+    // 5) Proceed normally
     centralWidget_->setCurrentWidget(workingWidget_);
     uploadImage(filePath);
 
     CoordInputDialog cordDialog;
-    if (cordDialog.exec() == QDialog::Accepted)
-    {
+    if (cordDialog.exec() == QDialog::Accepted) {
         mapWidget_->setLeftTop(cordDialog.leftTopCoordinate());
         mapWidget_->setRightBottom(cordDialog.rightBottomCoordinate());
     }
 
-    if (client_->checkServerConnected())
-    {
+    if (client_ && client_->checkServerConnected()) {
         client::AttachmentSender sender(client_->getSocket(), client_);
         sender.sendToServer(filePath, common::resource::command::server::Publish);
-    }
-    else
-    {
-        terminalWidget_->appendText("Server does not respond. Please reconnect! \n");
+    } else {
+        terminalWidget_->appendText("Server does not respond. Please reconnect!\n");
     }
 }
 
@@ -376,31 +408,117 @@ void MainWindow::onLiveUpdateGraph(const QJsonDocument &json)
 
 void MainWindow::onSaveGraph()
 {
-    QString savedGraphsPath = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
-    QString filePath = QFileDialog::getSaveFileName(this, tr("Save File"), savedGraphsPath, tr("JSON Files (*.json)"));
-    if (!filePath.isEmpty())
-    {
-        graph::Graph *currentGraph = graphView_->getGraph();
-        if (currentGraph == nullptr)
-        {
-            return;
-        }
+    // 0) Choose a start dir that exists; prefer config if valid
+    QString startDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (startDir.isEmpty()) startDir = QDir::homePath();
 
+    QString cfg = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
+    if (!cfg.isEmpty() && QDir(cfg).exists())
+        startDir = QDir(cfg).absolutePath();
+    else
+        QDir().mkpath(startDir); // ensure exists
+
+    const QString filter = tr("JSON Files (*.json)");
+    QString suggested = QDir(startDir).filePath("graph.json");
+
+    // 1) Try native
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Graph"),
+        suggested,
+        filter
+    );
+
+    // 2) Fallback to Qt dialog if needed
+    if (filePath.isEmpty()) {
+        QFileDialog dlg(this, tr("Save Graph"), startDir, filter);
+        dlg.setAcceptMode(QFileDialog::AcceptSave);
+        dlg.setDefaultSuffix("json");
+        dlg.setOption(QFileDialog::DontUseNativeDialog, true);
+        dlg.selectFile("graph.json");
+        if (dlg.exec() == QDialog::Accepted) {
+            const QStringList files = dlg.selectedFiles();
+            if (!files.isEmpty())
+                filePath = files.first();
+        }
+    }
+
+    if (filePath.isEmpty()) {
+        terminalWidget_->appendText("Save canceled.\n");
+        return;
+    }
+
+    // 3) Ensure .json suffix
+    if (!filePath.endsWith(".json", Qt::CaseInsensitive))
+        filePath += ".json";
+
+    // 4) Save
+    graph::Graph *currentGraph = graphView_->getGraph();
+    if (!currentGraph) {
+        QMessageBox::warning(this, tr("Nothing to save"), tr("Create or load a graph first."));
+        return;
+    }
+
+    try {
         graph::Graph::save(currentGraph, filePath);
+        terminalWidget_->appendText(QString("Saved: %1\n").arg(filePath));
+    } catch (...) {
+        QMessageBox::critical(this, tr("Save failed"), tr("Could not save the graph to:\n%1").arg(filePath));
     }
 }
 
 void MainWindow::onLoadGraph()
 {
-    centralWidget_->setCurrentWidget(workingWidget_);
+   centralWidget_->setCurrentWidget(workingWidget_);
 
-    QString savedGraphsPath = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
-    QString filePath = QFileDialog::getOpenFileName(this, tr("Open File"), savedGraphsPath, tr("JSON Files (*.json)"));
-    if (!filePath.isEmpty())
-    {
+    // 0) Existing dir (config preferred)
+    QString startDir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    if (startDir.isEmpty()) startDir = QDir::homePath();
+
+    QString cfg = common::config::ConfigManager::getConfig("saved_graphs_path").toString();
+    if (!cfg.isEmpty() && QDir(cfg).exists())
+        startDir = QDir(cfg).absolutePath();
+
+    const QString filter = tr("JSON Files (*.json)");
+
+    // 1) Try native
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Open Graph"),
+        startDir,
+        filter
+    );
+
+    // 2) Fallback to Qt dialog if needed
+    if (filePath.isEmpty()) {
+        QFileDialog dlg(this, tr("Open Graph"), startDir, filter);
+        dlg.setFileMode(QFileDialog::ExistingFile);
+        dlg.setOption(QFileDialog::DontUseNativeDialog, true);
+        dlg.setViewMode(QFileDialog::Detail);
+        if (dlg.exec() == QDialog::Accepted) {
+            const QStringList files = dlg.selectedFiles();
+            if (!files.isEmpty())
+                filePath = files.first();
+        }
+    }
+
+    if (filePath.isEmpty()) {
+        terminalWidget_->appendText("Open canceled.\n");
+        return;
+    }
+
+    // 3) Load
+    try {
         graph::Graph *graph = graph::Graph::load(filePath);
+        if (!graph) {
+            QMessageBox::warning(this, tr("Load failed"), tr("Invalid or empty graph file."));
+            return;
+        }
         graphView_->updateGraph(graph);
         onGraphChanged();
+        terminalWidget_->appendText(QString("Loaded: %1\n").arg(filePath));
+    } catch (...) {
+        QMessageBox::critical(this, tr("Load failed"), tr("Could not load the graph from:\n%1").arg(filePath));
     }
 }
 
@@ -553,11 +671,17 @@ void MainWindow::createEntryWidget()
     portLineEdit_->setText("2323");
 
     connectButton_ = new QPushButton(tr("Connect"), entryWidget_);
-    connectButton_->setStyleSheet("font-size: 20px; padding: 10px; background-color: #b8865e; color: #333;"
-                                  "}"
-                                  "QPushButton:hover {"
-                                  "background-color: #ad7e59;"
-                                  "}");
+    connectButton_->setStyleSheet(
+    "QPushButton {"
+    "  font-size: 20px;"
+    "  padding: 10px;"
+    "  background-color: #b8865e;"
+    "  color: #333;"
+    "}"
+    "QPushButton:hover {"
+    "  background-color: #ad7e59;"
+    "}"
+    );
     connectButton_->setCursor(Qt::PointingHandCursor); // Set hand cursor on hover
     connectButton_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     connectButton_->setMaximumWidth(500);

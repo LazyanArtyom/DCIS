@@ -128,6 +128,7 @@ void UAVSimulationScene::updateGraph(common::graph::Graph *newGraph)
             continue;
         }
 
+        qDebug() << "Animation .... ";
         if (auto *nodeItem = getNodeItem(node->getName()))
         {
             QPointF newPos(node->getX(), node->getY());
@@ -183,7 +184,7 @@ void UAVSimulationScene::animateNodeMovement(common::graph::NodeItemBase *node, 
 
     // Create animation
     auto *animation = new QPropertyAnimation(node, "pos");
-    animation->setDuration(300);  // in ms
+    animation->setDuration(200);  // in ms // 300 was
     animation->setStartValue(startPos);
     animation->setEndValue(newPos);
     animation->setEasingCurve(QEasingCurve::OutCubic);
