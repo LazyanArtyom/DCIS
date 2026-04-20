@@ -36,16 +36,61 @@
   <title>Map</title>
  
   <script src="qrc:/resources/qwebchannel.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://api-maps.yandex.ru/2.1/?apikey=471e6c57-6649-4e28-b17c-7ea468c36e57&lang=en_RU" type="text/javascript"></script>
   <style>
+    html {
+        width: 100%;
+        height: 100%;
+    }
     body{
         margin: 0;
         padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
     }
     #map {
       width: 100%;
       height: 100vh;
+      cursor: grab;
+      user-select: none;
+    }
+    #map [class*="events-pane"] {
+      cursor: grab !important;
+    }
+    #map input {
+      user-select: text;
+    }
+    #map.ctrl-select,
+    #map.ctrl-select [class*="events-pane"] {
+      cursor: crosshair !important;
+    }
+    #map.dragging,
+    #map.dragging [class*="events-pane"] {
+      cursor: grabbing !important;
+    }
+    #selectionLayer {
+      position: absolute;
+      inset: 0;
+      z-index: 1000;
+      pointer-events: none;
+      cursor: crosshair;
+    }
+    #selectionLayer.active {
+      pointer-events: auto;
+    }
+    #selectionBox {
+      position: absolute;
+      display: none;
+      border: 2px solid #00b7ff;
+      background: rgba(0, 183, 255, 0.2);
+      box-sizing: border-box;
+    }
+    body.capture-mode #selectionLayer,
+    body.capture-mode #selectionBox,
+    body.capture-mode #map [class*="controls-pane"] {
+      display: none !important;
     }
     #map .ymaps-2-1-79-gotoymaps, #map .ymaps-2-1-79-copyrights-pane{
         display: none;
@@ -98,8 +143,9 @@
 </head>
 <body>
    <div id="map"></div>
+   <div id="selectionLayer"><div id="selectionBox"></div></div>
     <script>
-       let mapWidget;
+        let mapWidget = null;
 
         new QWebChannel(qt.webChannelTransport, function(channel) {
             mapWidget = channel.objects.mapWidget;
@@ -107,8 +153,13 @@
 
         ymaps.ready(init);
 
-        let rectangle, startCoords, isDrawing = false, isPointSelectionMode = false;
-        let map, marker, screenshotCoords = null;
+        let map;
+        let startCoords = null;
+        let lastCoords = null;
+        let startPixel = null;
+        let lastPixel = null;
+        let isDrawing = false;
+        let highResolutionCaptureState = null;
 
         function init() {
             map = new ymaps.Map("map", {
@@ -118,102 +169,280 @@
                 controls: ['searchControl']
             });
 
-            map.events.add('mousedown', function (e) {
-                if (isPointSelectionMode) return;
+            map.behaviors.enable('drag');
 
-                if (e.get('domEvent').originalEvent.ctrlKey) {
-                    map.behaviors.enable('drag');
-                    return;
-                } else {
-                    isDrawing = true;
-                    startCoords = e.get('coords');
-                    map.behaviors.disable('drag');
-
-                    if (rectangle) {
-                        map.geoObjects.remove(rectangle);
-                    }
-
-                    rectangle = new ymaps.Rectangle([startCoords, startCoords], {
-                        hintContent: "Drag to select area"
-                    }, {
-                        fillColor: '#AA0000',
-                        strokeColor: '#0000FF',
-                        strokeWidth: 2,
-                        fillOpacity: 0.3
-                    });
-
-                    map.geoObjects.add(rectangle);
-                    map.events.add('mousemove', onMouseMove);
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Control') {
+                    enableSelectionMode();
                 }
             });
 
-            function onMouseMove(e) {
-                if (!isDrawing) return;
-                const currentCoords = e.get('coords');
-                rectangle.geometry.setCoordinates([startCoords, currentCoords]);
+            document.addEventListener('keyup', function (event) {
+                if (event.key === 'Control' && !isDrawing) {
+                    disableSelectionMode();
+                }
+            });
+
+            window.addEventListener('blur', function () {
+                if (!isDrawing) {
+                    disableSelectionMode();
+                }
+            });
+
+            document.addEventListener('contextmenu', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+
+            map.events.add('mousedown', function (e) {
+                const originalEvent = getOriginalEvent(e);
+                if (!originalEvent || !originalEvent.ctrlKey) {
+                    document.getElementById('map').classList.add('dragging');
+                    return;
+                }
+
+                beginSelection(originalEvent);
+            });
+
+            const selectionLayer = document.getElementById('selectionLayer');
+            selectionLayer.addEventListener('mousedown', beginSelection);
+            selectionLayer.addEventListener('mousemove', updateSelection);
+            document.addEventListener('mouseup', finishSelection);
+        }
+
+        function getOriginalEvent(e) {
+            const domEvent = e.get('domEvent');
+            return domEvent ? domEvent.originalEvent : null;
+        }
+
+        function getMapPixel(originalEvent) {
+            const mapRect = map.container.getElement().getBoundingClientRect();
+            return [
+                originalEvent.clientX - mapRect.left,
+                originalEvent.clientY - mapRect.top
+            ];
+        }
+
+        function pixelToCoords(originalEvent) {
+            const projection = map.options.get('projection');
+            const globalPixels = map.converter.pageToGlobal([originalEvent.pageX, originalEvent.pageY]);
+            return projection.fromGlobalPixels(globalPixels, map.getZoom());
+        }
+
+        function coordsToMapPixel(coords) {
+            const projection = map.options.get('projection');
+            const globalPixels = projection.toGlobalPixels(coords, map.getZoom());
+            const pagePixel = map.converter.globalToPage(globalPixels);
+            const mapRect = map.container.getElement().getBoundingClientRect();
+            const mapPageLeft = mapRect.left + window.pageXOffset;
+            const mapPageTop = mapRect.top + window.pageYOffset;
+
+            return [
+                pagePixel[0] - mapPageLeft,
+                pagePixel[1] - mapPageTop
+            ];
+        }
+
+        function parseCoordsString(coordsString) {
+            const values = coordsString.split(',').map(function (value) {
+                return Number(value.trim());
+            });
+
+            if (values.length < 4 || values.some(Number.isNaN)) {
+                return null;
             }
 
-            document.addEventListener('mouseup', function () {
-                if (!isDrawing) return;
-                isDrawing = false;
-                map.behaviors.enable('drag');
-                map.events.remove('mousemove', onMouseMove);
+            return {
+                north: values[0],
+                west: values[1],
+                south: values[2],
+                east: values[3]
+            };
+        }
 
-                const coords = rectangle.geometry.getCoordinates();
-                if (coords && coords.length === 2) {
-                    screenshotCoords = coords;
+        function enableSelectionMode() {
+            const mapElement = document.getElementById('map');
+            const selectionLayer = document.getElementById('selectionLayer');
 
-                    console.log('Top-left, Bottom-right:', coords);
-                    mapWidget.onReceiveCoords(coords.toString());
+            mapElement.classList.add('ctrl-select');
+            mapElement.classList.remove('dragging');
+            selectionLayer.classList.add('active');
+            map.behaviors.disable('drag');
+        }
 
-                    getScreenshot()
-                } else {
-                    console.error("Rectangle coordinates are not set correctly.");
+        function disableSelectionMode() {
+            const mapElement = document.getElementById('map');
+            const selectionLayer = document.getElementById('selectionLayer');
+
+            mapElement.classList.remove('ctrl-select', 'dragging');
+            selectionLayer.classList.remove('active');
+            map.behaviors.enable('drag');
+        }
+
+        function normalizeGeoBounds(firstCoords, secondCoords) {
+            const south = Math.min(firstCoords[0], secondCoords[0]);
+            const north = Math.max(firstCoords[0], secondCoords[0]);
+            const west = Math.min(firstCoords[1], secondCoords[1]);
+            const east = Math.max(firstCoords[1], secondCoords[1]);
+
+            return {
+                rectangle: [[south, west], [north, east]],
+                coordsString: [north, west, south, east].join(',')
+            };
+        }
+
+        function normalizePixelBounds(firstPixel, secondPixel) {
+            const left = Math.min(firstPixel[0], secondPixel[0]);
+            const top = Math.min(firstPixel[1], secondPixel[1]);
+            const right = Math.max(firstPixel[0], secondPixel[0]);
+            const bottom = Math.max(firstPixel[1], secondPixel[1]);
+
+            return {
+                x: left,
+                y: top,
+                width: right - left,
+                height: bottom - top
+            };
+        }
+
+        function captureBoundsToPixelRect(bounds) {
+            const topLeft = coordsToMapPixel([bounds.north, bounds.west]);
+            const bottomRight = coordsToMapPixel([bounds.south, bounds.east]);
+            const pixelBounds = normalizePixelBounds(topLeft, bottomRight);
+
+            return [
+                Math.round(pixelBounds.x),
+                Math.round(pixelBounds.y),
+                Math.round(pixelBounds.width),
+                Math.round(pixelBounds.height)
+            ].join(',');
+        }
+
+        function prepareHighResolutionCapture(coordsString) {
+            const bounds = parseCoordsString(coordsString);
+            if (!bounds) {
+                return false;
+            }
+
+            highResolutionCaptureState = {
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                bounds: bounds
+            };
+
+            hideSelectionBox();
+            disableSelectionMode();
+            document.body.classList.add('capture-mode');
+
+            map.setBounds(
+                [[bounds.south, bounds.west], [bounds.north, bounds.east]],
+                {
+                    checkZoomRange: true,
+                    duration: 0,
+                    zoomMargin: 0
                 }
+            );
+
+            return true;
+        }
+
+        function getHighResolutionCaptureRect() {
+            if (!highResolutionCaptureState) {
+                return '';
+            }
+
+            return captureBoundsToPixelRect(highResolutionCaptureState.bounds);
+        }
+
+        function restoreMapAfterHighResolutionCapture() {
+            if (!highResolutionCaptureState) {
+                return;
+            }
+
+            const state = highResolutionCaptureState;
+            highResolutionCaptureState = null;
+
+            document.body.classList.remove('capture-mode');
+            map.setCenter(state.center, state.zoom, {
+                duration: 0
             });
+        }
 
-           async function getScreenshot() {
-               if (!screenshotCoords) return;
+        function setSelectionBox(firstPixel, secondPixel) {
+            const selectionBox = document.getElementById('selectionBox');
+            const pixelBounds = normalizePixelBounds(firstPixel, secondPixel);
 
-               const topLeft = screenshotCoords[0];
-               const bottomRight = screenshotCoords[1];
-               const center = [
-                   (topLeft[0] + bottomRight[0]) / 2,
-                   (topLeft[1] + bottomRight[1]) / 2,
-               ];
-               const bbox = `${topLeft[1]},${topLeft[0]}~${bottomRight[1]},${bottomRight[0]}`;
+            selectionBox.style.display = 'block';
+            selectionBox.style.left = `${pixelBounds.x}px`;
+            selectionBox.style.top = `${pixelBounds.y}px`;
+            selectionBox.style.width = `${pixelBounds.width}px`;
+            selectionBox.style.height = `${pixelBounds.height}px`;
+        }
 
-               // Single tile URL
-               const imageUrl = `https://static-maps.yandex.ru/1.x/?ll=${center[1]},${center[0]}&bbox=${bbox}&size=650,450&l=sat`;
+        function hideSelectionBox() {
+            const selectionBox = document.getElementById('selectionBox');
+            selectionBox.style.display = 'none';
+        }
 
-               // Load the image
-               const img = new Image();
-               img.crossOrigin = "Anonymous"; // Handle cross-origin issues
+        function beginSelection(originalEvent) {
+            originalEvent.preventDefault();
+            originalEvent.stopPropagation();
 
-               const canvas = document.createElement("canvas");
-               const ctx = canvas.getContext("2d");
+            isDrawing = true;
+            startCoords = pixelToCoords(originalEvent);
+            lastCoords = startCoords;
+            startPixel = getMapPixel(originalEvent);
+            lastPixel = startPixel;
 
-               img.onload = () => {
-                   const scaleFactor = 2; // Increase for better visual scaling (2x, 3x, etc.)
-                   canvas.width = img.width * scaleFactor;
-                   canvas.height = img.height * scaleFactor;
+            enableSelectionMode();
+            setSelectionBox(startPixel, lastPixel);
+        }
 
-                   // Draw scaled image onto the canvas
-                   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        function updateSelection(originalEvent) {
+            if (!isDrawing) return;
 
-                   // Convert the canvas to a data URL
-                   const scaledImageURL = canvas.toDataURL("image/png");
+            originalEvent.preventDefault();
+            originalEvent.stopPropagation();
 
-                   // Pass the scaled image URL to Qt
-                   mapWidget.onReceiveImageURL(scaledImageURL);
-               };
+            lastCoords = pixelToCoords(originalEvent);
+            lastPixel = getMapPixel(originalEvent);
+            setSelectionBox(startPixel, lastPixel);
+        }
 
-               img.onerror = (err) => {
-                   console.error("Failed to load image", err);
-               };
+        function finishSelection() {
+            document.getElementById('map').classList.remove('dragging');
 
-               img.src = imageUrl;
-           }
+            if (!isDrawing) return;
+
+            isDrawing = false;
+            disableSelectionMode();
+
+            if (!startCoords || !lastCoords || !startPixel || !lastPixel) {
+                hideSelectionBox();
+                return;
+            }
+
+            const pixelBounds = normalizePixelBounds(startPixel, lastPixel);
+            if (pixelBounds.width < 5 || pixelBounds.height < 5) {
+                hideSelectionBox();
+                return;
+            }
+
+            const geoBounds = normalizeGeoBounds(startCoords, lastCoords);
+            hideSelectionBox();
+
+            if (!mapWidget) {
+                console.error("Map widget bridge is not ready.");
+                return;
+            }
+
+            mapWidget.onAreaSelected(
+                geoBounds.coordsString,
+                pixelBounds.x,
+                pixelBounds.y,
+                pixelBounds.width,
+                pixelBounds.height
+            );
         }
     </script>
 </body>

@@ -48,6 +48,7 @@ class MapWidget : public QWidget
   public slots:
     void onReceiveImageURL(const QString url);
     void onReceiveCoords(const QString url);
+    void onAreaSelected(const QString coords, double x, double y, double width, double height);
 
   private:
     QString leftTop_;
