@@ -21,7 +21,13 @@
 #include <config/configmanager.h>
 
 // QT includes
+#include <QDateTime>
+#include <QDir>
 #include <QFile>
+#include <QImage>
+#include <QPixmap>
+#include <QTimer>
+#include <QVariant>
 #include <QVBoxLayout>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -33,6 +39,7 @@ namespace dcis::gui
 MapWidget::MapWidget(QWidget *parent)
 {
     webView_ = new QWebEngineView(this);
+    webView_->setContextMenuPolicy(Qt::NoContextMenu);
     webView_->setUrl(QUrl("qrc:/resources/index.html"));
 
     webChannel_ = new QWebChannel(this);
@@ -103,6 +110,12 @@ void MapWidget::onReceiveImageURL(const QString imageData)
 void MapWidget::onReceiveCoords(const QString coords)
 {
     QStringList coordList = coords.split(",", Qt::SkipEmptyParts);
+    if (coordList.size() < 4)
+    {
+        qWarning() << "Invalid map coordinates received:" << coords;
+        return;
+    }
+
     for (QString &coord : coordList)
     {
         coord = coord.trimmed();
@@ -110,6 +123,107 @@ void MapWidget::onReceiveCoords(const QString coords)
 
     leftTop_ = QString("%1 %2").arg(coordList[0]).arg(coordList[1]);
     rightBottom_ = QString("%1 %2").arg(coordList[2]).arg(coordList[3]);
+}
+
+void MapWidget::onAreaSelected(const QString coords, double x, double y, double width, double height)
+{
+    onReceiveCoords(coords);
+
+    QRect selectionRect(qRound(x), qRound(y), qRound(width), qRound(height));
+    selectionRect = selectionRect.normalized().intersected(webView_->rect());
+
+    if (!selectionRect.isValid() || selectionRect.width() < 2 || selectionRect.height() < 2)
+    {
+        qWarning() << "Invalid map selection rectangle:" << selectionRect;
+        return;
+    }
+
+    auto saveScreenshot = [this](const QRect &rect) -> bool {
+        QString uploadedImagesPath = common::config::ConfigManager::getConfig("uploaded_images_path").toString();
+        QDir().mkpath(uploadedImagesPath);
+
+        QString timeStamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+        QString imageName = QString("image_%1.png").arg(timeStamp);
+        QString fullPath = QDir(uploadedImagesPath).filePath(imageName);
+
+        QPixmap screenshot = webView_->grab(rect);
+        if (!screenshot.isNull() && screenshot.save(fullPath, "PNG"))
+        {
+            qDebug() << "Map selection saved at:" << fullPath << "size:" << screenshot.size();
+            imagePath_ = fullPath;
+            return true;
+        }
+
+        qWarning() << "Failed to save map selection.";
+        return false;
+    };
+
+    QString escapedCoords = coords;
+    escapedCoords.replace("\\", "\\\\");
+    escapedCoords.replace("'", "\\'");
+
+    QString prepareScript = QString("prepareHighResolutionCapture('%1');").arg(escapedCoords);
+    webView_->page()->runJavaScript(prepareScript, [this, selectionRect, saveScreenshot](const QVariant &prepared) {
+        if (!prepared.toBool())
+        {
+            QTimer::singleShot(100, this, [this, selectionRect, saveScreenshot]() {
+                if (saveScreenshot(selectionRect))
+                {
+                    emit sigDataReady();
+                }
+            });
+            return;
+        }
+
+        QTimer::singleShot(1800, this, [this, selectionRect, saveScreenshot]() {
+            webView_->page()->runJavaScript("getHighResolutionCaptureRect();",
+                                           [this, selectionRect, saveScreenshot](const QVariant &value) {
+                                               QRect captureRect;
+                                               QStringList parts = value.toString().split(",", Qt::SkipEmptyParts);
+
+                                               if (parts.size() == 4)
+                                               {
+                                                   bool okX = false;
+                                                   bool okY = false;
+                                                   bool okWidth = false;
+                                                   bool okHeight = false;
+
+                                                   QRect candidate(qRound(parts[0].toDouble(&okX)),
+                                                                   qRound(parts[1].toDouble(&okY)),
+                                                                   qRound(parts[2].toDouble(&okWidth)),
+                                                                   qRound(parts[3].toDouble(&okHeight)));
+                                                   candidate = candidate.normalized().intersected(webView_->rect());
+
+                                                   if (okX && okY && okWidth && okHeight && candidate.width() >= 2 &&
+                                                       candidate.height() >= 2)
+                                                   {
+                                                       captureRect = candidate;
+                                                   }
+                                               }
+
+                                               if (!captureRect.isValid())
+                                               {
+                                                   qWarning() << "High resolution capture rect is invalid, using "
+                                                                 "visible selection fallback.";
+                                                   webView_->page()->runJavaScript("restoreMapAfterHighResolutionCapture();");
+                                                   QTimer::singleShot(300, this, [this, selectionRect, saveScreenshot]() {
+                                                       if (saveScreenshot(selectionRect))
+                                                       {
+                                                           emit sigDataReady();
+                                                       }
+                                                   });
+                                                   return;
+                                               }
+
+                                               bool saved = saveScreenshot(captureRect);
+                                               webView_->page()->runJavaScript("restoreMapAfterHighResolutionCapture();");
+                                               if (saved)
+                                               {
+                                                   emit sigDataReady();
+                                               }
+                                           });
+        });
+    });
 }
 
 } // end namespace dcis::gui
